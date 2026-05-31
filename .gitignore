@@ -1,0 +1,29 @@
+__pycache__/
+lib*
+dist*
+build*
+bin*
+PROJECT*
+workspaces*
+sessions/
+session_templates/
+scratchpad*
+agent_checkpoints.db
+*config.json
+*.spec
+pyvenv.cfg
+CACHEDIR.TAG
+
+# Additional Virtual Environment Folders
+include/
+share/
+
+# System / Run files
+.lock
+
+# Standard Python Ignores
+*.pyc
+*.pyo
+*.pyd
+.env
+*.log

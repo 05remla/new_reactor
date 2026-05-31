@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AddDataWindow</class>
+ <widget class="QWidget" name="AddDataWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>550</width>
+    <height>450</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Add RAG Data</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QPushButton" name="file_btn">
+     <property name="styleSheet">
+      <string notr="true">background-color: #ef8bce; 
+color: black;</string>
+     </property>
+     <property name="text">
+      <string>Select File</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QTextEdit" name="textbox">
+     <property name="placeholderText">
+      <string>Type, paste, and/or click [Select File] to load a documents contents...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QPushButton" name="submit_btn">
+     <property name="styleSheet">
+      <string notr="true">background-color: #54d88c; 
+color: black;
+</string>
+     </property>
+     <property name="text">
+      <string>Process and Add to Stack</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
