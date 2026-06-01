@@ -18,23 +18,6 @@
 - [ ] [🔧 Agent calling tool: simple_web_scraper]
         [LangChain/Agent Generation Error: 'int' object is not subscriptable]
 - [ ] prompt message pane not lining up with prompt combobox name
-- [ ] [Library Plugin Error: [Errno 2] No such file or directory: '/langgraph_info.md']
-./ai+ --continue
-An error occurred:
-Traceback (most recent call last):
-  File "/home/leo/.pyvirtenvs/new_reactor/repl.py", line 1141, in execute
-    for step in stream:
-                ^^^^^^
-  File "/home/leo/.pyvirtenvs/new_reactor/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2605, in stream
-    with SyncPregelLoop(
-         ^^^^^^^^^^^^^^^
-  File "/home/leo/.pyvirtenvs/new_reactor/lib/python3.12/site-packages/langgraph/pregel/_loop.py", line 1122, in 
-__enter__
-    self.updated_channels = self._first(
-                            ^^^^^^^^^^^^
-  File "/home/leo/.pyvirtenvs/new_reactor/lib/python3.12/site-packages/langgraph/pregel/_loop.py", line 725, in _first
-    raise EmptyInputError(f"Received no input for {input_keys}")
-langgraph.errors.EmptyInputError: Received no input for __start__
 
 
 
