@@ -30,7 +30,9 @@ Whether you want a sleek, persistent desktop chat environment, or a rapid comman
 - 🧩 **Extensible Plugin System**: Dynamically load external Python plugins to extend the capabilities of your workspace on the fly.
 
 ### ⚠️ Disclaimers
-1. **LM Studio Centric**: This project was built by a heavy user of LM Studio. As such, many features (like remote server management and specific API hooks) are deeply baked in to take full advantage of everything LM Studio has to offer.
+**This project was built by a heavy user of the following...**
+1. Provider :: **LM Studio Centric**: As such, many features (like remote server management and specific API hooks) are deeply baked in to take full advantage of everything LM Studio has to offer.
+2. RAG :: **LiteRAG Centric**: As such, many features/descriptors point to LiteRAG and are deeply baked in.
 
 ## 🚀 Getting Started
 
@@ -43,20 +45,20 @@ Whether you want a sleek, persistent desktop chat environment, or a rapid comman
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/new_reactor.git
+   git clone https://github.com/05remla/new_reactor.git
    cd new_reactor
    ```
 
 2. **Create a virtual environment:**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   uv venv . --allow-existing   
+   source bin/activate  # On Windows use: new_reactor\Scripts\activate
    ```
 
 3. **Install the dependencies:**
    *(Ensure you have a `requirements.txt` file configured with PyQt5, Langchain, Pydantic, etc.)*
    ```bash
-   pip install -r requirements.txt
+   uv pip install -r requirements.txt
    ```
 
 ## 🎮 Usage
@@ -98,9 +100,9 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 ## 📜 License
 [MIT License](LICENSE)  
   
-[Image 1](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_1.jpg)  
-[Image 2](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_2.jpg)  
-[Image 3](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_3.jpg)  
-[Image 4](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_1.jpg)  
-[Image 5](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_2.jpg)  
-[Image 6](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_3.jpg)  
+![Image 1](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_1.jpg)  
+![Image 2](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_2.jpg)  
+![Image 3](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_3.jpg)  
+![Image 4](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_1.jpg)  
+![Image 5](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_2.jpg)  
+![Image 6](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_3.jpg)  
