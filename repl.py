@@ -681,7 +681,7 @@ def main():
         elif os.path.isfile(init_cfg):
             # use the defined cfg file
             try:
-                dest_path = os.path.join(os.getcwd(), "config.json")
+                dest_path = os.path.join(os.getcwd(), args.cfg_file)
                 if os.path.abspath(init_cfg) == os.path.abspath(dest_path):
                     err_console.print("[bold yellow]Source and destination config are the same file. Skipping copy.[/bold yellow]")
                 else:
@@ -691,13 +691,13 @@ def main():
                 err_console.print(f"[bold red]Failed to copy custom config: {e}[/bold red]")
                 sys.exit(1)
         else:
-            # use default cfg (/home/leo/.pyvirtenvs/new_reactor/config.json)
+            # use default cfg (app_dir + config.json)
             try:
                 src_path = os.path.join(app_dir, "config.json")
-                dest_path = os.path.join(os.getcwd(), "config.json")
+                dest_path = os.path.join(os.getcwd(), args.cfg_file)
                 if os.path.exists(src_path):
                     if os.path.abspath(src_path) == os.path.abspath(dest_path):
-                        err_console.print("[bold yellow]Already in the app directory. Skipping copying config.json to itself.[/bold yellow]")
+                        err_console.print("[bold yellow]Already in the app directory. Skipping copying config to itself.[/bold yellow]")
                     else:
                         shutil.copy(src_path, dest_path)
                         err_console.print(f"[bold green]Copied default config from '{src_path}' to '{dest_path}'[/bold green]")
@@ -708,7 +708,13 @@ def main():
                 err_console.print(f"[bold red]Failed to copy default config: {e}[/bold red]")
                 sys.exit(1)
 
-        alias_cmd = "alias ai++=\"'/home/leo/.pyvirtenvs/new_reactor/bin/ai+' --cfg-file '$PWD/config.json'\""
+        cfg_path = args.cfg_file
+        if cfg_path == "config.json":
+            cfg_path = "$PWD/config.json"
+        elif not os.path.isabs(cfg_path):
+            cfg_path = f"$PWD/{cfg_path}"
+
+        alias_cmd = f"alias ai++=\"'{app_dir}/bin/python' '{app_dir}/repl.py' --cfg-file '{cfg_path}'\""
         print(alias_cmd)
         sys.exit(0)
 

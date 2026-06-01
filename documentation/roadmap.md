@@ -49,7 +49,8 @@ langgraph.errors.EmptyInputError: Received no input for __start__
 #  * = implimented, needs validation
 #  ? = unknown status/follow up
 #  \ = cancelled
-- [?] shared --init information amoungst main and repl
+- [ ] need to fix how --init is handled for repl.py; it needs to be dynamic and except --cfg-file if passed
+- [\] shared --init information amoungst main and repl // not implimented; use ```--cfg-file $CFG_FILE``` with main.py to accomplish this
 - [ ] add --init to main: --init uses config in present dir
 - [ ] use ctrl + keys for GUI
    - [x] previous messages: ctrl + [up arrow]
