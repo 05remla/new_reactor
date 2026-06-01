@@ -96,4 +96,11 @@ The codebase has been meticulously structured for modularity:
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](#) to see where you can help out.
 
 ## 📜 License
-[MIT License](LICENSE)
+[MIT License](LICENSE)  
+  
+[Image 1](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_1.jpg)  
+[Image 2](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_2.jpg)  
+[Image 3](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_3.jpg)  
+[Image 4](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_1.jpg)  
+[Image 5](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_2.jpg)  
+[Image 6](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_3.jpg)  

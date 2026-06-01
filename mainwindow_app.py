@@ -155,6 +155,45 @@ class MstyCloneApp(QMainWindow):
         self.is_loading = False
         self.load_session(self.ui.comboBoxSessions.currentText())
 
+    def _setup_phoenix_tracing(self):
+        try:
+            import phoenix as px
+            from openinference.instrumentation.langchain import LangChainInstrumentor
+            from opentelemetry import trace
+            from opentelemetry.sdk.trace import TracerProvider
+            from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+            
+            # Launch Phoenix local server (handles new and old versions of arize-phoenix)
+            try:
+                if hasattr(px, "launch_app"):
+                    px.launch_app(port=6006)
+                else:
+                    px.launch(port=6006)
+            except Exception as launch_err:
+                import socket
+                is_active = False
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.settimeout(1.0)
+                        is_active = s.connect_ex(("127.0.0.1", 6006)) == 0
+                except Exception:
+                    pass
+                if not is_active:
+                    print(f"Failed to launch Phoenix: {launch_err}")
+                
+            # Configure OTLP Trace Exporter
+            tracer_provider = TracerProvider()
+            otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:6006/v1/traces")
+            tracer_provider.add_span_processor(SimpleSpanProcessor(otlp_exporter))
+            trace.set_tracer_provider(tracer_provider)
+            
+            # Instrument LangChain
+            LangChainInstrumentor().instrument()
+            print("[Tracing] Arize Phoenix instrumentation active on port 6006")
+        except Exception as e:
+            print(f"[Tracing Warning] Failed to initialize Arize Phoenix tracing: {e}")
+
     def _is_main_instance(self):
         ret = False
         flag = '/tmp/msty_like_main_flag'
@@ -628,6 +667,7 @@ class MstyCloneApp(QMainWindow):
         # Arize Phoenix View
         if self.config.get("enable_phoenix_tracing", False):
             from PyQt5.QtCore import QUrl
+            self._setup_phoenix_tracing()
             self.ui.phoenix_view.setUrl(QUrl("http://localhost:6006"))
         else:
             disabled_html = (
@@ -913,6 +953,7 @@ class MstyCloneApp(QMainWindow):
                 from PyQt5.QtCore import QUrl
                 current_url = self.ui.phoenix_view.url().toString()
                 if "localhost:6006" not in current_url:
+                    self._setup_phoenix_tracing()
                     self.ui.phoenix_view.setUrl(QUrl("http://localhost:6006"))
             else:
                 disabled_html = (

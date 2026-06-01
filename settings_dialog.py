@@ -1,5 +1,6 @@
 import sys
 import os
+import requests
 if getattr(sys, "frozen", False):
     app_dir = os.path.dirname(sys.executable)
 else:
