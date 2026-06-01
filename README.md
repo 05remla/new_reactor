@@ -29,6 +29,9 @@ Whether you want a sleek, persistent desktop chat environment, or a rapid comman
 - 💾 **Advanced Session Management**: Save, load, and template your conversations. Includes an LLM-powered "Auto Rename" feature for generating contextually aware session filenames!
 - 🧩 **Extensible Plugin System**: Dynamically load external Python plugins to extend the capabilities of your workspace on the fly.
 
+### ⚠️ Disclaimers
+1. **LM Studio Centric**: This project was built by a heavy user of LM Studio. As such, many features (like remote server management and specific API hooks) are deeply baked in to take full advantage of everything LM Studio has to offer.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
