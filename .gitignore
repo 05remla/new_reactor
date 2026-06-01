@@ -1,5 +1,6 @@
 .git/
 __pycache__/
+GEMINI.md
 lib*
 dist*
 build*
@@ -9,7 +10,7 @@ workspaces*
 sessions/
 session_templates/
 scratchpad*
-agent_checkpoints.db
+*.db
 *config.json
 *.spec
 pyvenv.cfg

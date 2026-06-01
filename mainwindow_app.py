@@ -249,10 +249,12 @@ class MstyCloneApp(QMainWindow):
             pass
 
     def context_compressor_hook(self, full_response):
-        if len(self.messages) > 15:
+        if not self.config.get("enable_context_compression", False): return
+        threshold = self.config.get("context_compress_threshold", 15)
+        if len(self.messages) > threshold:
             import threading, requests
             def worker():
-                if len(self.messages) <= 15: return
+                if len(self.messages) <= threshold: return
                 msgs_to_compress = self.messages[:5]
                 rest = self.messages[5:]
                 text_to_compress = "\n".join([f"{m.get('role', 'unknown')}: {m.get('content', '')}" for m in msgs_to_compress])

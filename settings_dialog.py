@@ -692,13 +692,17 @@ class SettingsDialog(QWidget):
         self.ui.chk_enable_tracing.blockSignals(True)
         self.ui.chk_show_tool_calls.blockSignals(True)
         self.ui.combo_emb_provider.blockSignals(True)
-        self.ui.txt_emb_model.blockSignals(True)
+        self.ui.comboBox.blockSignals(True)
+        self.ui.checkBoxCompressContext.blockSignals(True)
+        self.ui.spinBoxCompressContextCount.blockSignals(True)
 
         self.ui.chk_use_semantic.setChecked(self.config.get("use_semantic_ltm", False))
         self.ui.spin_threshold.setValue(self.config.get("semantic_ltm_threshold", 0.55))
         self.ui.spin_max_tools.setValue(self.config.get("max_tool_calls", 12))
         self.ui.chk_enable_tracing.setChecked(self.config.get("enable_phoenix_tracing", False))
         self.ui.chk_show_tool_calls.setChecked(self.config.get("show_tool_calls_in_chat", False))
+        self.ui.checkBoxCompressContext.setChecked(self.config.get("enable_context_compression", False))
+        self.ui.spinBoxCompressContextCount.setValue(self.config.get("context_compress_threshold", 15))
 
         # Set up Embedding Provider Index
         provider = self.config.get("embedding_provider", "local")
@@ -715,7 +719,7 @@ class SettingsDialog(QWidget):
             default_model = "models/text-embedding-004"
         elif provider == "openai":
             default_model = "text-embedding-3-small"
-        self.ui.txt_emb_model.setText(self.config.get("embedding_model", default_model))
+        self.ui.comboBox.setCurrentText(self.config.get("embedding_model", default_model))
 
         self.ui.chk_use_semantic.blockSignals(False)
         self.ui.spin_threshold.blockSignals(False)
@@ -723,16 +727,19 @@ class SettingsDialog(QWidget):
         self.ui.chk_enable_tracing.blockSignals(False)
         self.ui.chk_show_tool_calls.blockSignals(False)
         self.ui.combo_emb_provider.blockSignals(False)
-        self.ui.txt_emb_model.blockSignals(False)
+        self.ui.comboBox.blockSignals(False)
+        self.ui.checkBoxCompressContext.blockSignals(False)
+        self.ui.spinBoxCompressContextCount.blockSignals(False)
 
-        # Connect signals directly to the saving routine
         self.ui.chk_use_semantic.toggled.connect(self._save_advanced_settings)
         self.ui.spin_threshold.valueChanged.connect(self._save_advanced_settings)
         self.ui.spin_max_tools.valueChanged.connect(self._save_advanced_settings)
         self.ui.chk_enable_tracing.toggled.connect(self._save_advanced_settings)
         self.ui.chk_show_tool_calls.toggled.connect(self._save_advanced_settings)
         self.ui.combo_emb_provider.currentIndexChanged.connect(self._save_advanced_settings)
-        self.ui.txt_emb_model.textChanged.connect(self._save_advanced_settings)
+        self.ui.comboBox.currentTextChanged.connect(self._save_advanced_settings)
+        self.ui.checkBoxCompressContext.toggled.connect(self._save_advanced_settings)
+        self.ui.spinBoxCompressContextCount.valueChanged.connect(self._save_advanced_settings)
         
     def _save_advanced_settings(self):
         self.config["use_semantic_ltm"] = self.ui.chk_use_semantic.isChecked()
@@ -740,13 +747,15 @@ class SettingsDialog(QWidget):
         self.config["max_tool_calls"] = self.ui.spin_max_tools.value()
         self.config["enable_phoenix_tracing"] = self.ui.chk_enable_tracing.isChecked()
         self.config["show_tool_calls_in_chat"] = self.ui.chk_show_tool_calls.isChecked()
+        self.config["enable_context_compression"] = self.ui.checkBoxCompressContext.isChecked()
+        self.config["context_compress_threshold"] = self.ui.spinBoxCompressContextCount.value()
         
         # Save provider
         provider_map = {0: "local", 1: "gemini", 2: "openai"}
         self.config["embedding_provider"] = provider_map.get(self.ui.combo_emb_provider.currentIndex(), "local")
         
         # Save model name
-        self.config["embedding_model"] = self.ui.txt_emb_model.text().strip()
+        self.config["embedding_model"] = self.ui.comboBox.currentText().strip()
         
         self._push_save()
 

@@ -667,53 +667,53 @@ def main():
     parser.add_argument("--cfg-file", type=str, default="config.json", help="Path to the config file.")
     parser.add_argument("--continue", dest="continue_session", action="store_true", help="Continue the session with a null/None prompt.")
     parser.add_argument("--init", action="store_true", help="Initialize project & config file. (e.g. eval $(python repl.py --init))")
-    parser.add_argument("--init-cfg", type=str, default=None, help="Path to the custom config file to initialize from.")
     parser.add_argument("--tmp", action="store_true", help="Create and use a temporary timestamped session.")
     # parser.add_argument("--show-session", type="store_true", help="open session file for review.")
     args = parser.parse_args()
 
-    if args.init or args.init_cfg is not None:
+    if args.init:
         import shutil
-        init_cfg = args.init_cfg
-        if init_cfg is None:
-            # no init_cfg passed, just initialize the alias
-            err_console.print("[bold green]Initializing alias for ai++...[/bold green]")
-        elif os.path.isfile(init_cfg):
-            # use the defined cfg file
-            try:
-                dest_path = os.path.join(os.getcwd(), args.cfg_file)
-                if os.path.abspath(init_cfg) == os.path.abspath(dest_path):
-                    err_console.print("[bold yellow]Source and destination config are the same file. Skipping copy.[/bold yellow]")
-                else:
-                    shutil.copy(init_cfg, dest_path)
-                    err_console.print(f"[bold green]Copied custom config from '{init_cfg}' to '{dest_path}'[/bold green]")
-            except Exception as e:
-                err_console.print(f"[bold red]Failed to copy custom config: {e}[/bold red]")
-                sys.exit(1)
+        err_console.print("[bold green]Initializing alias for ai++...[/bold green]")
+        
+        # Determine source configuration path
+        if os.path.isabs(args.cfg_file):
+            src_path = args.cfg_file
         else:
-            # use default cfg (app_dir + config.json)
-            try:
-                src_path = os.path.join(app_dir, "config.json")
-                dest_path = os.path.join(os.getcwd(), args.cfg_file)
-                if os.path.exists(src_path):
-                    if os.path.abspath(src_path) == os.path.abspath(dest_path):
-                        err_console.print("[bold yellow]Already in the app directory. Skipping copying config to itself.[/bold yellow]")
-                    else:
-                        shutil.copy(src_path, dest_path)
-                        err_console.print(f"[bold green]Copied default config from '{src_path}' to '{dest_path}'[/bold green]")
+            src_path = os.path.join(app_dir, args.cfg_file)
+            
+        # Determine destination configuration path
+        dest_path = os.path.join(os.getcwd(), "config.json")
+        
+        if os.path.exists(dest_path):
+            err_console.print(f"[bold yellow]Config file '{dest_path}' already exists. Skipping copy.[/bold yellow]")
+        else:
+            if os.path.exists(src_path):
+                if os.path.abspath(src_path) == os.path.abspath(dest_path):
+                    err_console.print("[bold yellow]Already in the app directory. Skipping copying config to itself.[/bold yellow]")
                 else:
-                    err_console.print(f"[bold red]Default config file '{src_path}' not found.[/bold red]")
-                    sys.exit(1)
-            except Exception as e:
-                err_console.print(f"[bold red]Failed to copy default config: {e}[/bold red]")
+                    try:
+                        shutil.copy(src_path, dest_path)
+                        err_console.print(f"[bold green]Copied config from '{src_path}' to '{dest_path}'[/bold green]")
+                        
+                        with open(dest_path, "r") as f:
+                            cfg_data = json.load(f)
+                            
+                        agent_space = os.path.join(os.getcwd(), "agent_space")
+                        cfg_data["da_root_dir"] = agent_space
+                        
+                        with open(dest_path, "w") as f:
+                            json.dump(cfg_data, f, indent=4)
+                            
+                        os.makedirs(agent_space, exist_ok=True)
+                        err_console.print(f"[bold green]Configured da_root_dir and created {agent_space}[/bold green]")
+                    except Exception as e:
+                        err_console.print(f"[bold red]Failed to copy or configure config: {e}[/bold red]")
+                        sys.exit(1)
+            else:
+                err_console.print(f"[bold red]Source config file '{src_path}' not found.[/bold red]")
                 sys.exit(1)
 
-        cfg_path = args.cfg_file
-        if cfg_path == "config.json":
-            cfg_path = "$PWD/config.json"
-        elif not os.path.isabs(cfg_path):
-            cfg_path = f"$PWD/{cfg_path}"
-
+        cfg_path = "$PWD/config.json"
         alias_cmd = f"alias ai++=\"'{app_dir}/bin/python' '{app_dir}/repl.py' --cfg-file '{cfg_path}'\""
         print(alias_cmd)
         sys.exit(0)
@@ -781,7 +781,8 @@ def main():
         except Exception as e:
             err_console.print(f"[bold red][Tracing Warning] Failed to initialize Arize Phoenix tracing: {e}[/bold red]")
 
-    setup_phoenix_tracing(config)
+    if not args.config and not args.test_config:
+        setup_phoenix_tracing(config)
 
     if args.test_config:
         print(json.dumps(config, indent=4))
