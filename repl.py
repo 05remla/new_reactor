@@ -24,6 +24,9 @@ else:
 sys.path.append(f"{app_dir}/plugins")
 sys.path.append(app_dir)
 
+import da_patch
+da_patch.apply_deepagents_patches()
+
 # Tool and Backend imports
 import toolz
 import deepagents.backends

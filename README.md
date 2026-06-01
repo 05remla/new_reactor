@@ -105,10 +105,9 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 ![Image 2](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_2.jpg)  
   
 ![Image 3](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_3.jpg)  
-  
-![Image 4](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_1.jpg)  
-  
-![Image 5](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_2.jpg)  
-  
-![Image 6](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/settings_screen_3.jpg)  
+
+![Image 4](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_4.jpg)   
+   
+![Image 5](https://raw.githubusercontent.com/05remla/repo_images/refs/heads/main/ITReactor_full_screen_5.jpg)  
+     
   

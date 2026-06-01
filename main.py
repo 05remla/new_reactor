@@ -7,6 +7,9 @@ else:
 sys.path.append(f"{app_dir}/plugins")
 sys.path.append(app_dir)
 
+import da_patch
+da_patch.apply_deepagents_patches()
+
 import glob
 import json
 import requests
