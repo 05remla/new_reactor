@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased] - 2026-06-07
 
 ### Added
+- **Documentation**: Created `usage_examples.md` in the `/documentation` directory to provide users with step-by-step CLI usage examples, including session initialization, parameter tweaking, and plugin usage.
+- **Documentation Refactor**: Updated `project_structure.md` to include missing `agent_manager.py` and `agent_manager_ui.py` files. Padded all markdown files in `/documentation` with 3 trailing spaces per line to enforce context history formatting rules.
 - **Settings Awareness**: Populated project directory name, config file path, and session filename labels directly in the settings window for better situational awareness.
 - **Agent Max Tool Calls**: Added support for enabling/disabling maximum sequential tool calls per agent via the Agent Manager UI, saving directly to agent configurations.
 
