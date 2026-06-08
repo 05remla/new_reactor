@@ -1,0 +1,43 @@
+{
+    "name": "Tron",
+    "provider_type": "gemini",
+    "provider_url": "http://100.115.235.43:8081/v1",
+    "model_name": "gemini-2.5-flash",
+    "system_prompt": "You are Tron, a brilliant assistant.",
+    "inference_params": {
+        "temperature": 0.7,
+        "top_p": 1.0,
+        "min_p": 0.05,
+        "top_k": 40,
+        "repeat_penalty": 1.1,
+        "max_tokens": 0
+    },
+    "allowed_tools": [
+        "query_knowledge_base",
+        "simple_web_search"
+    ],
+    "allowed_subagents": [],
+    "stop_strings": [],
+    "max_sequential_tool_calls": 12,
+    "compress_context_after": 15,
+    "show_tool_calls": true,
+    "system_prompt_file": "tron_mk3.md",
+    "deepagents": {
+        "root_dir": "/home/leo/.pyvirtenvs/new_reactor",
+        "enabled_tools": [
+            "append_to_note",
+            "clear_scratchpad",
+            "get_long_term_memory",
+            "list_memory_namespaces",
+            "list_notes",
+            "read_note",
+            "search_vault",
+            "store_long_term_memory",
+            "write_note",
+            "write_to_scratchpad"
+        ],
+        "enabled_subagents": [],
+        "use_project_deepagents": true,
+        "semantic_agent": "Tron"
+    }
+}

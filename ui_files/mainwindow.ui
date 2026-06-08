@@ -244,7 +244,7 @@ color: black;
                   <string notr="true">color: rgb(51, 51, 51);</string>
                  </property>
                  <property name="text">
-                  <string>Model:</string>
+                  <string>Main Agent:</string>
                  </property>
                 </widget>
                </item>
@@ -254,7 +254,7 @@ color: black;
                   <number>4</number>
                  </property>
                  <item>
-                  <widget class="QComboBox" name="model_combo">
+                  <widget class="QComboBox" name="agent_combo">
                    <property name="styleSheet">
                     <string notr="true">selection-background-color: #be8fd3;
 background-color: rgb(221, 221, 221);
@@ -268,290 +268,18 @@ background-color: rgb(221, 221, 221);
                    </property>
                   </widget>
                  </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_6">
-                   <item>
-                    <widget class="QPushButton" name="pushButtonModelsFromConfig">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>8</pointsize>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: #ef8bce; 
-color: black;
-</string>
-                     </property>
-                     <property name="text">
-                      <string>from config</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButtonModelsFromServer">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>8</pointsize>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: #54d88c; 
-color: black;
-</string>
-                     </property>
-                     <property name="text">
-                      <string>server side</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButtonModelsLoaded">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>8</pointsize>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: #ad6dc8; 
-color: black;</string>
-                     </property>
-                     <property name="text">
-                      <string>loaded</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
                 </layout>
                </item>
                <item>
-                <widget class="QLabel" name="label_gen_params">
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
+                <widget class="QPushButton" name="pushButtonManageAgents">
                  <property name="styleSheet">
-                  <string notr="true">color: rgb(51, 51, 51);</string>
+                  <string notr="true">background-color: #54d88c; 
+color: black;</string>
                  </property>
                  <property name="text">
-                  <string>
-Inference Parameters:</string>
+                  <string>manage agents</string>
                  </property>
                 </widget>
-               </item>
-               <item>
-                <widget class="Line" name="line">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_12">
-                 <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_4">
-                   <item>
-                    <widget class="QLabel" name="temp_label">
-                     <property name="text">
-                      <string>Temperature: 0.70</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="top_p_label">
-                     <property name="text">
-                      <string>Top P: 1.00</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="min_p_label">
-                     <property name="text">
-                      <string>Min P: 0.05</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="top_k_label">
-                     <property name="text">
-                      <string>Top K: 40</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="repeat_penalty_label">
-                     <property name="text">
-                      <string>Repeat Penalty: 1.10</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="max_output_label">
-                     <property name="text">
-                      <string>Max Output Tokens:</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_9">
-                   <item>
-                    <widget class="QSlider" name="temp_slider">
-                     <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
-                     </property>
-                     <property name="maximum">
-                      <number>200</number>
-                     </property>
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSlider" name="top_p_slider">
-                     <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
-                     </property>
-                     <property name="maximum">
-                      <number>100</number>
-                     </property>
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSlider" name="min_p_slider">
-                     <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
-                     </property>
-                     <property name="maximum">
-                      <number>100</number>
-                     </property>
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSlider" name="top_k_slider">
-                     <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
-                     </property>
-                     <property name="minimum">
-                      <number>1</number>
-                     </property>
-                     <property name="maximum">
-                      <number>100</number>
-                     </property>
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSlider" name="repeat_penalty_slider">
-                     <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
-                     </property>
-                     <property name="minimum">
-                      <number>100</number>
-                     </property>
-                     <property name="maximum">
-                      <number>200</number>
-                     </property>
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSlider" name="max_output_horizontalSlider">
-                     <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
-                     </property>
-                     <property name="maximum">
-                      <number>30000</number>
-                     </property>
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <spacer name="spacerItem">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                </spacer>
                </item>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -568,66 +296,17 @@ Inference Parameters:</string>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
-                     <property name="text">
-                      <string>Preset:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButtonInferrancePresetDelete">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>20</height>
-                      </size>
-                     </property>
                      <property name="font">
                       <font>
-                       <pointsize>8</pointsize>
+                       <weight>75</weight>
+                       <bold>true</bold>
                       </font>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: #ef8bce; 
-color: black;
-</string>
+                      <string notr="true">color: rgb(51, 51, 51);</string>
                      </property>
                      <property name="text">
-                      <string>delete</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButtonInferrancePresetSave">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>8</pointsize>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: #54d88c; 
-color: black;
-</string>
-                     </property>
-                     <property name="text">
-                      <string>save</string>
+                      <string>Inferance Preset:</string>
                      </property>
                     </widget>
                    </item>
@@ -652,143 +331,20 @@ background-color: rgb(221, 221, 221);
                    </item>
                   </layout>
                  </item>
-                </layout>
-               </item>
-              </layout>
-             </widget>
-             <widget class="QWidget" name="tab_prompts">
-              <attribute name="title">
-               <string>Prompts</string>
-              </attribute>
-              <layout class="QVBoxLayout" name="verticalLayout_prompts">
-               <item>
-                <widget class="QLabel" name="label_prompt">
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">color: rgb(51, 51, 51);</string>
-                 </property>
-                 <property name="text">
-                  <string>System Prompt (.md):</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QVBoxLayout" name="verticalLayout_6">
-                 <property name="spacing">
-                  <number>3</number>
-                 </property>
                  <item>
-                  <widget class="QComboBox" name="prompt_combo">
-                   <property name="styleSheet">
-                    <string notr="true">selection-background-color: #be8fd3;
-background-color: rgb(221, 221, 221);
-</string>
+                  <spacer name="spacerItem">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
                    </property>
-                   <property name="editable">
-                    <bool>false</bool>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
                    </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_7">
-                   <item>
-                    <widget class="QPushButton" name="save_prompt_btn">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>8</pointsize>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: #54d88c; 
-color: black;
-</string>
-                     </property>
-                     <property name="text">
-                      <string>Save</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="new_btn">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>8</pointsize>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: #ad6dc8; 
-color: black;</string>
-                     </property>
-                     <property name="text">
-                      <string>New</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="refresh_prompts_btn">
-                     <property name="minimumSize">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: #ef8bce; 
-color: black;
-</string>
-                     </property>
-                     <property name="text">
-                      <string>↻</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
+                  </spacer>
                  </item>
                 </layout>
-               </item>
-               <item>
-                <widget class="QTextEdit" name="sys_prompt_box">
-                 <property name="styleSheet">
-                  <string notr="true">background-color: #ffffff;
-alternate-background-color: #ffffff;
-selection-background-color: #b88bcc;</string>
-                 </property>
-                </widget>
                </item>
               </layout>
              </widget>
@@ -809,7 +365,7 @@ selection-background-color: #b88bcc;</string>
                   <string notr="true">color: rgb(51, 51, 51);</string>
                  </property>
                  <property name="text">
-                  <string>RAG Model:</string>
+                  <string>RAG Agent:</string>
                  </property>
                 </widget>
                </item>
@@ -1063,92 +619,6 @@ color: black;
                </item>
               </layout>
              </widget>
-             <widget class="QWidget" name="tab_providers">
-              <attribute name="title">
-               <string>Providers</string>
-              </attribute>
-              <layout class="QVBoxLayout" name="verticalLayout_providers">
-               <item>
-                <widget class="QLabel" name="label_api_base">
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">color: rgb(51, 51, 51);</string>
-                 </property>
-                 <property name="text">
-                  <string>API Base URL:</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="api_base_combo">
-                 <property name="styleSheet">
-                  <string notr="true">selection-background-color: #be8fd3;
-background-color: rgb(221, 221, 221);
-</string>
-                 </property>
-                 <property name="editable">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_api_key">
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">color: rgb(51, 51, 51);</string>
-                 </property>
-                 <property name="text">
-                  <string>API Key (Leave 'ollama' for local):</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLineEdit" name="api_key_input">
-                 <property name="styleSheet">
-                  <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;</string>
-                 </property>
-                 <property name="echoMode">
-                  <enum>QLineEdit::Password</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="apply_provider_btn">
-                 <property name="styleSheet">
-                  <string notr="true">background-color: #54d88c; 
-color: black;</string>
-                 </property>
-                 <property name="text">
-                  <string>Apply + Reconnect</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="spacerItem4">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </widget>
             </widget>
            </item>
            <item>
@@ -1273,28 +743,66 @@ color: black;
          </attribute>
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="0">
-           <widget class="QWebEngineView" name="phoenix_view" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <layout class="QVBoxLayout" name="verticalLayout_10">
+            <property name="spacing">
+             <number>6</number>
             </property>
-            <property name="minimumSize">
-             <size>
-              <width>400</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">selection-background-color: #be8fd3;</string>
-            </property>
-            <property name="url" stdset="0">
-             <url>
-              <string>about:blank</string>
-             </url>
-            </property>
-           </widget>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_14">
+              <item>
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonStartPhoenix">
+                <property name="text">
+                 <string>start</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonStopPhoenix">
+                <property name="text">
+                 <string>stop</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QWebEngineView" name="phoenix_view" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>400</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">selection-background-color: #be8fd3;</string>
+              </property>
+              <property name="url" stdset="0">
+               <url>
+                <string>about:blank</string>
+               </url>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>

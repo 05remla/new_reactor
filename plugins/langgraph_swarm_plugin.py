@@ -277,7 +277,7 @@ class LGLibSwarmThread(QThread):
             
             app = workflow.compile()
             
-            self.status_update.emit(f"🤖 langgraph-swarm library:\\n({model_name})<br>", True)
+            self.status_update.emit(f"🤖 langgraph-swarm library:   \n({model_name})<br>", True)
             
             for s in app.stream({"messages": self.lc_messages}, {"recursion_limit": 50}):
                 if self.cancel_flag: break

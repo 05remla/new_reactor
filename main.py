@@ -47,7 +47,7 @@ QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 
 # Optimizations
 sys.argv.append("--disable-gpu")
-sys.argv.append("--disable-software-rasterizer") 
+sys.argv.append("--disable-software-rasterizer")
 sys.argv.append("--limit-fps=30")
 
 # from PyQt5.QtWebEngineWidgets import QWebEngineSettings
@@ -63,7 +63,7 @@ from settings import Ui_SettingsWindow
 from subwindow import Ui_AddDataWindow
 
 
-from mainwindow_app import MstyCloneApp
+from mainwindow import MstyCloneApp
 
 if __name__ == "__main__":
     import argparse

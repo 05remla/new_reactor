@@ -295,7 +295,7 @@ class LGLibGraphThread(QThread):
             
             app = workflow.compile()
             
-            self.status_update.emit(f"🤖 langgraph-supervisor library:\\n({model_name})<br>", True)
+            self.status_update.emit(f"🤖 langgraph-supervisor library:   \n({model_name})<br>", True)
             
             for s in app.stream({"messages": self.lc_messages}, {"recursion_limit": 20}):
                 if self.cancel_flag: break

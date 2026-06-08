@@ -46,7 +46,7 @@ class ConfigManager:
             "da_root_dir": f"{self.app_dir}/workspace",
             "da_backend": "FilesystemBackend",
             "da_virtual": True,
-            "da_enabled_tools": ["query_knowledge_base", "simple_web_search", "bulk_web_search", "simple_web_scraper", "context7", "analyze_journal_logs"],
+            "da_enabled_tools": ["query_knowledge_base", "simple_web_search", "bulk_web_search", "simple_web_scraper", "interactive_web_search", "scrape_indexed_urls", "context7", "analyze_journal_logs"],
             "da_enabled_subagents": [],
             "lmstudio_url": "http://localhost:1234", "lms_model": "",
             "saved_lmstudio_urls": ["http://localhost:1234"],
@@ -58,7 +58,9 @@ class ConfigManager:
             "stop_strings": [],
             "file_manager_cmd": "/usr/bin/pcmanfm-qt",
             "editor_cmd": "/usr/bin/micro",
-            "system_prompt": "You are a brilliant, analytical Unix CLI agent. Obey the user's prompt. Use tools if necessary."
+            "system_prompt": "You are a brilliant, analytical Unix CLI agent. Obey the user's prompt. Use tools if necessary.",
+            "default_chat_agent": "Tron",
+            "embedding_agent": ""
         }
         self.load_config()
         self.initialized = True
@@ -106,3 +108,33 @@ class ConfigManager:
                 json.dump(self.config, f, indent=4)
         except Exception as e:
             print(f"Error saving config: {e}")
+
+    def get_agents_dir(self):
+        agents_dir = os.path.join(self.app_dir, "agents")
+        os.makedirs(agents_dir, exist_ok=True)
+        return agents_dir
+
+    def list_agents(self):
+        agents_dir = self.get_agents_dir()
+        agents = []
+        for file in os.listdir(agents_dir):
+            if file.endswith(".json"):
+                agents.append(file[:-5])
+        return agents
+
+    def get_agent_config(self, agent_name):
+        file_path = os.path.join(self.get_agents_dir(), f"{agent_name}.json")
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return None
+
+    def save_agent_config(self, agent_name, agent_config):
+        file_path = os.path.join(self.get_agents_dir(), f"{agent_name}.json")
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(agent_config, f, indent=4)
+
+    def delete_agent(self, agent_name):
+        file_path = os.path.join(self.get_agents_dir(), f"{agent_name}.json")
+        if os.path.exists(file_path):
+            os.remove(file_path)

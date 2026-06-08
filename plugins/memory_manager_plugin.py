@@ -230,7 +230,7 @@ def enable_cli_plugin(repl_app):
             return True 
         
         repl_app._is_managing_memory = True
-        repl_app.write_to_chat("\n[Memory Manager active: Analyzing recent dialogue for key information...]\n")
+        repl_app.write_to_chat("   \n[Memory Manager active: Analyzing recent dialogue for key information...]   \n")
         
         prompt = repl_app.config.get("memory_manager_prompt", DEFAULT_MEMORY_PROMPT)
         repl_app.prompt = prompt

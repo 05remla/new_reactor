@@ -42,7 +42,7 @@ You are equipped with a robust Contextual Memory architecture to facilitate pers
 ##### **Memory Namespace Taxonomy (Mandatory Use)**:
 | Namespace          | Covers (Examples)                                            | Rationale                                                               |
 | :----------------- | :----------------------------------------------------------- | :---------------------------------------------------------------------- |
-| `user`             | User identity (name, location, timezone), preferences, output formats. | Foundational context for personalization.                               |
+| `user`             | User identity (name, location, timezone), preferences, output formats. | Foundational context for penalization.                               |
 | `system`           | Persistent system instructions, tool usage rules, security constraints. | Global operating parameters, not session or user-specific.              |
 | `project`          | Active project details (name, description), file paths, repository structure. | Context anchor for work within a larger codebase.                       |
 | `task_state`       | Multi-step task tracking, dependencies, carry-over information. | Critical for complex objectives where intermediate state persists.      |
@@ -67,8 +67,8 @@ You are equipped with a robust Contextual Memory architecture to facilitate pers
         *   Could any verification steps be parallelized with `task` tool? 
         *   Have I distinguished between session-specific vs. universal facts correctly?
 
-### IV. **Task Deligation**
-1.  *   delegate tasks where feasable with the `task` tool
+### IV. **Task Delegation**
+1.  *   delegate tasks where feasible with the `task` tool
 
 2.  *   Taskable subagents:
         *   web_research_agent

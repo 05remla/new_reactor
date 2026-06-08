@@ -133,7 +133,7 @@ def build_lcel_fetcher(mw):
         if hasattr(mw, 'lightrag_widget') and not mw.lightrag_widget.enable_checkbox.isChecked():
             return ""
             
-        status_update_signal.emit(f"[🔍 Fetching context...]\n", False)
+        status_update_signal.emit(f"[🔍 Fetching context...]   \n", False)
         try:
             url = f"{mw.config.get('lightrag_url', '').rstrip('/')}/query"
             mode = "hybrid"
@@ -156,10 +156,10 @@ def build_lcel_fetcher(mw):
             resp = requests.post(url, json=payload, headers=headers, timeout=45)
             resp.raise_for_status()
             d = resp.json()
-            status_update_signal.emit("[✅ Knowledge retrieved and injected]\n\n", False)
+            status_update_signal.emit("[✅ Knowledge retrieved and injected]   \n   \n", False)
             return d.get("response", d.get("context", str(d))) if isinstance(d, dict) else str(d)
         except Exception as e:
-            status_update_signal.emit(f"[❌ LightRAG LCEL Error: {str(e)}]\n\n", False)
+            status_update_signal.emit(f"[❌ LightRAG LCEL Error: {str(e)}]   \n   \n", False)
             return ""
             
     return fetcher

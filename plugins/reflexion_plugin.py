@@ -246,7 +246,7 @@ def enable_cli_plugin(repl_app):
             return True 
         
         repl_app._is_reflecting = True
-        repl_app.write_to_chat("\n[Reflexion active: Analyzing recent actions...]\n")
+        repl_app.write_to_chat("   \n[Reflexion active: Analyzing recent actions...]   \n")
         
         reflexion_prompt = repl_app.config.get("reflexion_prompt", DEFAULT_REFLEXION_PROMPT)
         repl_app.prompt = reflexion_prompt

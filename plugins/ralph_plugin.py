@@ -145,10 +145,10 @@ def enable_cli_plugin(repl_app):
         if repl_app.generation_thread and getattr(repl_app.generation_thread, 'cancel_flag', False):
             return
         if "TASK_COMPLETE" in full_response.upper():
-            repl_app.write_to_chat("\n[Ralph Loop: 'TASK_COMPLETE' detected. Autonomous loop halted.]\n")
+            repl_app.write_to_chat("   \n[Ralph Loop: 'TASK_COMPLETE' detected. Autonomous loop halted.]   \n")
             return
             
-        repl_app.write_to_chat("\n[Ralph Loop active: Initiating next autonomous step...]\n")
+        repl_app.write_to_chat("   \n[Ralph Loop active: Initiating next autonomous step...]   \n")
         
         ralph_prompt = (
             "[Ralph Loop Auto-Prompt]: Continue reasoning. Reflect on your last output "

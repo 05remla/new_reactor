@@ -1,0 +1,40 @@
+{
+    "model_name": "qwopus3.5-4b-v3-mtp@q8_0",
+    "system_prompt_file": "Omni_mk2.md",
+    "provider_url": "http://localhost:8081/v1",
+    "inference_params": {
+        "temperature": 0.05,
+        "top_p": 0.95,
+        "min_p": 0.05,
+        "top_k": 5,
+        "repeat_penalty": 1.12,
+        "max_tokens": 0
+    },
+    "deepagents": {
+        "root_dir": "/home/leo/.pyvirtenvs/new_reactor",
+        "enabled_tools": [
+            "analyze_journal_logs",
+            "append_to_note",
+            "clear_scratchpad",
+            "file_contents_search",
+            "get_long_term_memory",
+            "interactive_web_search",
+            "list_memory_namespaces",
+            "list_notes",
+            "py_syntax_checker",
+            "read_note",
+            "scrape_indexed_urls",
+            "search_vault",
+            "store_long_term_memory",
+            "write_note",
+            "write_to_scratchpad"
+        ],
+        "enabled_subagents": [
+            "Archivist"
+        ],
+        "use_project_deepagents": true,
+        "backend": "FilesystemBackend",
+        "virtual": true,
+        "semantic_agent": "Tron"
+    }
+}

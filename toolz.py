@@ -10,6 +10,82 @@
      [ ] processes
      [ ] firewalls
 '''
+# Temporary cache for interactive web searching
+LAST_SEARCH_RESULTS = []
+
+def interactive_web_search(query: str, max_results: int = 10):
+    '''
+        DESCRIPTION:
+            Search the web and return a numbered list of results.
+            The results are cached internally. You MUST follow up by
+            calling `scrape_indexed_urls` with the indices of the pages
+            you want to read.
+
+        ARGS:
+            1. query: str = "your search query"
+            2. max_results: int = 10
+
+        RETURNS:
+            A string listing the enumerated search results and instructions on how to read them.
+    '''
+    import json
+    global LAST_SEARCH_RESULTS
+    try:
+        from ddgs import DDGS
+        results = list(DDGS().text(query, safesearch="off", max_results=max_results))
+        LAST_SEARCH_RESULTS = [res.get('href', '') for res in results if res.get('href')]
+        
+        output = f"Search Results for '{query}':\n\n"
+        for i, res in enumerate(results):
+            output += f"[{i}] {res.get('title', 'No Title')} - {res.get('href', '')}\n"
+            output += f"    {res.get('body', '')}\n\n"
+            
+        output += "SYSTEM INSTRUCTION: To read the full content of any of these pages, you MUST now call the `scrape_indexed_urls` tool and provide a list of index numbers (e.g., [0, 1])."
+        return output
+    except Exception as e:
+        return f"Error executing web search: {str(e)}"
+
+def scrape_indexed_urls(indices: list):
+    '''
+        DESCRIPTION:
+            Takes a list of integer indices (e.g. [0, 2]) corresponding to the results
+            from your last `interactive_web_search` call. It scrapes the HTML of those
+            URLs and returns the text data.
+
+        ARGS:
+            1. indices: list = [0, 1]
+
+        RETURNS:
+            A string containing the combined scraped data for all requested indices.
+    '''
+    import json
+    global LAST_SEARCH_RESULTS
+    
+    if not LAST_SEARCH_RESULTS:
+        return "Error: No search results found in cache. You must run `interactive_web_search` first."
+        
+    output_data = {}
+    for idx in indices:
+        try:
+            idx = int(idx)
+            if 0 <= idx < len(LAST_SEARCH_RESULTS):
+                url = LAST_SEARCH_RESULTS[idx]
+                if 'youtube.com' in url:
+                    output_data[url] = "Skipped YouTube URL (cannot be text-scraped effectively)."
+                    continue
+                scraped = simple_web_scraper(url, max_data=5000)
+                try:
+                    scraped_dict = json.loads(scraped)
+                    output_data[f"[{idx}] {url}"] = scraped_dict.get('html', 'No content retrieved.')
+                except Exception:
+                    output_data[f"[{idx}] {url}"] = scraped
+            else:
+                output_data[f"[{idx}]"] = "Error: Index out of bounds."
+        except Exception as e:
+            output_data[str(idx)] = f"Error processing index: {str(e)}"
+            
+    return json.dumps(output_data, indent=2, ensure_ascii=False)
+
 def file_contents_search(file: str = '/example/file.txt',
                      query: str = 'query here'):
     '''
@@ -269,29 +345,8 @@ def clear_scratchpad():
 
 
 def _load_active_config():
-    import os
-    import json
-    app_dir = os.path.dirname(os.path.realpath(__file__))
-    
-    # Check for environmental custom config path
-    env_cfg = os.environ.get("NEW_REACTOR_CONFIG_PATH")
-    if env_cfg and os.path.exists(env_cfg):
-        try:
-            with open(env_cfg, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except:
-            pass
-            
-    # Fallback to defaults
-    for filename in ["config.json", "repl_config.json"]:
-        path = os.path.join(app_dir, filename)
-        if os.path.exists(path):
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except:
-                pass
-    return {}
+    from config_manager import ConfigManager
+    return ConfigManager().config
 
 
 def store_long_term_memory(namespace: str = "user", key: str = "theme", value: str = "dark"):
@@ -503,15 +558,8 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs
     err_console.print(f"[dim magenta]Sub-agent chunking logs: {len(lines)} lines split into {total_chunks} chunks.[/dim magenta]")
     
     # Load config to initialize LLM
-    app_dir = os.path.dirname(os.path.realpath(__file__))
-    config_file = os.path.join(app_dir, "repl_config.json")
-    config = {}
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, "r", encoding="utf-8") as f:
-                config.update(json.load(f))
-        except:
-            pass
+    from config_manager import ConfigManager
+    config = ConfigManager().config
             
     api_key = config.get("api_key") or os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
@@ -581,3 +629,80 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs
         
     err_console.print(f"[dim green]Sub-agent finished analyzing {total_chunks} chunks.[/dim green]")
     return "\\n\\n".join(summaries)
+
+
+# ==========================================
+# OBSIDIAN-STYLE MEMORY VAULT TOOLS
+# ==========================================
+
+def _ensure_memory_tree_path():
+    import sys
+    import os
+    memory_tree_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "memory-tree")
+    if memory_tree_path not in sys.path:
+        sys.path.append(memory_tree_path)
+
+def read_note(title: str = "example"):
+    '''
+        DESCRIPTION:
+             Reads the content of a specific note from the memory vault. Use this to retrieve full details of a topic.
+        ARGS:
+            1. title: str = "User_Preferences"
+        RETURNS:
+             The markdown content of the note.
+    '''
+    _ensure_memory_tree_path()
+    from memory_tree.tools import read_note as _read_note
+    return _read_note.invoke({"title": title})
+
+def write_note(title: str = "example", content: str = "Content goes here"):
+    '''
+        DESCRIPTION:
+             Creates a new note or overwrites an existing note in the memory vault.
+        ARGS:
+            1. title: str = "Project_Alpha"
+            2. content: str = "# Project Alpha\\nDetails..."
+        RETURNS:
+             Status string.
+    '''
+    _ensure_memory_tree_path()
+    from memory_tree.tools import write_note as _write_note
+    return _write_note.invoke({"title": title, "content": content})
+
+def append_to_note(title: str = "example", content: str = "Appended details"):
+    '''
+        DESCRIPTION:
+             Appends new content to the end of an existing note. If the note doesn't exist, it will be created.
+        ARGS:
+            1. title: str = "Project_Alpha"
+            2. content: str = "Additional details..."
+        RETURNS:
+             Status string.
+    '''
+    _ensure_memory_tree_path()
+    from memory_tree.tools import append_to_note as _append_to_note
+    return _append_to_note.invoke({"title": title, "content": content})
+
+def search_vault(query: str = "keyword"):
+    '''
+        DESCRIPTION:
+             Searches across all notes in the vault for the given query and returns snippets of matching notes.
+        ARGS:
+            1. query: str = "python"
+        RETURNS:
+             A string containing matched snippets.
+    '''
+    _ensure_memory_tree_path()
+    from memory_tree.tools import search_vault as _search_vault
+    return _search_vault.invoke({"query": query})
+
+def list_notes():
+    '''
+        DESCRIPTION:
+             Returns a list of all existing notes in the memory vault.
+        RETURNS:
+             A string listing note titles.
+    '''
+    _ensure_memory_tree_path()
+    from memory_tree.tools import list_notes as _list_notes
+    return _list_notes.invoke({})

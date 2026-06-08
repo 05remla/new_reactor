@@ -1,0 +1,32 @@
+{
+    "model_name": "qwopus3.5-4b-v3-mtp@q8_0",
+    "system_prompt_file": "research_agent_Zed.md",
+    "provider_url": "http://100.115.235.43:8081/v1",
+    "inference_params": {
+        "temperature": 0.05,
+        "top_p": 0.95,
+        "min_p": 0.05,
+        "top_k": 5,
+        "repeat_penalty": 1.12,
+        "max_tokens": 0
+    },
+    "deepagents": {
+        "use_project_deepagents": true,
+        "enabled_tools": [
+            "append_to_note",
+            "clear_scratchpad",
+            "interactive_web_search",
+            "list_notes",
+            "read_note",
+            "scrape_indexed_urls",
+            "search_vault",
+            "write_note",
+            "write_to_scratchpad"
+        ],
+        "enabled_subagents": [],
+        "inject_subagents_to_prompt": false,
+        "semantic_agent": "Tron"
+    },
+    "enable_max_tool_calls": true,
+    "max_sequential_tool_calls": 50
+}

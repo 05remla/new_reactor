@@ -4,6 +4,15 @@ import sqlite3
 import numpy as np
 import datetime
 import sys
+import warnings
+
+warnings.warn(
+    "semantic_memory.py is deprecated and will be removed in a future release. "
+    "Please use the Obsidian-style Memory Tree (memory-tree/memory_tree/tools.py) instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
+print("[WARNING] semantic_memory.py is deprecated. Use the new Memory Vault tools instead.", file=sys.stderr)
 
 def get_db_path():
     workspace = os.environ.get("DEEP_AGENTS_WORKING_DIR")

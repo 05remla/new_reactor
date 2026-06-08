@@ -75,6 +75,8 @@ class ReplApp:
                                 self.history.append(HumanMessage(content=content))
                             elif role in ["assistant", "ai"]:
                                 self.history.append(AIMessage(content=content))
+                            elif role == "system":
+                                self.history.append(SystemMessage(content=content))
                     
                     # Merge consecutive messages of the same type/role
                     cleaned_history = []
@@ -168,7 +170,7 @@ class ReplApp:
         err_console.print("[bold green]--- Launching Settings GUI ---[/bold green]")
         try:
             from PyQt5.QtWidgets import QApplication
-            from settings_dialog import SettingsDialog
+            from settings import SettingsDialog
         except ImportError as e:
             err_console.print(f"[bold red]Error: PyQt5 is required for the GUI config. {e}[/bold red]")
             sys.exit(1)
@@ -182,297 +184,49 @@ class ReplApp:
         dialog.show()
         app.exec_()
 
-    def setup_agent(self):
+    def setup_agent(self, initial_prompt=None):
+        agent_name = self.config.get("default_chat_agent", "Tron")
+        agent_cfg = self.config_manager.get_agent_config(agent_name)
         model_name = self.config.get("model", "gpt-4o")
-
-        if "gemini" in model_name.lower():
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            
-            api_key = self.config.get("google_api_key") or os.environ.get("GOOGLE_API_KEY", "")
-            if not api_key:
-                err_console.print("[bold red]Error: GOOGLE_API_KEY is not set.[/bold red]")
-                sys.exit(1)
-                
-            llm = ChatGoogleGenerativeAI(
-                model=model_name,
-                google_api_key=api_key,
-                temperature=self.config.get("temperature", 0.7),
-                top_p=self.config.get("top_p", 1.0),
-                top_k=self.config.get("top_k", 40),
-                streaming=True,
-            )
-        else:
-            api_key = self.config.get("api_key") or os.environ.get("OPENAI_API_KEY", "")
-            if not api_key:
-                err_console.print("[bold red]Error: API key is not set.[/bold red]")
-                sys.exit(1)
-
-            llm_kwargs = {
-                "model": model_name,
-                "base_url": self.config.get("api_base", "https://api.openai.com/v1"),
-                "api_key": api_key,
-                "temperature": self.config.get("temperature", 0.7),
-                "top_p": self.config.get("top_p", 1.0),
-                "extra_body": {
-                    "top_k": self.config.get("top_k", 40),
-                    "min_p": self.config.get("min_p", 0.05),
-                    "repeat_penalty": self.config.get("repeat_penalty", 1.1)
-                },
-                "streaming": True,
-                "max_retries": 0,
-            }
-            if self.config.get("max_tokens", 0) > 0:
-                llm_kwargs["max_tokens"] = self.config.get("max_tokens")
-                
-            llm = ChatOpenAI(**llm_kwargs)
-
-        def wrap_llm_to_clean_null_messages(model_inst):
-            orig_invoke = model_inst.invoke
-            orig_stream = model_inst.stream
-
-            def clean_msgs(input_val):
-                is_prompt_val = False
-                if hasattr(input_val, "to_messages"):
-                    messages = input_val.to_messages()
-                    is_prompt_val = True
-                elif hasattr(input_val, "messages") and isinstance(input_val.messages, list):
-                    messages = input_val.messages
-                    is_prompt_val = True
-                elif isinstance(input_val, list):
-                    messages = input_val
-                else:
-                    return input_val
-
-                from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-
-                def content_to_str(c):
-                    if isinstance(c, str):
-                        return c
-                    if isinstance(c, list):
-                        parts = []
-                        for part in c:
-                            if isinstance(part, str):
-                                parts.append(part)
-                            elif isinstance(part, dict):
-                                if "text" in part:
-                                    parts.append(part["text"])
-                                else:
-                                    import json
-                                    parts.append(json.dumps(part))
-                            else:
-                                parts.append(str(part))
-                        return "".join(parts)
-                    return str(c) if c is not None else ""
-
-                # 1. Standardize all messages and format tool calls/results
-                standardized = []
-                for m in messages:
-                    m_type = getattr(m, "type", "").lower() if hasattr(m, "type") else ""
-                    class_name = type(m).__name__
-                    m_role = getattr(m, "role", "").lower() if hasattr(m, "role") else ""
-                    if isinstance(m, dict):
-                        m_type = m.get("type", "").lower() if isinstance(m.get("type"), str) else ""
-                        m_role = m.get("role", "").lower() if isinstance(m.get("role"), str) else ""
-                        content = m.get("content", "")
-                    else:
-                        content = getattr(m, "content", "")
-
-                    content_str = content_to_str(content)
-
-                    # Resolve role
-                    role = "user"
-                    if "human" in m_type or "user" in m_type or "human" in class_name or "user" in class_name or "user" in m_role:
-                        role = "user"
-                    elif "ai" in m_type or "assistant" in m_type or "ai" in class_name or "assistant" in class_name or "assistant" in m_role:
-                        role = "assistant"
-                    elif "system" in m_type or "system" in class_name or "system" in m_role:
-                        role = "system"
-                    elif "tool" in m_type or "tool" in class_name or "tool" in m_role:
-                        role = "tool"
-
-                    if role == "system":
-                        standardized.append(SystemMessage(content=content_str))
-                    elif role == "user":
-                        standardized.append(HumanMessage(content=content_str))
-                    elif role == "assistant":
-                        # Format any tool calls in content as plain text
-                        tool_calls_text = ""
-                        if self.config.get("show_tool_calls_in_chat", False):
-                            if hasattr(m, "tool_calls") and m.tool_calls:
-                                tool_calls_text = "\n".join([
-                                    f"[Tool Call: {tc.get('name')} with arguments {tc.get('args')}]"
-                                    for tc in m.tool_calls
-                                ])
-                            elif isinstance(m, dict) and m.get("tool_calls"):
-                                tool_calls_text = "\n".join([
-                                    f"[Tool Call: {tc.get('name')} with arguments {tc.get('args')}]"
-                                    for tc in m["tool_calls"]
-                                ])
-                        
-                        if tool_calls_text:
-                            if content_str:
-                                content_str = f"{content_str}\n\n{tool_calls_text}"
-                            else:
-                                content_str = tool_calls_text
-                        
-                        # Strip tool calls from attributes so API accepts it as a standard message
-                        new_msg = AIMessage(content=content_str)
-                        if hasattr(new_msg, "tool_calls"):
-                            new_msg.tool_calls = []
-                        if hasattr(new_msg, "additional_kwargs") and new_msg.additional_kwargs:
-                            if "tool_calls" in new_msg.additional_kwargs:
-                                del new_msg.additional_kwargs["tool_calls"]
-                        standardized.append(new_msg)
-                    elif role == "tool":
-                        # Format tool result as a user message
-                        tool_name = getattr(m, "name", None) or (m.get("name") if isinstance(m, dict) else None) or "tool"
-                        tool_id = getattr(m, "tool_call_id", None) or (m.get("tool_call_id") if isinstance(m, dict) else None) or ""
-                        formatted_content = f"[Tool Result for '{tool_name}' (ID: {tool_id})]:\n{content_str}"
-                        standardized.append(HumanMessage(content=formatted_content))
-                    else:
-                        standardized.append(HumanMessage(content=content_str))
-
-                # 2. Extract and merge system messages
-                system_contents = []
-                other_messages = []
-                for m in standardized:
-                    if isinstance(m, SystemMessage):
-                        if m.content:
-                            system_contents.append(m.content)
-                    else:
-                        other_messages = [msg for msg in standardized if not isinstance(msg, SystemMessage)]
-                        break
-
-                # Gather any other system messages from later parts of history
-                final_other_messages = []
-                for m in other_messages:
-                    if isinstance(m, SystemMessage):
-                        if m.content:
-                            system_contents.append(m.content)
-                    else:
-                        final_other_messages.append(m)
-
-                merged_system = None
-                if system_contents:
-                    merged_system = SystemMessage(content="\n\n".join(system_contents))
-
-                # 3. Merge consecutive same-class messages
-                merged_others = []
-                for m in final_other_messages:
-                    if not merged_others:
-                        merged_others.append(m)
-                    else:
-                        prev = merged_others[-1]
-                        if type(prev) == type(m):
-                            prev_content = prev.content or ""
-                            curr_content = m.content or ""
-                            if prev_content and curr_content:
-                                prev.content = f"{prev_content}\n\n{curr_content}"
-                            else:
-                                prev.content = prev_content or curr_content
-                        else:
-                            merged_others.append(m)
-
-                # 4. Construct the final cleaned list
-                cleaned = []
-                if merged_system:
-                    cleaned.append(merged_system)
-                cleaned.extend(merged_others)
-
-                # 5. Ensure the sequence starts with a HumanMessage after the system message
-                first_non_sys_idx = 1 if merged_system else 0
-                if len(cleaned) > first_non_sys_idx:
-                    if isinstance(cleaned[first_non_sys_idx], AIMessage):
-                        cleaned.insert(first_non_sys_idx, HumanMessage(content=""))
-
-                # Debug Flag Needed To Trigger This Block
-                ##
-                # import sys
-                # print("--- SANITIZED MESSAGES FOR LLM INVOCATION ---", file=sys.stderr)
-                # for idx, m in enumerate(cleaned):
-                #     print(f"  Final Msg {idx}: {type(m).__name__}, Content={repr(m.content)[:60]}...", file=sys.stderr)
-                # print("---------------------------------------------", file=sys.stderr)
-
-                if is_prompt_val:
-                    try:
-                        return input_val.__class__(messages=cleaned)
-                    except Exception as e:
-                        print(f"FAILED to reconstruct PromptValue: {e}", file=sys.stderr)
-                        return cleaned
-                return cleaned
-
-            def wrapped_invoke(input, config=None, **kwargs):
-                return orig_invoke(clean_msgs(input), config, **kwargs)
-
-            def wrapped_stream(input, config=None, **kwargs):
-                return orig_stream(clean_msgs(input), config, **kwargs)
-
-            object.__setattr__(model_inst, "invoke", wrapped_invoke)
-            object.__setattr__(model_inst, "stream", wrapped_stream)
-            return model_inst
-
-        llm = wrap_llm_to_clean_null_messages(llm)
-
-        funcs = dict(inspect.getmembers(toolz, inspect.isfunction))
-        tools = []
-        for tool_name in self.config.get("da_enabled_tools", []):
-            if tool_name in funcs:
-                tools.append(funcs[tool_name])
-
-        if self.config.get("use_rag", False) and "query_knowledge_base" in self.config.get("da_enabled_tools", []):
-            import requests
-            from langchain_core.tools import StructuredTool
-            def query_lightrag(query: str) -> str:
-                try:
-                    base_url = self.config.get("lightrag_url", "http://localhost:9621")
-                    if not base_url.startswith("http"):
-                        base_url = "http://" + base_url
-                    url = f"{base_url}/query"
-                    payload = {
-                        "query": query, 
-                        "mode": self.config.get("retrieval_mode", "hybrid"), 
-                        "only_need_context": True, 
-                        "model": self.config.get("rag_model", self.config.get("model", "gpt-4o"))
-                    }
-                    api_key = self.config.get("lightrag_api_key", "")
-                    headers = {"X-API-Key": api_key} if api_key else {}
-                    resp = requests.post(url, json=payload, headers=headers, timeout=45)
-                    resp.raise_for_status()
-                    d = resp.json()
-                    return d.get("response", d.get("context", str(d))) if isinstance(d, dict) else str(d)
-                except Exception as e:
-                    return f"Error retrieving context: {str(e)}"
-
-            rag_tool = StructuredTool.from_function(
-                func=query_lightrag,
-                name="query_knowledge_base",
-                description="Search the internal LightRAG knowledge base. Use this for specific factual lookup."
-            )
-            tools.append(rag_tool)
-
-        da_backend_str = self.config.get("da_backend", "FilesystemBackend")
-        da_root_dir = self.config.get("da_root_dir", f"{app_dir}/workspace")
-        os.environ["DEEP_AGENTS_WORKING_DIR"] = da_root_dir
-        da_virtual = self.config.get("da_virtual", True)
-
-        backend_class = getattr(deepagents.backends, da_backend_str, deepagents.backends.FilesystemBackend)
         
-        if da_backend_str == "LocalShellBackend":
-            backend = backend_class(root_dir=da_root_dir)
-        elif da_backend_str == "StateBackend":
-            backend = backend_class()
-        elif da_backend_str == "CompositeBackend":
-            backend = backend_class(default=deepagents.backends.FilesystemBackend(root_dir=da_root_dir, virtual_mode=da_virtual))
+        if agent_cfg:
+            actual_model = agent_cfg.get("model_name", agent_cfg.get("model", model_name))
+            inf = agent_cfg.get("inference_params", {})
+            api_base = agent_cfg.get("provider_url", agent_cfg.get("provider", {}).get("api_base", self.config.get("api_base", "")))
+            da_cfg = agent_cfg.get("deepagents", {})
+            sys_prompt_file_name = agent_cfg.get("system_prompt_file", "tron.md")
+            self.max_tools = agent_cfg.get("max_sequential_tool_calls", self.config.get("max_tool_calls", 12))
+            self.enable_max_tools = agent_cfg.get("enable_max_tool_calls", self.config.get("enable_max_tool_calls", True))
+            use_da = agent_cfg.get("use_deepagents", self.config.get("use_deepagents", False))
         else:
-            backend = backend_class(root_dir=da_root_dir, virtual_mode=da_virtual)
+            actual_model = model_name
+            inf = {}
+            api_base = self.config.get("api_base", "https://api.openai.com/v1")
+            da_cfg = {}
+            sys_prompt_file_name = self.config.get("selected_prompt", "tron.md")
+            self.max_tools = self.config.get("max_tool_calls", 12)
+            self.enable_max_tools = self.config.get("enable_max_tool_calls", True)
+            use_da = self.config.get("use_deepagents", False)
 
-        if create_deep_agent is None:
-            err_console.print("[bold red]Error: deepagents package not installed.[/bold red]")
-            sys.exit(1)
+        import core_engine
+        
+        overrides = {
+            "model": actual_model,
+            "temperature": inf.get("temperature", self.config.get("temperature", 0.7)),
+            "top_p": inf.get("top_p", self.config.get("top_p", 1.0)),
+            "top_k": inf.get("top_k", self.config.get("top_k", 40)),
+            "min_p": inf.get("min_p", self.config.get("min_p", 0.05)),
+            "repeat_penalty": inf.get("repeat_penalty", self.config.get("repeat_penalty", 1.1)),
+            "max_tokens": inf.get("max_tokens", self.config.get("max_tokens", 0))
+        }
+        
+        llm = core_engine.setup_llm(self.config, agent_cfg, overrides)
 
-        sys_prompt_file = os.path.join(f"{app_dir}/prompts", self.config.get("selected_prompt", "tron.md"))
+        tools = core_engine.get_tools(self.config, agent_cfg)
+
+        sys_prompt_file = os.path.join(f"{app_dir}/prompts", sys_prompt_file_name)
         if not os.path.isfile(sys_prompt_file):
-            print('{} not in prompts dir. Using Tron.md'.format(self.config.get("selected_prompt")))
+            print('{} not in prompts dir. Using Tron.md'.format(sys_prompt_file_name))
             sys_prompt_file = f"{app_dir}/prompts/tron.md"
             
         with open(sys_prompt_file, 'r') as promptFile:
@@ -489,32 +243,33 @@ class ReplApp:
             except Exception as e:
                 err_console.print(f"[bold yellow]Warning: Could not read scratchpad: {e}[/bold yellow]")
 
-        try:
-            from subagents import my_subagents
-            default_subagents = [s["name"] for s in my_subagents]
-        except ImportError:
-            my_subagents = []
-            default_subagents = []
+        if initial_prompt:
+            try:
+                memory_tree_path = os.path.join(app_dir, "memory-tree")
+                if memory_tree_path not in sys.path:
+                    sys.path.append(memory_tree_path)
+                from memory_tree.agent import pre_generation_retrieval
+                
+                err_console.print("[dim cyan][🧠 Searching Memory Vault...][/dim cyan]")
+                vault_context = pre_generation_retrieval(initial_prompt)
+                if vault_context and "No relevant context found" not in vault_context:
+                    sys_prompt += f"\n\n[Relevant Memory Vault Context]\n{vault_context}\n"
+                    err_console.print("[dim green][✅ Memory Vault context injected][/dim green]")
+            except Exception as e:
+                err_console.print(f"[dim red]Failed to retrieve memory vault context: {e}[/dim red]")
 
-        enabled_subagents_names = self.config.get("da_enabled_subagents", default_subagents)
-        filtered_subagents = [s for s in my_subagents if s.get("name") in enabled_subagents_names]
+        if da_cfg.get("inject_subagents_to_prompt", False):
+            all_agents = self.config_manager.list_agents()
+            subagents_info = []
+            for a in all_agents:
+                if a != actual_model:
+                    a_conf = self.config_manager.get_agent_config(a)
+                    desc = a_conf.get("description", f"AI subagent specialized as {a}.") if a_conf else f"AI subagent specialized as {a}."
+                    subagents_info.append(f"- {a}: {desc}")
+            if subagents_info:
+                sys_prompt += f"\n\n[Available Subagents]\nYou may use these agents via tool calls if enabled:\n" + "\n".join(subagents_info) + "\n"
 
-        import sqlite3
-        from langgraph.checkpoint.sqlite import SqliteSaver
-        db_path = os.path.join(app_dir, "agent_checkpoints.db")
-        conn = sqlite3.connect(db_path, check_same_thread=False)
-        checkpointer = SqliteSaver(conn)
-
-        self.agent = create_deep_agent(
-            model=llm,
-            backend=backend,
-            memory=[os.path.join(da_root_dir, "memory_store.json")],
-            system_prompt=sys_prompt,
-            tools=tools,
-            skills=[os.path.join(da_root_dir, "skills")],
-            subagents=filtered_subagents,
-            checkpointer=checkpointer
-        )
+        self.agent = core_engine.setup_deep_agent(llm, tools, sys_prompt, self.config, agent_cfg, app_dir)
 
     def execute(self, initial_prompt=None):
         self.prompt = initial_prompt
@@ -566,18 +321,19 @@ class ReplApp:
                         pass
 
                     class ToolLoopBreakerCallback(BaseCallbackHandler):
-                        def __init__(self, max_tool_calls: int = 12):
+                        def __init__(self, max_tool_calls: int = 12, enable: bool = True):
                             super().__init__()
                             self.max_tool_calls = max_tool_calls
                             self.tool_call_count = 0
+                            self.enable = enable
 
                         def on_tool_start(self, serialized: dict, input_str: str, **kwargs) -> None:
+                            if not self.enable: return
                             self.tool_call_count += 1
                             if self.tool_call_count > self.max_tool_calls:
                                 raise ToolLoopLimitException(f"\n\n[🛑 Loop Breaker Triggered]: Agent exceeded maximum allowed sequential tool calls ({self.max_tool_calls}). Halting execution.")
 
-                    max_tools = self.config.get("max_tool_calls", 12)
-                    cb = ToolLoopBreakerCallback(max_tool_calls=max_tools)
+                    cb = ToolLoopBreakerCallback(max_tool_calls=self.max_tools, enable=self.enable_max_tools)
                     config["callbacks"] = [cb]
 
                     stream = self.agent.stream(inputs, config, stream_mode="updates")
@@ -600,13 +356,34 @@ class ReplApp:
                                     if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
                                         for tc in last_msg.tool_calls:
                                             err_console.print(f"[dim magenta]🛠️ Executing: {tc['name']}('{tc.get('args', '')}')[/dim magenta]")
-                                    elif not getattr(last_msg, 'tool_calls', None):
+                                    
+                                    # Always process reasoning and content, even if there are tool calls
+                                    reasoning_val = last_msg.additional_kwargs.get("reasoning_content", "") or last_msg.additional_kwargs.get("thought", "") or last_msg.additional_kwargs.get("thinking", "")
+                                    content_val = ""
+                                    if isinstance(last_msg.content, list):
+                                        for item in last_msg.content:
+                                            if isinstance(item, dict):
+                                                if item.get("type") in ("thinking", "thought"):
+                                                    reasoning_val += item.get("thinking", item.get("thought", item.get("text", "")))
+                                                else:
+                                                    content_val += item.get("text", "")
+                                            else:
+                                                content_val += str(item)
+                                    elif not isinstance(last_msg.content, str):
+                                        content_val = str(last_msg.content) if last_msg.content else ""
+                                    else:
                                         content_val = last_msg.content
-                                        if isinstance(content_val, list):
-                                            content_val = "".join([item.get("text", "") if isinstance(item, dict) else str(item) for item in content_val])
-                                        elif not isinstance(content_val, str):
-                                            content_val = str(content_val)
-                                        self.final_answer = content_val
+                                        
+                                    if reasoning_val:
+                                        err_console.print(f"[dim cyan]Thinking:\n{reasoning_val}[/dim cyan]")
+                                        
+                                    import re
+                                    inline_thoughts = re.findall(r'<think>(.*?)</think>', content_val, flags=re.DOTALL)
+                                    for thought in inline_thoughts:
+                                        err_console.print(f"[dim cyan]Thinking:\n{thought.strip()}[/dim cyan]")
+                                        
+                                    cleaned_content = re.sub(r'<think>.*?</think>', '', content_val, flags=re.DOTALL).strip()
+                                    self.final_answer = cleaned_content
                                         
                                 elif getattr(last_msg, "type", "") == "tool":
                                     for msg in messages:
@@ -671,8 +448,35 @@ def main():
     parser.add_argument("--continue", dest="continue_session", action="store_true", help="Continue the session with a null/None prompt.")
     parser.add_argument("--init", action="store_true", help="Initialize project & config file. (e.g. eval $(python repl.py --init))")
     parser.add_argument("--tmp", action="store_true", help="Create and use a temporary timestamped session.")
+    parser.add_argument("--list-plugins", action="store_true", help="List all available plugins by name.")
     # parser.add_argument("--show-session", type="store_true", help="open session file for review.")
     args = parser.parse_args()
+
+    if args.list_plugins:
+        plugins_dir = os.path.join(app_dir, "plugins")
+        if os.path.exists(plugins_dir):
+            plugins = []
+            for f in os.listdir(plugins_dir):
+                if f.endswith("_plugin.py"):
+                    base_name = f.replace("_plugin.py", "")
+                    display_name = ""
+                    try:
+                        with open(os.path.join(plugins_dir, f), "r", encoding="utf-8") as pf:
+                            content = pf.read()
+                            import re
+                            match = re.search(r'"name"\s*:\s*"([^"]+)"', content)
+                            if match:
+                                display_name = match.group(1)
+                    except:
+                        pass
+                    
+                    if display_name:
+                        plugins.append(f"{base_name} ({display_name})")
+                    else:
+                        plugins.append(base_name)
+            for p in sorted(plugins):
+                print(p)
+        sys.exit(0)
 
     if args.init:
         import shutil
@@ -716,6 +520,8 @@ def main():
                 err_console.print(f"[bold red]Source config file '{src_path}' not found.[/bold red]")
                 sys.exit(1)
 
+        ## cfg_file :: so if --cfg-file passed with init its not hardcoded to "config.json"
+        ## $> eval $(ai+ --init --cfg-file config2.json)
         cfg_path = "$PWD/config.json"
         alias_cmd = f"alias ai++=\"'{app_dir}/bin/python' '{app_dir}/repl.py' --cfg-file '{cfg_path}'\""
         print(alias_cmd)
@@ -723,6 +529,8 @@ def main():
 
     from config_manager import ConfigManager
     config_filename = args.cfg_file
+    if config_filename != "config.json" or os.path.exists(config_filename):
+        config_filename = os.path.abspath(config_filename)
     config_manager = ConfigManager(config_filename)
     config = config_manager.config
     config_file = config_manager.config_file
@@ -732,60 +540,10 @@ def main():
     os.environ["DEEP_AGENTS_WORKING_DIR"] = da_root
     os.environ["NEW_REACTOR_CONFIG_PATH"] = config_file
 
-    def setup_phoenix_tracing(config: dict):
-        if not config.get("enable_phoenix_tracing", False):
-            return
-            
-        try:
-            err_console.print("[bold cyan][Tracing] Initializing Arize Phoenix offline tracing...[/bold cyan]", style="dim")
-            import phoenix as px
-            from openinference.instrumentation.langchain import LangChainInstrumentor
-            from opentelemetry import trace
-            from opentelemetry.sdk.trace import TracerProvider
-            from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-            
-            # Launch Phoenix local server (handles new and old versions of arize-phoenix)
-            try:
-                if hasattr(px, "launch_app"):
-                    px.launch_app(port=6006)
-                else:
-                    px.launch(port=6006)
-            except Exception as launch_err:
-                # Double-check if the port is in use (server might have started anyway, or was already running)
-                import socket
-                is_active = False
-                try:
-                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                        s.settimeout(1.0)
-                        is_active = s.connect_ex(("127.0.0.1", 6006)) == 0
-                except Exception:
-                    pass
-                if not is_active:
-                    raise launch_err
-                else:
-                    err_console.print("[dim cyan][Tracing] Phoenix server is already active or bound to port 6006.[/dim cyan]")
-            
-            # Configure OTLP Trace Exporter
-            tracer_provider = TracerProvider()
-            otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:6006/v1/traces")
-            tracer_provider.add_span_processor(SimpleSpanProcessor(otlp_exporter))
-            trace.set_tracer_provider(tracer_provider)
-            
-            # Instrument LangChain
-            LangChainInstrumentor().instrument()
-            err_console.print("[bold green][Tracing] Arize Phoenix instrumentation active. View dashboard at http://localhost:6006[/bold green]")
-        except ImportError:
-            msg = (
-                "\n[Tracing Warning] Arize Phoenix or OpenTelemetry packages are missing.\n"
-                "To resolve, run: pip install arize-phoenix openinference-instrumentation-langchain opentelemetry-sdk opentelemetry-exporter-otlp-proto-http\n"
-            )
-            err_console.print(f"[bold yellow]{msg}[/bold yellow]")
-        except Exception as e:
-            err_console.print(f"[bold red][Tracing Warning] Failed to initialize Arize Phoenix tracing: {e}[/bold red]")
+
 
     if not args.config and not args.test_config:
-        setup_phoenix_tracing(config)
+        pass
 
     if args.test_config:
         print(json.dumps(config, indent=4))
@@ -866,7 +624,7 @@ def main():
             else:
                 full_prompt = piped_data
 
-    app.setup_agent()
+    app.setup_agent(full_prompt)
     
     if args.plugins:
         load_plugins(app, args.plugins.split(","))
@@ -876,6 +634,13 @@ def main():
         
         # 6. Print the final answer strictly to STDOUT so it can be piped.
         print(final_answer)
+        
+        # Wait for any background threads spawned by plugins (e.g. Memory Archivist)
+        if hasattr(app, "background_threads"):
+            for t in app.background_threads:
+                if t.is_alive():
+                    t.join()
+                    
     except KeyboardInterrupt:
         err_console.print("\n[bold yellow]Process interrupted by user (Ctrl+C). Exiting...[/bold yellow]")
         sys.exit(0)

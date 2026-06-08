@@ -1,0 +1,25 @@
+{
+    "model_name": "qwopus3.5-4b-v3-mtp@q8_0",
+    "system_prompt_file": "Omni_mk2.md",
+    "provider_url": "http://localhost:8081/v1",
+    "inference_params": {
+        "temperature": 0.05,
+        "top_p": 0.95,
+        "min_p": 0.05,
+        "top_k": 5,
+        "repeat_penalty": 1.12,
+        "max_tokens": 0
+    },
+    "enable_max_tool_calls": true,
+    "max_sequential_tool_calls": 50,
+    "deepagents": {
+        "semantic_agent": "Tron",
+        "use_project_deepagents": true,
+        "enabled_tools": [],
+        "enabled_subagents": [
+            "Web_Seacher",
+            "Archivist"
+        ],
+        "inject_subagents_to_prompt": true
+    }
+}

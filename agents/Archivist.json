@@ -1,0 +1,29 @@
+{
+    "model_name": "qwen3.5-9b-mtp",
+    "system_prompt_file": "Sisyphus.md",
+    "provider_url": "http://100.115.235.43:8081/v1",
+    "inference_params": {
+        "temperature": 0.05,
+        "top_p": 0.95,
+        "min_p": 0.05,
+        "top_k": 5,
+        "repeat_penalty": 1.12,
+        "max_tokens": 0
+    },
+    "deepagents": {
+        "semantic_agent": "Tron",
+        "use_project_deepagents": true,
+        "enabled_tools": [
+            "append_to_note",
+            "file_contents_search",
+            "get_long_term_memory",
+            "list_memory_namespaces",
+            "list_notes",
+            "read_note",
+            "search_vault",
+            "store_long_term_memory",
+            "write_note"
+        ],
+        "enabled_subagents": []
+    }
+}

@@ -144,9 +144,9 @@ def enable_plugin(main_window):
 
         if gc.is_active and gc.agents and 0 <= gc.current_agent_index < len(gc.agents):
             agent_name = gc.agents[gc.current_agent_index]["name"]
-            if text.startswith("🤖 ") and ":\n(" in text:
+            if text.startswith("🤖 ") and ":   \n(" in text:
                 import re
-                text = re.sub(r"^🤖 .*?:\n", f"🤖 {agent_name.upper()}:\n", text)
+                text = re.sub(r"^🤖 .*?:   \n", f"🤖 {agent_name.upper()}:   \n", text)
                 
         main_window._original_write_to_chat_gc(text, is_new_message)
     main_window.write_to_chat = gc_write_to_chat
