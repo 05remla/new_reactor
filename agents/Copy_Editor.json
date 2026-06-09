@@ -1,6 +1,6 @@
 {
     "model_name": "qwopus3.5-4b-v3-mtp@q8_0",
-    "system_prompt_file": "Omni_mk2.md",
+    "system_prompt_file": "tron_mk3.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {
         "temperature": 0.05,
@@ -10,31 +10,26 @@
         "repeat_penalty": 1.12,
         "max_tokens": 0
     },
+    "enable_max_tool_calls": true,
+    "max_sequential_tool_calls": 50,
     "deepagents": {
-        "root_dir": "/home/leo/.pyvirtenvs/new_reactor",
+        "inject_subagents_to_prompt": false,
+        "semantic_agent": "Archivist",
+        "use_project_deepagents": true,
         "enabled_tools": [
-            "analyze_journal_logs",
             "append_to_note",
             "clear_scratchpad",
             "file_contents_search",
             "get_long_term_memory",
-            "interactive_web_search",
             "list_memory_namespaces",
             "list_notes",
-            "py_syntax_checker",
             "read_note",
-            "scrape_indexed_urls",
             "search_vault",
             "store_long_term_memory",
             "write_note",
             "write_to_scratchpad"
         ],
-        "enabled_subagents": [
-            "Archivist"
-        ],
-        "use_project_deepagents": true,
-        "backend": "FilesystemBackend",
-        "virtual": true,
-        "semantic_agent": "Tron"
-    }
+        "enabled_subagents": []
+    },
+    "description": "Report/information reviewer and editor"
 }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>593</width>
-    <height>779</height>
+    <width>585</width>
+    <height>703</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,11 +31,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonClose">
-       <property name="styleSheet">
-        <string notr="true">background-color: #ef8bce; 
-color: black;
-</string>
-       </property>
        <property name="text">
         <string>Close</string>
        </property>
@@ -684,23 +679,6 @@ alternate-background-color: rgb(207, 207, 207);</string>
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonSystemPromptOpen">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: #54d88c; 
-color: black;
-</string>
-             </property>
              <property name="text">
               <string>open</string>
              </property>
@@ -708,23 +686,6 @@ color: black;
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonSystemPromptRevert">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: #ef8bce; 
-color: black;
-</string>
-             </property>
              <property name="text">
               <string>revert</string>
              </property>
@@ -732,22 +693,6 @@ color: black;
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonSystemPromptSave">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: #ad6dc8; 
-color: black;</string>
-             </property>
              <property name="text">
               <string>save</string>
              </property>
@@ -912,22 +857,6 @@ alternate-background-color: rgb(207, 207, 207);</string>
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonProvidersRemove">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: #ad6dc8; 
-color: black;</string>
-             </property>
              <property name="text">
               <string>Remove</string>
              </property>
@@ -935,23 +864,6 @@ color: black;</string>
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonProvidersAdd">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: #54d88c; 
-color: black;
-</string>
-             </property>
              <property name="text">
               <string>Add</string>
              </property>
@@ -1148,23 +1060,6 @@ color: black;
          </property>
          <item>
           <widget class="QPushButton" name="pushButtonSynBrain">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #ef8bce; 
-color: black;
-</string>
-           </property>
            <property name="text">
             <string>synthetic brain</string>
            </property>
@@ -1172,23 +1067,6 @@ color: black;
          </item>
          <item>
           <widget class="QPushButton" name="pushButtonLTM">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #54d88c; 
-color: black;
-</string>
-           </property>
            <property name="text">
             <string>long-term mem</string>
            </property>
@@ -1196,22 +1074,6 @@ color: black;
          </item>
          <item>
           <widget class="QPushButton" name="pushButtonSTM">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #ad6dc8; 
-color: black;</string>
-           </property>
            <property name="text">
             <string>short-term mem</string>
            </property>
@@ -1524,22 +1386,6 @@ alternate-background-color: rgb(207, 207, 207);</string>
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonLightRAGRemove_2">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: #ad6dc8; 
-color: black;</string>
-             </property>
              <property name="text">
               <string>Remove</string>
              </property>
@@ -1547,23 +1393,6 @@ color: black;</string>
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonLightRAGAdd_2">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: #54d88c; 
-color: black;
-</string>
-             </property>
              <property name="text">
               <string>Add</string>
              </property>

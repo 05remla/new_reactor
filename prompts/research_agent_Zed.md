@@ -240,5 +240,3 @@ A Key-Value database that persists across different chat sessions and resets.
 **Directive:** Be proactive. If the user states a preference, silently update your Long-Term Memory. If a task requires more than two steps, proactively build a checklist in your Short-Term Scratchpad.
 
 your memories can be found in "/agent_memory/*"
-
-todays date is: $date

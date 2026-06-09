@@ -185,7 +185,7 @@ def setup_llm(config, agent_cfg=None, overrides=None):
     if overrides is None:
         overrides = {}
 
-    model_name = overrides.get("model", agent_cfg.get("model", config.get("model", "gpt-4o")))
+    model_name = overrides.get("model", agent_cfg.get("model_name", agent_cfg.get("model", config.get("model", "gpt-4o"))))
     inf = agent_cfg.get("inference_params", {})
     
     # Overrides have precedence (e.g., from generation_thread sliders)
@@ -342,11 +342,13 @@ def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."
                         with open(agent_json_path, "r", encoding="utf-8") as f:
                             a_data = json.load(f)
                         sub_tools = get_tools(config, agent_cfg=a_data)
+                        sub_llm = setup_llm(config, agent_cfg=a_data)
                         filtered_subagents.append({
                             "name": a_data.get("name", sub_name),
                             "description": a_data.get("description", f"AI subagent specialized as {sub_name}."),
                             "system_prompt": a_data.get("system_prompt", ""),
                             "tools": sub_tools,
+                            "model": sub_llm,
                         })
                     except Exception as e:
                         print(f"Failed to load subagent {sub_name} from json: {e}", file=sys.stderr)
@@ -363,7 +365,7 @@ def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."
         memory=[os.path.join(da_root_dir, "AGENTS.md"), os.path.join(da_root_dir, "memory_store.json")],
         system_prompt=sys_prompt,
         tools=tools,
-        skills=[os.path.join(da_root_dir, "skills")],
+        skills=os.path.join(da_root_dir, 'skills/'),
         subagents=filtered_subagents,
         checkpointer=checkpointer
     )

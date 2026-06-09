@@ -143,6 +143,10 @@ class AgentManagerDialog(QWidget):
             self.ui.listWidgetPrompts.itemSelectionChanged.connect(self._save_agent)
         if hasattr(self.ui, 'listWidgetProviders'):
             self.ui.listWidgetProviders.itemSelectionChanged.connect(self._save_agent)
+        if hasattr(self.ui, 'lineEditAgentDescription'):
+            self.ui.lineEditAgentDescription.textChanged.connect(self._save_agent)
+            
+        # DA backend fields
         if hasattr(self.ui, 'lineEditDARootDir'):
             self.ui.lineEditDARootDir.textChanged.connect(self._save_agent)
         if hasattr(self.ui, 'comboBoxDABackend'):
@@ -157,6 +161,20 @@ class AgentManagerDialog(QWidget):
             self.ui.pushButtonAgentsCreate.clicked.connect(self._create_agent)
             self.ui.pushButtonAgentsDelete.clicked.connect(self._delete_agent)
             self.ui.pushButtonAgentsSave.clicked.connect(self._save_agent)
+
+        if hasattr(self.ui, 'pushButtonSynBrain'):
+            self.ui.pushButtonSynBrain.clicked.connect(self._enable_synbrain_tools)
+        if hasattr(self.ui, 'pushButtonLTM'):
+            self.ui.pushButtonLTM.clicked.connect(self._enable_ltm_tools)
+        if hasattr(self.ui, 'pushButtonSTM'):
+            self.ui.pushButtonSTM.clicked.connect(self._enable_stm_tools)
+            
+        if hasattr(self.ui, 'pushButtonSynBrain1'):
+            self.ui.pushButtonSynBrain1.clicked.connect(self._enable_synbrain_tools)
+        if hasattr(self.ui, 'pushButtonLTM1'):
+            self.ui.pushButtonLTM1.clicked.connect(self._enable_ltm_tools)
+        if hasattr(self.ui, 'pushButtonSTM1'):
+            self.ui.pushButtonSTM1.clicked.connect(self._enable_stm_tools)
 
     def _on_use_project_toggled(self, checked):
         if hasattr(self.ui, 'lineEditDARootDir'):
@@ -217,6 +235,10 @@ class AgentManagerDialog(QWidget):
         # Save model
         if hasattr(self.ui, 'model_combo'):
             agent_cfg["model_name"] = self.ui.model_combo.currentText().strip()
+            
+        # Save description
+        if hasattr(self.ui, 'lineEditAgentDescription'):
+            agent_cfg["description"] = self.ui.lineEditAgentDescription.text().strip()
             
         # Save prompt
         if hasattr(self.ui, 'listWidgetPrompts'):
@@ -303,8 +325,8 @@ class AgentManagerDialog(QWidget):
 
     def _on_agent_selected(self, agent_name):
         if agent_name:
-            self.config["default_chat_agent"] = agent_name
-            self.cfg_mgr.save_config()
+            # self.config["default_chat_agent"] = agent_name
+            # self.cfg_mgr.save_config()
             self._load_agent_config(agent_name)
 
     def _load_agent_config(self, agent_name):
@@ -320,6 +342,12 @@ class AgentManagerDialog(QWidget):
                 self.ui.model_combo.addItem(agent_cfg.get("model_name", ""))
                 self.ui.model_combo.setCurrentText(agent_cfg.get("model_name", ""))
                 self.ui.model_combo.blockSignals(False)
+                
+            # Populate description
+            if hasattr(self.ui, 'lineEditAgentDescription'):
+                self.ui.lineEditAgentDescription.blockSignals(True)
+                self.ui.lineEditAgentDescription.setText(agent_cfg.get("description", ""))
+                self.ui.lineEditAgentDescription.blockSignals(False)
 
             # Prompts
             selected_prompt = agent_cfg.get("system_prompt_file", "tron.md")
@@ -672,8 +700,33 @@ class AgentManagerDialog(QWidget):
             url = item.text()
             desc = self.ui.plainTextEditProviderDescription.toPlainText()
             descs = self.config.setdefault("provider_descriptions", {})
-            descs[url] = desc
+            descs[item.text()] = desc
             self.cfg_mgr.save_config()
+
+    def _enable_synbrain_tools(self):
+        self._enable_tools(["append_to_note", "list_notes", "read_note", "write_note", "search_vault"])
+
+    def _enable_ltm_tools(self):
+        self._enable_tools(["list_memory_namespaces", "get_long_term_memory", "store_long_term_memory"])
+
+    def _enable_stm_tools(self):
+        self._enable_tools(["write_to_scratchpad", "clear_scratchpad"])
+
+    def _enable_tools(self, tool_names):
+        layout = getattr(self.ui, 'groupBox_tools', None)
+        if layout and layout.layout():
+            scroll_area = layout.layout().itemAt(0).widget()
+            if scroll_area and scroll_area.widget() and scroll_area.widget().layout():
+                scroll_layout = scroll_area.widget().layout()
+                for i in range(scroll_layout.count()):
+                    w = scroll_layout.itemAt(i).widget()
+                    from PyQt5.QtWidgets import QCheckBox
+                    if isinstance(w, QCheckBox):
+                        tool_name = w.text().split(" ")[0]
+                        if tool_name in tool_names:
+                            w.setChecked(True)
+            self._save_agent()
+
 
     def _add_provider(self):
         url, ok = QInputDialog.getText(self, "Add Provider", "Provider URL:")

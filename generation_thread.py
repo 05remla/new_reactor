@@ -67,6 +67,10 @@ class GenerationThread(QThread):
                 try:
                     with open(prompt_path, "r", encoding="utf-8") as f:
                         self.sys_prompt = f.read()
+                        
+                        import datetime
+                        self.sys_prompt += "\n\nYour training data is a checkpoint in history and time has since moved forward like time does."
+                        self.sys_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
                 except:
                     pass
 
@@ -112,7 +116,7 @@ class GenerationThread(QThread):
             except Exception as e:
                 print(f"Failed to retrieve memory vault context: {e}", file=sys.stderr)
 
-            actual_model = self.agent_cfg.get("model", self.model) if self.agent_cfg else self.model
+            actual_model = self.agent_cfg.get("model_name", self.agent_cfg.get("model", self.model)) if self.agent_cfg else self.model
 
             # Build LangChain LLM using core_engine
             overrides = {

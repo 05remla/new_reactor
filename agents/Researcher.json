@@ -1,0 +1,26 @@
+{
+    "model_name": "ibm/granite-4-h-tiny",
+    "system_prompt_file": "research_assistant.md",
+    "provider_url": "http://localhost:8081/v1",
+    "inference_params": {
+        "temperature": 0.6,
+        "top_p": 0.96,
+        "min_p": 0.05,
+        "top_k": 20,
+        "repeat_penalty": 1.14,
+        "max_tokens": 0
+    },
+    "enable_max_tool_calls": true,
+    "max_sequential_tool_calls": 50,
+    "deepagents": {
+        "inject_subagents_to_prompt": false,
+        "semantic_agent": "Archivist",
+        "use_project_deepagents": true,
+        "enabled_tools": [
+            "interactive_web_search",
+            "scrape_indexed_urls"
+        ],
+        "enabled_subagents": []
+    },
+    "description": "Web lookup and research agent"
+}

@@ -1,7 +1,7 @@
 {
-    "model_name": "qwen3.5-9b-mtp",
-    "system_prompt_file": "Sisyphus.md",
-    "provider_url": "http://100.115.235.43:8081/v1",
+    "model_name": "ibm/granite-4-h-tiny",
+    "system_prompt_file": "tron_mk3.md",
+    "provider_url": "http://localhost:8081/v1",
     "inference_params": {
         "temperature": 0.05,
         "top_p": 0.95,
@@ -11,19 +11,24 @@
         "max_tokens": 0
     },
     "deepagents": {
-        "semantic_agent": "Tron",
+        "semantic_agent": "Archivist",
         "use_project_deepagents": true,
         "enabled_tools": [
             "append_to_note",
-            "file_contents_search",
+            "clear_scratchpad",
             "get_long_term_memory",
             "list_memory_namespaces",
             "list_notes",
             "read_note",
             "search_vault",
             "store_long_term_memory",
-            "write_note"
+            "write_note",
+            "write_to_scratchpad"
         ],
-        "enabled_subagents": []
-    }
+        "enabled_subagents": [],
+        "inject_subagents_to_prompt": false
+    },
+    "enable_max_tool_calls": true,
+    "max_sequential_tool_calls": 50,
+    "description": "Memory recording/manipulating agent"
 }

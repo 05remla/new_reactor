@@ -4,9 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] - 2026-06-07
+## [Unreleased] - 2026-06-08
 
 ### Added
+- **Quick Memory Tooling Enablers**: Wired up the new `SynBrain`, `LTM`, and `STM` buttons in the Agent Manager's Deepagents tab to act as quick-enable toggles for their respective memory toolsets. Clicking them instantly checks the corresponding required tools (e.g. `append_to_note`, `store_long_term_memory`, `write_to_scratchpad`) and saves the agent configuration.
+- **Agent Descriptions**: Added a description text field to the Agent Manager UI. Agent descriptions are now saved directly into the agent configurations and automatically injected into the system prompt when subagents are enabled, providing parent agents with better context when deciding which subagent tool to call.
+
+### Fixed
+- **Generation Thread Agent Config**: Resolved an `Invalid model identifier` LangChain/Agent Generation Error (e.g. `Invalid model identifier "Researcher"`) in `generation_thread.py` when chatting directly with a subagent/orchestrator in the GUI. The thread logic now properly prioritizes extracting the `"model_name"` field from the agent configuration file before incorrectly falling back to using the agent's name as the override `model` identifier.
+
+### Changed   
+- **Subagent Custom LLMs**: Modified `core_engine.py` to route subagent creation through `setup_llm()`, injecting the instantiated connection as the `"model"` key. Subagents now inherit custom provider URLs, API keys, models, and inference parameters from their specific configurations rather than piggybacking off the parent agent's connection.   
+- **Agent Creation Skills Argument**: Modified `core_engine.py` to pass the `skills` argument as a directory string (`skills=os.path.join(da_root_dir, 'skills/')`) instead of a list of paths during agent creation.   
+
+## [Unreleased] - 2026-06-07   
+   
+### Added   
+- **Testing Suite**: Added `pytest`, `pytest-qt`, `pytest-asyncio`, and `pytest-mock` to `requirments.txt`. Created `tests/` directory with `test_mainwindow.py` and `test_repl.py`. Consolidated ad-hoc API scripts into `test_llm_integrations.py`.   
 - **Documentation**: Created `usage_examples.md` in the `/documentation` directory to provide users with step-by-step CLI usage examples, including session initialization, parameter tweaking, and plugin usage.
 - **Documentation Refactor**: Updated `project_structure.md` to include missing `agent_manager.py` and `agent_manager_ui.py` files. Padded all markdown files in `/documentation` with 3 trailing spaces per line to enforce context history formatting rules.
 - **Settings Awareness**: Populated project directory name, config file path, and session filename labels directly in the settings window for better situational awareness.

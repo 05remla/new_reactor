@@ -232,7 +232,7 @@ class ReplApp:
         with open(sys_prompt_file, 'r') as promptFile:
             sys_prompt = promptFile.read()
             
-        sys_prompt = sys_prompt.replace('$date', datetime.datetime.ctime(datetime.datetime.now()))
+        sys_prompt += f"\n\nCurrent Date and Time: {datetime.datetime.ctime(datetime.datetime.now())}"
 
         scratchpad_path = os.path.join(os.environ.get("DEEP_AGENTS_WORKING_DIR", ""), 'scratchpad.json')
         if os.path.exists(scratchpad_path):

@@ -1,6 +1,7 @@
 {
-    "model_name": "qwen3.5-9b-mtp",
-    "system_prompt_file": "tron_mk3.md",
+    "model_name": "qwen/qwen3.5-9b",
+    "description": "",
+    "system_prompt_file": "nirmata_mk3.md",
     "provider_url": "http://100.115.235.43:8081/v1",
     "inference_params": {
         "temperature": 0.05,
@@ -10,23 +11,23 @@
         "repeat_penalty": 1.12,
         "max_tokens": 0
     },
+    "enable_max_tool_calls": true,
+    "max_sequential_tool_calls": 50,
     "deepagents": {
+        "inject_subagents_to_prompt": false,
+        "semantic_agent": "Archivist",
         "use_project_deepagents": true,
         "enabled_tools": [
-            "append_to_note",
+            "analyze_journal_logs",
             "clear_scratchpad",
+            "file_contents_search",
             "interactive_web_search",
-            "list_notes",
-            "read_note",
+            "manage_memory",
             "scrape_indexed_urls",
-            "search_vault",
-            "write_note",
             "write_to_scratchpad"
         ],
-        "enabled_subagents": [],
-        "inject_subagents_to_prompt": false,
-        "semantic_agent": "Tron"
-    },
-    "enable_max_tool_calls": true,
-    "max_sequential_tool_calls": 50
+        "enabled_subagents": [
+            "Archivist"
+        ]
+    }
 }

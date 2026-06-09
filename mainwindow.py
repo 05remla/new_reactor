@@ -993,12 +993,28 @@ class MstyCloneApp(QMainWindow):
             mode 3: load agents from config
             (other modes disabled as model fetching moved to agent manager)
         '''
+        current = self.ui.agent_combo.currentText()
+        
+        self.ui.agent_combo.blockSignals(True)
         self.ui.agent_combo.clear()
 
         if mode == 3:
-            self.ui.agent_combo.addItems(self.config_manager.list_agents())
-            self.ui.agent_combo.setCurrentText(self.config.get("default_chat_agent", ""))
+            agents = self.config_manager.list_agents()
+            self.ui.agent_combo.addItems(agents)
+            
+            default_agent = self.config.get("default_chat_agent", "")
+            if current and current in agents:
+                self.ui.agent_combo.setCurrentText(current)
+            elif default_agent in agents:
+                self.ui.agent_combo.setCurrentText(default_agent)
+            elif agents:
+                self.ui.agent_combo.setCurrentText(agents[0])
         
+        self.ui.agent_combo.blockSignals(False)
+        
+        if self.ui.agent_combo.currentText() != current:
+            self._save_config()
+            
         return
                 
     # --- PROMPT MANAGEMENT ---
