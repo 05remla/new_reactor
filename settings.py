@@ -30,7 +30,23 @@ class SettingsDialog(QWidget):
 
         # --- Providers tab moved to agent manager ---
 
-        # --- LightRAG tab moved ---
+        # --- LightRAG tab ---
+        if hasattr(self.ui, 'listWidgetLightRAGURL'):
+            self.ui.listWidgetLightRAGURL.clear()
+            self.ui.listWidgetLightRAGURL.addItems(cfg.get("saved_lightrag_urls", []))
+            self._select_item(self.ui.listWidgetLightRAGURL, cfg.get("lightrag_url"))
+            
+            self.ui.comboBoxLightRAGAgent.clear()
+            self.ui.comboBoxLightRAGAgent.addItems(self.app.config_manager.list_agents())
+            self.ui.comboBoxLightRAGAgent.setCurrentText(cfg.get("lightrag_agent", ""))
+            
+            self.ui.comboBoxLightRAGEmbeddingsModel.clear()
+            self.ui.comboBoxLightRAGEmbeddingsModel.addItems(cfg.get("saved_embedding_models", ["sentence-transformers/all-MiniLM-L6-v2", "text-embedding-nomic-embed-text-v1.5"]))
+            self.ui.comboBoxLightRAGEmbeddingsModel.setCurrentText(cfg.get("lightrag_embeddings_model", ""))
+            
+            desc_map = cfg.get("lightrag_descriptions", {})
+            current_url = cfg.get("lightrag_url", "")
+            self.ui.plainTextEditLightRAGDesc.setPlainText(desc_map.get(current_url, ""))
 
         # --- LMStudio tab ---
         if hasattr(self.ui, 'listWidgetLMStudio'):
@@ -135,6 +151,8 @@ class SettingsDialog(QWidget):
             self.ui.lineEditCmdLMS.setText(cfg.get("lms_location", "/usr/bin/lms"))
         if hasattr(self.ui, 'lineEditGoogle_api_key'):
             self.ui.lineEditGoogle_api_key.setText(cfg.get("google_api_key", ""))
+        
+        self._sync_preset_combobox()
 
     def _select_item(self, list_widget, text):
         if not text:
@@ -156,7 +174,18 @@ class SettingsDialog(QWidget):
         
         # Providers moved
 
-        # LightRAG moved
+        # LightRAG
+        if hasattr(self.ui, 'listWidgetLightRAGURL'):
+            if hasattr(self.ui, 'pushButtonLightRAGAdd'):
+                self.ui.pushButtonLightRAGAdd.clicked.connect(self._add_lightrag_url)
+                self.ui.pushButtonLightRAGRemove.clicked.connect(self._remove_lightrag_url)
+            self.ui.listWidgetLightRAGURL.itemClicked.connect(self._on_lightrag_url_selected)
+            if hasattr(self.ui, 'plainTextEditLightRAGDesc'):
+                self.ui.plainTextEditLightRAGDesc.textChanged.connect(self._on_lightrag_desc_changed)
+            if hasattr(self.ui, 'comboBoxLightRAGAgent'):
+                self.ui.comboBoxLightRAGAgent.currentTextChanged.connect(self._on_lightrag_agent_changed)
+            if hasattr(self.ui, 'comboBoxLightRAGEmbeddingsModel'):
+                self.ui.comboBoxLightRAGEmbeddingsModel.currentTextChanged.connect(self._on_lightrag_embeddings_model_changed)
 
         # LMStudio
         if hasattr(self.ui, 'pushButtonLMStudioAdd'):
@@ -220,8 +249,16 @@ class SettingsDialog(QWidget):
 
     def _refresh_agents(self):
         if not hasattr(self.ui, 'listWidgetAgents'): return
+        agents = self.app.config_manager.list_agents()
         self.ui.listWidgetAgents.clear()
-        self.ui.listWidgetAgents.addItems(self.app.config_manager.list_agents())
+        self.ui.listWidgetAgents.addItems(agents)
+        if hasattr(self.ui, 'comboBoxLightRAGAgent'):
+            current_agent = self.config.get("lightrag_agent", "")
+            self.ui.comboBoxLightRAGAgent.blockSignals(True)
+            self.ui.comboBoxLightRAGAgent.clear()
+            self.ui.comboBoxLightRAGAgent.addItems(agents)
+            self.ui.comboBoxLightRAGAgent.setCurrentText(current_agent)
+            self.ui.comboBoxLightRAGAgent.blockSignals(False)
 
     def _on_agent_selected(self, item):
         self.config["default_chat_agent"] = item.text()
@@ -283,6 +320,72 @@ class SettingsDialog(QWidget):
     def _on_lmstudio_selected(self, item):
         self.config["lmstudio_url"] = item.text()
         self._push_save()
+
+    # ---------- LightRAG ----------
+    def _add_lightrag_url(self):
+        url, ok = QInputDialog.getText(self, "Add LightRAG URL", "URL:")
+        if not ok or not url.strip():
+            return
+        url = url.strip()
+        urls = self.config.setdefault("saved_lightrag_urls", [])
+        if url not in urls:
+            urls.append(url)
+            self.ui.listWidgetLightRAGURL.addItem(url)
+        self.config["lightrag_url"] = url
+        self._select_item(self.ui.listWidgetLightRAGURL, url)
+        if hasattr(self.ui, 'plainTextEditLightRAGDesc'):
+            self.ui.plainTextEditLightRAGDesc.setPlainText(self.config.get("lightrag_descriptions", {}).get(url, ""))
+        self._push_save()
+
+    def _remove_lightrag_url(self):
+        row = self.ui.listWidgetLightRAGURL.currentRow()
+        if row < 0:
+            return
+        url = self.ui.listWidgetLightRAGURL.item(row).text()
+        self.ui.listWidgetLightRAGURL.takeItem(row)
+        urls = self.config.get("saved_lightrag_urls", [])
+        if url in urls:
+            urls.remove(url)
+        
+        desc_map = self.config.get("lightrag_descriptions", {})
+        if url in desc_map:
+            del desc_map[url]
+
+        if self.config.get("lightrag_url") == url:
+            new_url = urls[0] if urls else ""
+            self.config["lightrag_url"] = new_url
+            self._select_item(self.ui.listWidgetLightRAGURL, new_url)
+            if hasattr(self.ui, 'plainTextEditLightRAGDesc'):
+                self.ui.plainTextEditLightRAGDesc.setPlainText(desc_map.get(new_url, ""))
+        self._push_save()
+
+    def _on_lightrag_url_selected(self, item):
+        url = item.text()
+        self.config["lightrag_url"] = url
+        desc_map = self.config.get("lightrag_descriptions", {})
+        if hasattr(self.ui, 'plainTextEditLightRAGDesc'):
+            self.ui.plainTextEditLightRAGDesc.blockSignals(True)
+            self.ui.plainTextEditLightRAGDesc.setPlainText(desc_map.get(url, ""))
+            self.ui.plainTextEditLightRAGDesc.blockSignals(False)
+        self._push_save()
+
+    def _on_lightrag_desc_changed(self):
+        url = self.config.get("lightrag_url")
+        if url and hasattr(self.ui, 'plainTextEditLightRAGDesc'):
+            if "lightrag_descriptions" not in self.config:
+                self.config["lightrag_descriptions"] = {}
+            self.config["lightrag_descriptions"][url] = self.ui.plainTextEditLightRAGDesc.toPlainText()
+            self._push_save()
+
+    def _on_lightrag_agent_changed(self, agent_name):
+        if agent_name:
+            self.config["lightrag_agent"] = agent_name
+            self._push_save()
+
+    def _on_lightrag_embeddings_model_changed(self, model_name):
+        if model_name:
+            self.config["lightrag_embeddings_model"] = model_name
+            self._push_save()
 
     # ---------- Sessions ----------
     def _add_session(self):
@@ -487,6 +590,7 @@ class SettingsDialog(QWidget):
         self.config["repeat_penalty"] = self.ui.repeat_penalty_slider.value() / 100.0
         self.config["max_tokens"] = val
         self._push_save()
+        self._sync_preset_combobox()
 
     def _save_inference_preset(self):
         name, ok = QInputDialog.getText(self, "Save Inference Preset", "Preset name:")
@@ -513,4 +617,33 @@ class SettingsDialog(QWidget):
             return
         self.config.get("inference_presets", {}).pop(name, None)
         self._push_save()
+
+    def _sync_preset_combobox(self):
+        if not hasattr(self.ui, 'comboBoxInferrancePreset'): return
+        
+        inf = self.config
+        presets = self.config.get("inference_presets", {})
+        
+        matched_preset = "-- Select Preset --"
+        for p_name, p_params in presets.items():
+            match = True
+            for k, v in p_params.items():
+                val1 = inf.get(k)
+                val2 = v
+                if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+                    if abs(float(val1) - float(val2)) > 0.001:
+                        match = False
+                        break
+                elif val1 != val2:
+                    match = False
+                    break
+            if match:
+                matched_preset = p_name
+                break
+                
+        cb = self.ui.comboBoxInferrancePreset
+        if cb.currentText() != matched_preset:
+            cb.blockSignals(True)
+            cb.setCurrentText(matched_preset)
+            cb.blockSignals(False)
 

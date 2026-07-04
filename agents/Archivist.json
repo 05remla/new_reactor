@@ -3,11 +3,11 @@
     "system_prompt_file": "tron_mk3.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {
-        "temperature": 0.05,
-        "top_p": 0.95,
+        "temperature": 0.6,
+        "top_p": 0.96,
         "min_p": 0.05,
-        "top_k": 5,
-        "repeat_penalty": 1.12,
+        "top_k": 20,
+        "repeat_penalty": 1.13,
         "max_tokens": 0
     },
     "deepagents": {
@@ -16,19 +16,16 @@
         "enabled_tools": [
             "append_to_note",
             "clear_scratchpad",
-            "get_long_term_memory",
-            "list_memory_namespaces",
             "list_notes",
+            "manage_memory",
             "read_note",
             "search_vault",
-            "store_long_term_memory",
-            "write_note",
-            "write_to_scratchpad"
+            "write_note"
         ],
         "enabled_subagents": [],
         "inject_subagents_to_prompt": false
     },
     "enable_max_tool_calls": true,
     "max_sequential_tool_calls": 50,
-    "description": "Memory recording/manipulating agent"
+    "description": "Memory recording and retreiving agent"
 }

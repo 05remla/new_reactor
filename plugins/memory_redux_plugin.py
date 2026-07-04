@@ -38,7 +38,7 @@ def manage_memory(action: str = "set", payload: str = "", context_window: int = 
 
     try:
         from langchain_openai import ChatOpenAI
-        from langchain_core.messages import SystemMessage, HumanMessage
+        from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
     except ImportError:
         return "Error: langchain_openai is not installed."
 
@@ -148,7 +148,7 @@ def manage_memory(action: str = "set", payload: str = "", context_window: int = 
             else:
                 tool_res = f"Tool {tool_name} not found."
                 
-            messages.append(HumanMessage(content=str(tool_res), name=tool_name))
+            messages.append(ToolMessage(content=str(tool_res), tool_call_id=tc.get("id", tc.get("tool_call_id", ""))))
             
     return "Memory Archivist finished but may not have returned a final synthesis due to max step limit."
 

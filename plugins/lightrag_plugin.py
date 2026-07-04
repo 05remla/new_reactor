@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QLineEdit, QLabel, QCheckBox, 
-                             QComboBox, QTextEdit, QFileDialog, QApplication)
+                             QComboBox, QTextEdit, QFileDialog, QApplication,
+                             QToolButton, QDialog, QDialogButtonBox)
 from PyQt5.QtCore import Qt, QTimer
 import requests
 import os
@@ -13,74 +14,38 @@ PLUGIN_META = {
     "author": "Antigravity Plugin Extractor"
 }
 
-class LightRAGWidget(QWidget):
-    def __init__(self, main_window):
-        super().__init__()
-        self.mw = main_window
-        self.layout = QVBoxLayout()
+class LightRAGSettingsDialog(QDialog):
+    def __init__(self, main_window, parent=None):
+        super().__init__(parent)
+        self.main_window = main_window
+        self.setWindowTitle("LightRAG Settings")
+        self.resize(300, 100)
+        self.setup_ui()
         
-        self.enable_checkbox = QCheckBox("Enable Distributed LightRAG Memory Module")
-        self.enable_checkbox.setStyleSheet("font-weight: bold; color: #27ae60;")
-        self.enable_checkbox.setChecked(True)
-        self.layout.addWidget(self.enable_checkbox)
+    def setup_ui(self):
+        layout = QVBoxLayout()
         
-        # Data insertion layout
-        self.layout.addWidget(QLabel("Insert Knowledge to LightRAG:"))
-        self.textbox = QTextEdit()
-        self.layout.addWidget(self.textbox)
+        mode_layout = QHBoxLayout()
+        mode_layout.addWidget(QLabel("Retrieval Mode:"))
+        self.mode_combo = QComboBox()
+        self.mode_combo.addItems(["naive", "local", "global", "hybrid", "mix"])
         
-        btn_layout = QHBoxLayout()
-        self.file_btn = QPushButton("Load File...")
-        self.file_btn.clicked.connect(self.load_file)
-        self.submit_btn = QPushButton("Process & Insert")
-        self.submit_btn.clicked.connect(self.submit_to_lightrag)
-        btn_layout.addWidget(self.file_btn)
-        btn_layout.addWidget(self.submit_btn)
+        current_mode = self.main_window.config.get("lightrag_retrieval_mode", "hybrid")
+        self.mode_combo.setCurrentText(current_mode)
+        mode_layout.addWidget(self.mode_combo)
+        layout.addLayout(mode_layout)
         
-        self.layout.addLayout(btn_layout)
-        self.setLayout(self.layout)
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.save_settings)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        self.setLayout(layout)
         
-    def load_file(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select File", "", "Text Files (*.txt *.md *.csv *.json);;All Files (*.*)")
-        if path:
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    self.textbox.setPlainText(f.read())
-                self.submit_btn.setText(f"Process & Insert: {os.path.basename(path)}")
-            except Exception as e:
-                self.textbox.setPlainText(f"Error reading file:\n{str(e)}")
-
-    def submit_to_lightrag(self):
-        text = self.textbox.toPlainText().strip()
-        if not text: return
-        self.submit_btn.setText("Indexing... (Please wait)")
-        self.submit_btn.setEnabled(False)
-        QApplication.processEvents()
-
-        try:
-            base = self.mw.config.get("lightrag_url", "").rstrip("/")
-            key = self.mw.config.get("lightrag_api_key", "").strip()
-            headers = {"X-API-Key": key} if key else {}
-            
-            rag_model = ""
-            if hasattr(self.mw.ui, 'rag_model_combo'):
-                rag_model = self.mw.ui.rag_model_combo.currentText().strip()
-
-            payload = {
-                "text": text,
-                "model": rag_model
-            }
-            res = requests.post(f"{base}/insert", json=payload, headers=headers, timeout=120)
-            res.raise_for_status()
-
-            self.submit_btn.setText("Knowledge Successfully Added!")
-            self.submit_btn.setStyleSheet("background-color: #27ae60; color: white;")
-        except Exception as e:
-            self.submit_btn.setText("Error! Ensure key/server is correct.")
-            self.submit_btn.setStyleSheet("background-color: #e74c3c; color: white;")
-        finally:
-            self.submit_btn.setEnabled(True)
-
+    def save_settings(self):
+        self.main_window.config["lightrag_retrieval_mode"] = self.mode_combo.currentText()
+        if hasattr(self.main_window, '_save_config'):
+            self.main_window._save_config()
+        self.accept()
 
 def build_lightrag_tool(mw):
     def query_lightrag(query: str) -> str:
@@ -89,14 +54,14 @@ def build_lightrag_tool(mw):
         if hasattr(mw.ui, 'use_rag_checkbox') and not mw.ui.use_rag_checkbox.isChecked():
             return "Knowledge retrieval skipped. LightRAG is disabled in the UI."
             
-        if hasattr(mw, 'lightrag_widget') and not mw.lightrag_widget.enable_checkbox.isChecked():
+        if hasattr(mw.ui, 'lightrag_checkbox') and not mw.ui.lightrag_checkbox.isChecked():
             return "Knowledge retrieval skipped. Module component is paused."
             
         try:
             url = f"{mw.config.get('lightrag_url', '').rstrip('/')}/query"
             
-            mode = "hybrid"
-            if hasattr(mw.ui, 'retrieval_mode_combo'):
+            mode = mw.config.get("lightrag_retrieval_mode", "hybrid")
+            if hasattr(mw.ui, 'retrieval_mode_combo') and "lightrag_retrieval_mode" not in mw.config:
                 mode = mw.ui.retrieval_mode_combo.currentText()
                 
             model = ""
@@ -130,14 +95,14 @@ def build_lcel_fetcher(mw):
         if hasattr(mw.ui, 'use_rag_checkbox') and not mw.ui.use_rag_checkbox.isChecked():
             return ""
             
-        if hasattr(mw, 'lightrag_widget') and not mw.lightrag_widget.enable_checkbox.isChecked():
+        if hasattr(mw.ui, 'lightrag_checkbox') and not mw.ui.lightrag_checkbox.isChecked():
             return ""
             
         status_update_signal.emit(f"[🔍 Fetching context...]   \n", False)
         try:
             url = f"{mw.config.get('lightrag_url', '').rstrip('/')}/query"
-            mode = "hybrid"
-            if hasattr(mw.ui, 'retrieval_mode_combo'):
+            mode = mw.config.get("lightrag_retrieval_mode", "hybrid")
+            if hasattr(mw.ui, 'retrieval_mode_combo') and "lightrag_retrieval_mode" not in mw.config:
                 mode = mw.ui.retrieval_mode_combo.currentText()
                 
             model = ""
@@ -170,9 +135,24 @@ def enable_plugin(main_window):
         return
     main_window._lightrag_plugin_installed = True
 
-    widget = LightRAGWidget(main_window)
-    main_window.ui.tabs.addTab(widget, "RAG Knowledge Module")
-    main_window.lightrag_widget = widget
+    rag_checkbox = QCheckBox("RAG", main_window.ui.centralwidget)
+    rag_checkbox.setStyleSheet("color: #27ae60; font-weight: bold;")
+    rag_checkbox.setChecked(True)
+    main_window.ui.lightrag_checkbox = rag_checkbox
+    
+    settings_btn = QToolButton(main_window.ui.centralwidget)
+    settings_btn.setText("⚙️")
+    settings_btn.setToolTip("LightRAG Settings")
+    settings_btn.setStyleSheet("margin-right: 10px;")
+    def open_settings():
+        dlg = LightRAGSettingsDialog(main_window, main_window)
+        dlg.exec_()
+    settings_btn.clicked.connect(open_settings)
+    main_window.ui.lightrag_settings_btn = settings_btn
+
+    if hasattr(main_window.ui, 'horizontalLayout_2'):
+        main_window.ui.horizontalLayout_2.insertWidget(1, settings_btn)
+        main_window.ui.horizontalLayout_2.insertWidget(1, rag_checkbox)
     
     # Initialize hooks
     if not hasattr(main_window, 'extra_tools'): main_window.extra_tools = []
@@ -191,12 +171,17 @@ def disable_plugin(main_window):
     if not getattr(main_window, '_lightrag_plugin_installed', False):
         return
 
-    idx = main_window.ui.tabs.indexOf(main_window.lightrag_widget)
-    if idx != -1:
-        main_window.ui.tabs.removeTab(idx)
-        
-    main_window.lightrag_widget.deleteLater()
-    del main_window.lightrag_widget
+    if hasattr(main_window.ui, 'lightrag_settings_btn'):
+        if hasattr(main_window.ui, 'horizontalLayout_2'):
+            main_window.ui.horizontalLayout_2.removeWidget(main_window.ui.lightrag_settings_btn)
+        main_window.ui.lightrag_settings_btn.deleteLater()
+        del main_window.ui.lightrag_settings_btn
+
+    if hasattr(main_window.ui, 'lightrag_checkbox'):
+        if hasattr(main_window.ui, 'horizontalLayout_2'):
+            main_window.ui.horizontalLayout_2.removeWidget(main_window.ui.lightrag_checkbox)
+        main_window.ui.lightrag_checkbox.deleteLater()
+        del main_window.ui.lightrag_checkbox
     main_window._lightrag_plugin_installed = False
     
     # Remove hooks

@@ -4,16 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-07-04
+
+### Added
+- **Drag-and-Drop Staging UI**: Added the ability to drag and drop files directly onto the main input box. Staged files are visually represented by dynamic icon labels placed neatly to the right of the plugins layout, nestled beside the context counter. Users can right-click these icons to open the document in their default editor or remove them from staging. The file contents are seamlessly injected into the agent's system prompt upon sending a message.
+- **Dynamic Context Length Estimator**: The UI context length estimator now dynamically calculates and includes the sizes of all currently staged files in its approximation in real-time.
+
+### Changed
+- **Persistent Staging**: Files staged via drag-and-drop now persist across multiple generations. They remain injected in the system prompt until the user explicitly removes them via their right-click context menu in the UI.
+- **Prompt Boundary Standardization**: Overhauled system prompt compilation in `generation_thread.py` to wrap all dynamically injected contexts (Persona, Memory Vault, LightRAG, Staged Files, and Subagents) in distinct headers, footers, and system hints. This reduces agent hallucination and improves context compartmentalization.
+
 ## [Unreleased] - 2026-06-08
 
 ### Added
+- **Self-Improving Harness Plugin**: Created a new plugin (`self_improving_harness_plugin.py`) that acts as an advanced execution loop. It can recursively retry a generation task if it fails to accomplish the specified goal, analyzing its deficiencies and applying fixes to its inference settings and prompt instructions automatically before restarting.
+- **Reactor Worker Agent**: Created a dedicated `reactor_worker` agent profile and system prompt to handle fast, internal "side work" tasks without invoking DeepAgents.   
 - **Quick Memory Tooling Enablers**: Wired up the new `SynBrain`, `LTM`, and `STM` buttons in the Agent Manager's Deepagents tab to act as quick-enable toggles for their respective memory toolsets. Clicking them instantly checks the corresponding required tools (e.g. `append_to_note`, `store_long_term_memory`, `write_to_scratchpad`) and saves the agent configuration.
 - **Agent Descriptions**: Added a description text field to the Agent Manager UI. Agent descriptions are now saved directly into the agent configurations and automatically injected into the system prompt when subagents are enabled, providing parent agents with better context when deciding which subagent tool to call.
 
 ### Fixed
 - **Generation Thread Agent Config**: Resolved an `Invalid model identifier` LangChain/Agent Generation Error (e.g. `Invalid model identifier "Researcher"`) in `generation_thread.py` when chatting directly with a subagent/orchestrator in the GUI. The thread logic now properly prioritizes extracting the `"model_name"` field from the agent configuration file before incorrectly falling back to using the agent's name as the override `model` identifier.
+- **Context Compressor**: Fixed a bug where `mainwindow.py`'s context compressor hook would crash with a `KeyError: 'choices'` when handling failed API responses. The compressor now correctly extracts the active agent's API config and handles HTTP/JSON errors gracefully.
+- **Plugin UI State Crashes**: Resolved `AttributeError` crashes in `reflexion_plugin.py` and `memory_manager_plugin.py` caused by the removal of `sys_prompt_box` from the main UI. These plugins now cleanly inject their custom temporary prompts through the new `_active_sys_prompt` override property in `mainwindow.py`.
 
 ### Changed   
+- **Auto Rename Session**: Modified `mainwindow.py` to route the auto-rename session functionality through the new `reactor_worker` agent.   
+- **Memory Redux Keyword Extraction**: Overhauled `pre_generation_retrieval` in `memory_tree/agent.py` to use the `reactor_worker` agent for semantic keyword extraction instead of a rudimentary stop-words/length-based heuristic.   
+- **Generation Thread**: Added an exception in `generation_thread.py` to strictly disable DeepAgents logic when the `reactor_worker` is active, keeping it lightweight.   
+- **Agent Chat Header**: Enhanced the agent chat header in `generation_thread.py` to display the agent's name, system prompt file, underlying model, and detailed inference parameters (temperature, top_k, top_p, min_p, repeat_penalty) to improve session context awareness.   
 - **Subagent Custom LLMs**: Modified `core_engine.py` to route subagent creation through `setup_llm()`, injecting the instantiated connection as the `"model"` key. Subagents now inherit custom provider URLs, API keys, models, and inference parameters from their specific configurations rather than piggybacking off the parent agent's connection.   
 - **Agent Creation Skills Argument**: Modified `core_engine.py` to pass the `skills` argument as a directory string (`skills=os.path.join(da_root_dir, 'skills/')`) instead of a list of paths during agent creation.   
 

@@ -63,7 +63,6 @@ from subwindow import Ui_AddDataWindow
 from config_manager import ConfigManager
 from generation_thread import GenerationThread
 from settings import SettingsDialog
-from rag_dialog import RAGDataDialog
 class MstyCloneApp(QMainWindow):
     def __init__(self, config_filename="config.json"):
         super().__init__()
@@ -100,6 +99,17 @@ class MstyCloneApp(QMainWindow):
         self.ui.chat_display.setHtml("<html><head><style>::-webkit-scrollbar { display: none; }</style></head><body style='background-color:#eeeeee; color:2b2b2b; font-family:sans-serif; font-size:13px;'><h3></h3></body></html>")
         self.ui.input_box.installEventFilter(self)
         self.ui.input_box.viewport().installEventFilter(self)
+        
+        # Enable drag and drop
+        self.ui.input_box.setAcceptDrops(True)
+        self.staged_files = []
+        
+        try:
+            import qrc
+        except ImportError:
+            pass
+        self._staged_file_widgets = []
+
         if hasattr(self.ui, 'sys_prompt_box'):
             self.ui.sys_prompt_box.viewport().installEventFilter(self)
 
@@ -190,8 +200,8 @@ class MstyCloneApp(QMainWindow):
             print("[Tracing] Arize Phoenix instrumentation active on port 6006")
             
             # Update View
-            if hasattr(self, 'ui') and hasattr(self.ui, 'phoenix_view'):
-                self.ui.phoenix_view.setUrl(QUrl("http://localhost:6006"))
+            # if hasattr(self, 'ui') and hasattr(self.ui, 'phoenix_view'):
+            #     self.ui.phoenix_view.setUrl(QUrl("http://localhost:6006"))
                 
         except Exception as e:
             print(f"[Tracing Warning] Failed to start Arize Phoenix tracing: {e}")
@@ -233,6 +243,60 @@ class MstyCloneApp(QMainWindow):
         flag = '/tmp/msty_like_main_flag'
         if self.mainInstance:
             os.remove(flag)
+
+    def _remove_staged_file(self, file_path):
+        if hasattr(self, 'staged_files') and file_path in self.staged_files:
+            self.staged_files.remove(file_path)
+            self.update_staged_files_indicator()
+
+    def _show_staged_file_menu(self, pos, file_path):
+        from PyQt5.QtWidgets import QMenu
+        from PyQt5.QtGui import QCursor, QDesktopServices
+        from PyQt5.QtCore import QUrl
+        menu = QMenu(self)
+        open_action = menu.addAction("Open Document")
+        remove_action = menu.addAction("Remove from Staging")
+        action = menu.exec_(QCursor.pos())
+        if action == open_action:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
+        elif action == remove_action:
+            self._remove_staged_file(file_path)
+
+    def update_staged_files_indicator(self):
+        if not hasattr(self, '_staged_file_widgets'):
+            self._staged_file_widgets = []
+            
+        # Remove previously added file widgets from horizontalLayout_2
+        for w in self._staged_file_widgets:
+            self.ui.horizontalLayout_2.removeWidget(w)
+            w.deleteLater()
+        self._staged_file_widgets.clear()
+        
+        if hasattr(self, 'staged_files') and self.staged_files:
+            from PyQt5.QtWidgets import QLabel
+            from PyQt5.QtCore import Qt
+            from PyQt5.QtGui import QPixmap
+            
+            # Find insertion index (just after the spacer) so it's between spacer and context counter
+            insert_idx = 1
+            for i in range(self.ui.horizontalLayout_2.count()):
+                if self.ui.horizontalLayout_2.itemAt(i).spacerItem():
+                    insert_idx = i + 1
+                    break
+                    
+            for file_path in self.staged_files:
+                lbl = QLabel()
+                lbl.setPixmap(QPixmap(":/images/wordpad_32x.png"))
+                lbl.setToolTip(f"{os.path.basename(file_path)}\n(Right-click for options)")
+                lbl.setContextMenuPolicy(Qt.CustomContextMenu)
+                lbl.customContextMenuRequested.connect(lambda pos, fp=file_path: self._show_staged_file_menu(pos, fp))
+                
+                self.ui.horizontalLayout_2.insertWidget(insert_idx, lbl)
+                self._staged_file_widgets.append(lbl)
+                insert_idx += 1
+                
+        if hasattr(self, '_update_context_len'):
+            self._update_context_len()
 
     def toggle_todos_widget(self):
         if self.ui.actionView_Agent_Todos.isChecked():
@@ -282,17 +346,35 @@ class MstyCloneApp(QMainWindow):
                 text_to_compress = "\n".join([f"{m.get('role', 'unknown')}: {m.get('content', '')}" for m in msgs_to_compress])
                 prompt = f"Summarize the following previous conversation chronologically and concisely. Retain all important facts, tasks, and context.\n\n{text_to_compress}"
                 
-                url = f"{self.config['api_base']}/chat/completions"
+                try:
+                    agent_name = self.ui.agent_combo.currentText()
+                    agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+                except Exception:
+                    agent_cfg = {}
+                    
+                api_base = agent_cfg.get("provider_url") or self.config.get("api_base", "https://api.openai.com/v1")
+                if api_base.endswith("/"): api_base = api_base[:-1]
+                url = f"{api_base}/chat/completions"
+                model_name = agent_cfg.get("model_name", agent_cfg.get("model", self.config.get("model", "gpt-4o")))
+                api_key = self.config.get("api_key", "")
+                
                 payload = {
-                    "model": self.config["model"],
+                    "model": model_name,
                     "messages": [{"role": "user", "content": prompt}]
                 }
-                headers = {"Authorization": f"Bearer {self.config['api_key']}"}
+                headers = {"Authorization": f"Bearer {api_key}"}
                 try:
                     resp = requests.post(url, json=payload, headers=headers)
-                    summary = resp.json()["choices"][0]["message"]["content"]
-                    new_sys_msg = {"role": "system", "content": f"[Summary of prior conversation]:\n{summary}"}
-                    self.messages = [new_sys_msg] + rest
+                    if resp.status_code == 200:
+                        resp_json = resp.json()
+                        if "choices" in resp_json and len(resp_json["choices"]) > 0:
+                            summary = resp_json["choices"][0]["message"]["content"]
+                            new_sys_msg = {"role": "system", "content": f"[Summary of prior conversation]:\n{summary}"}
+                            self.messages = [new_sys_msg] + rest
+                        else:
+                            print(f"Compressor error: No 'choices' in response. {resp_json}")
+                    else:
+                        print(f"Compressor HTTP error {resp.status_code}: {resp.text}")
                 except Exception as e:
                     print(f"Compressor error: {e}")
             threading.Thread(target=worker, daemon=True).start()
@@ -339,8 +421,11 @@ class MstyCloneApp(QMainWindow):
 
         # Instantiate LLM
         try:
-            agent_name = self.config.get("default_chat_agent", "Tron")
+            agent_name = "reactor_worker"
             agent_cfg = self.config_manager.get_agent_config(agent_name)
+            if not agent_cfg:
+                agent_name = self.config.get("default_chat_agent", "Tron")
+                agent_cfg = self.config_manager.get_agent_config(agent_name)
             
             import core_engine
             try:
@@ -615,35 +700,19 @@ class MstyCloneApp(QMainWindow):
 
         self.get_lms_models(3)
 
-        self.ui.rag_model_combo.addItems(self.config["saved_rag_models"])
-        self.ui.rag_model_combo.setCurrentText(self.config["rag_model"])
-
-        self.ui.retrieval_mode_combo.addItems(["naive", "local", "global", "hybrid", "mix"])
-        self.ui.retrieval_mode_combo.setCurrentText(self.config["retrieval_mode"])
-
         # LM Studio — now a single combined URL field
         lms_url = self.config.get("lmstudio_url", "http://localhost:8081")
-        self.ui.lmstudio_ip.clear()
-        self.ui.lmstudio_ip.addItems(self.config.get("saved_lmstudio_urls", [lms_url]))
-        self.ui.lmstudio_ip.setCurrentText(lms_url)
+        if hasattr(self.ui, 'lmstudio_ip'):
+            self.ui.lmstudio_ip.clear()
+            self.ui.lmstudio_ip.addItems(self.config.get("saved_lmstudio_urls", [lms_url]))
+            self.ui.lmstudio_ip.setCurrentText(lms_url)
 
         # Checkboxes and LineEdits
-        self.ui.use_rag_checkbox.setChecked(self.config["use_rag"])
-        
         if hasattr(self.ui, 'use_deepagents_checkbox'):
             self.ui.use_deepagents_checkbox.setChecked(self.config.get("use_deepagents", False))
 
-        # LightRAG — consolidated single URL field (previously split ip + port)
-        self.ui.lightrag_key.setText(self.config.get("lightrag_api_key", ""))
-        # lightrag_port field is now unused; keep hidden compatibility
-        if hasattr(self.ui, 'lightrag_port'):
-            self.ui.lightrag_port.setText("")
         if hasattr(self.ui, 'lmstudio_port'):
             self.ui.lmstudio_port.setText("")
-
-        # lightRAG URLs
-        self.ui.lightrag_ip.addItems(self.config.get("saved_lightrag_urls", []))
-        self.ui.lightrag_ip.setCurrentText(self.config.get("lightrag_url"))
 
         # Inference Presets
         self._refresh_preset_combobox()
@@ -657,7 +726,10 @@ class MstyCloneApp(QMainWindow):
             "<p>Click <b>Start</b> to enable Arize Phoenix Local Tracing and view telemetry here.</p>"
             "</div></body></html>"
         )
-        self.ui.phoenix_view.setHtml(disabled_html)
+        # self.ui.phoenix_view.setHtml(disabled_html)
+        
+        self._sync_preset_combobox()
+        self._update_agent_description()
 
     def enabled_tools(self):
         pass
@@ -717,17 +789,16 @@ class MstyCloneApp(QMainWindow):
     def _connect_signals(self):
         # Configuration Save Triggers
         self.ui.agent_combo.currentTextChanged.connect(self._save_config)
-        self.ui.rag_model_combo.currentTextChanged.connect(self._save_config)
-        self.ui.retrieval_mode_combo.currentTextChanged.connect(self._save_config)
-        self.ui.use_rag_checkbox.stateChanged.connect(self._save_config)
+        self.ui.agent_combo.currentTextChanged.connect(self._sync_preset_combobox)
+        self.ui.agent_combo.currentTextChanged.connect(self._update_agent_description)
         self.ui.comboBoxSessions.currentTextChanged.connect(self._save_config)
         
         # Deep Agents hook
         if hasattr(self.ui, 'use_deepagents_checkbox'):
             self.ui.use_deepagents_checkbox.stateChanged.connect(self._save_config)
 
-        self.ui.lmstudio_ip.currentTextChanged.connect(self._save_config)
-        self.ui.lightrag_key.textChanged.connect(self._save_config)
+        if hasattr(self.ui, 'lmstudio_ip'):
+            self.ui.lmstudio_ip.currentTextChanged.connect(self._save_config)
 
         # Menus
         self.ui.actionSessionRename.triggered.connect(self._rename_session)
@@ -773,7 +844,6 @@ class MstyCloneApp(QMainWindow):
         self.ui.clear_btn.clicked.connect(self.clear_chat)
         self.ui.send_btn.clicked.connect(self.send_message)
         self.ui.stop_btn.clicked.connect(self.stop_generation)
-        self.ui.add_data_btn.clicked.connect(self.open_add_data_window)
         if hasattr(self.ui, 'pushButtonAutoRename'):
             self.ui.pushButtonAutoRename.clicked.connect(self._llm_rename_session)
         
@@ -813,13 +883,58 @@ class MstyCloneApp(QMainWindow):
             return
         cb = self.ui.comboBoxInferrancePreset
         cb.blockSignals(True)
-        current = cb.currentText()
         cb.clear()
         cb.addItem("-- Select Preset --")
         for name in self.config.get("inference_presets", {}).keys():
             cb.addItem(name)
-        cb.setCurrentText(current)
         cb.blockSignals(False)
+
+    def _sync_preset_combobox(self, *args):
+        if not hasattr(self.ui, 'comboBoxInferrancePreset'): return
+        agent_name = self.ui.agent_combo.currentText().strip()
+        if not agent_name: return
+        agent_cfg = self.config_manager.get_agent_config(agent_name)
+        if not agent_cfg: return
+        
+        inf = agent_cfg.get("inference_params", {})
+        presets = self.config.get("inference_presets", {})
+        
+        matched_preset = "-- Select Preset --"
+        for p_name, p_params in presets.items():
+            match = True
+            for k, v in p_params.items():
+                val1 = inf.get(k)
+                val2 = v
+                if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+                    if abs(float(val1) - float(val2)) > 0.001:
+                        match = False
+                        break
+                elif val1 != val2:
+                    match = False
+                    break
+            if match:
+                matched_preset = p_name
+                break
+                
+        cb = self.ui.comboBoxInferrancePreset
+        if cb.currentText() != matched_preset:
+            cb.blockSignals(True)
+            cb.setCurrentText(matched_preset)
+            cb.blockSignals(False)
+
+    def _update_agent_description(self, *args):
+        if not hasattr(self.ui, 'plainTextEditAgentDescription'): return
+        agent_name = self.ui.agent_combo.currentText().strip()
+        if not agent_name:
+            self.ui.plainTextEditAgentDescription.setPlainText("")
+            return
+        agent_cfg = self.config_manager.get_agent_config(agent_name)
+        if not agent_cfg:
+            self.ui.plainTextEditAgentDescription.setPlainText("")
+            return
+        
+        description = agent_cfg.get("description", "")
+        self.ui.plainTextEditAgentDescription.setPlainText(description)
 
     def _load_inference_preset(self, name):
         if self.is_loading or not name or name == "-- Select Preset --":
@@ -847,20 +962,15 @@ class MstyCloneApp(QMainWindow):
         if self.is_loading: return
 
         self.config["default_chat_agent"] = self.ui.agent_combo.currentText().strip()
-        self.config["rag_model"] = self.ui.rag_model_combo.currentText().strip()
 
-        self.config["use_rag"] = self.ui.use_rag_checkbox.isChecked()
         self.config["session"] = self.ui.comboBoxSessions.currentText().strip()
         self.config["last_selected_session"] = self.config["session"]
         
         if hasattr(self.ui, 'use_deepagents_checkbox'):
             self.config["use_deepagents"] = self.ui.use_deepagents_checkbox.isChecked()
-            
-        self.config["lightrag_url"] = self.ui.lightrag_ip.currentText().strip()
-        self.config["lightrag_api_key"] = self.ui.lightrag_key.text().strip()
-        self.config["retrieval_mode"] = self.ui.retrieval_mode_combo.currentText()
 
-        self.config["lmstudio_url"] = self.ui.lmstudio_ip.currentText().strip()
+        if hasattr(self.ui, 'lmstudio_ip'):
+            self.config["lmstudio_url"] = self.ui.lmstudio_ip.currentText().strip()
 
         self.config_manager.save_config()
 
@@ -872,10 +982,29 @@ class MstyCloneApp(QMainWindow):
         text_widget.setFocus()
 
     def eventFilter(self, obj, event):
-        # Handle right-click / context menu for spell checking suggestions
         input_box = getattr(self.ui, 'input_box', None)
-        
         is_input_viewport = input_box and obj is input_box.viewport()
+        
+        # Handle Drag and Drop for files
+        if obj in (input_box, input_box.viewport() if input_box else None):
+            if event.type() == QEvent.DragEnter:
+                if event.mimeData().hasUrls():
+                    event.acceptProposedAction()
+                    return True
+            elif event.type() == QEvent.Drop:
+                if event.mimeData().hasUrls():
+                    for url in event.mimeData().urls():
+                        file_path = url.toLocalFile()
+                        if os.path.isfile(file_path):
+                            if not hasattr(self, 'staged_files'):
+                                self.staged_files = []
+                            if file_path not in self.staged_files:
+                                self.staged_files.append(file_path)
+                    self.update_staged_files_indicator()
+                    event.acceptProposedAction()
+                    return True
+
+        # Handle right-click / context menu for spell checking suggestions
 
         if (is_input_viewport) and event.type() == QEvent.ContextMenu:
             text_widget = input_box 
@@ -1011,6 +1140,7 @@ class MstyCloneApp(QMainWindow):
                 self.ui.agent_combo.setCurrentText(agents[0])
         
         self.ui.agent_combo.blockSignals(False)
+        self._update_agent_description()
         
         if self.ui.agent_combo.currentText() != current:
             self._save_config()
@@ -1061,6 +1191,16 @@ class MstyCloneApp(QMainWindow):
     def _update_context_len(self):
         if hasattr(self.ui, 'context_len_label'):
             total_chars = sum(len(m.get("content", "")) for m in self.messages)
+            
+            # include staged files
+            if hasattr(self, 'staged_files'):
+                for fpath in self.staged_files:
+                    if os.path.isfile(fpath):
+                        try:
+                            total_chars += os.path.getsize(fpath)
+                        except Exception:
+                            pass
+                            
             approx_tokens = total_chars // 4
             self.ui.context_len_label.setText(f"Context: ~{approx_tokens} tokens")
 
@@ -1129,17 +1269,21 @@ class MstyCloneApp(QMainWindow):
                     cleaned_messages.append(dict(msg))
         self.messages = cleaned_messages
 
+        if hasattr(self.ui, 'lightrag_checkbox'):
+            self.config["use_rag"] = self.ui.lightrag_checkbox.isChecked()
+
         rag_cfg = {
-            "use_rag": self.ui.use_rag_checkbox.isChecked(),
+            "use_rag": self.config.get("use_rag", False),
             "base_url": self.config.get("lightrag_url", "").rstrip("/"),
             "api_key": self.config.get("lightrag_api_key", ""),
-            "retrieval_mode": self.ui.retrieval_mode_combo.currentText(),
-            "model": self.ui.rag_model_combo.currentText().strip()
+            "retrieval_mode": self.config.get("lightrag_retrieval_mode", "hybrid"),
+            "model": self.config.get("rag_model", "")
         }
 
+        staged_files = getattr(self, 'staged_files', [])
         self.generation_thread = GenerationThread(
             model=self.ui.agent_combo.currentText().strip(),
-            sys_prompt="",
+            sys_prompt=getattr(self, '_active_sys_prompt', ""),
             messages=self.messages,
             config=self.config,
             rag_config=rag_cfg,
@@ -1150,7 +1294,8 @@ class MstyCloneApp(QMainWindow):
             repeat_penalty=self.config.get("repeat_penalty", 1.1),
             max_tokens=self.config.get("max_tokens", 0),
             session_file=self.session_file,
-            cfg_mgr=self.config_manager
+            cfg_mgr=self.config_manager,
+            staged_files=staged_files
         )
 
         self.generation_thread.todos_updated.connect(self._on_todos_updated)
@@ -1211,10 +1356,6 @@ class MstyCloneApp(QMainWindow):
                 content = task.get("content") if isinstance(task, dict) else getattr(task, "content", str(task))
                 status = task.get("status") if isinstance(task, dict) else getattr(task, "status", "unknown")
                 self.todo_list.addItem(f"[{str(status).upper()}] {content}")
-
-    def open_add_data_window(self):
-        self.add_win = RAGDataDialog(self)
-        self.add_win.show()
 
     def open_settings_window(self):
         self.settings_win = SettingsDialog(self)

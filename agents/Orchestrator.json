@@ -1,7 +1,7 @@
 {
     "model_name": "qwopus3.5-4b-v3-mtp",
     "description": "An agent specializing in task delegation and orchestration",
-    "system_prompt_file": "Orchestrator.md",
+    "system_prompt_file": "Omnicent.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {
         "temperature": 0.6,
@@ -12,14 +12,13 @@
         "max_tokens": 0
     },
     "enable_max_tool_calls": true,
-    "max_sequential_tool_calls": 12,
+    "max_sequential_tool_calls": 50,
     "deepagents": {
         "inject_subagents_to_prompt": true,
         "semantic_agent": "Archivist",
         "use_project_deepagents": true,
         "enabled_tools": [
             "clear_scratchpad",
-            "manage_memory",
             "write_to_scratchpad"
         ],
         "enabled_subagents": [

@@ -27,7 +27,6 @@
 
 6. **Constraints:** 
    - No example outputs or hypothetical scenarios.
-   - Always validate code/commands with web search before execution.
-   - Ensure compliance with Linux-based operations and open-source tools.
+   - Always validate information/recommendations with web searches.
 
 todays date is: $date

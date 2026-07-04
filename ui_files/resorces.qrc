@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="/">
+    <file>images/wordpad_32x.png</file>
+    <file>images/wordpad_48x.png</file>
+    <file>images/wordpad_64x.png</file>
+  </qresource>
+</RCC>

@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>601</width>
+    <height>631</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="3" column="0">
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Context Compressor</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_14">
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_24">
+        <item>
+         <widget class="QCheckBox" name="checkBoxCompressContext">
+          <property name="text">
+           <string>Compress context after N messages</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinBoxCompressContextCount">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="value">
+           <number>15</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="grp_loop">
+     <property name="title">
+      <string>Tool Loop Breaker</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_loop">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_max_tools">
+        <item>
+         <widget class="QCheckBox" name="checkBoxMaxToolCalls">
+          <property name="text">
+           <string>Max Sequential Tool Calls:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spin_max_tools">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>12</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="grp_semantic">
+     <property name="title">
+      <string>Semantic Long-Term Memory</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_semantic">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_emb_provider_2">
+        <item>
+         <widget class="QLabel" name="label_emb_provider_2">
+          <property name="minimumSize">
+           <size>
+            <width>156</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>156</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>LTM Agent:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="combo_emb_provider_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_emb_provider">
+        <item>
+         <widget class="QLabel" name="label_emb_provider">
+          <property name="minimumSize">
+           <size>
+            <width>156</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>156</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Embedding Provider:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="combo_emb_provider">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <item>
+           <property name="text">
+            <string>Local (Offline CPU)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Gemini</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Custom / OpenAI Compatible</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_emb_model">
+        <item>
+         <widget class="QLabel" name="label_emb_model">
+          <property name="minimumSize">
+           <size>
+            <width>156</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>156</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Embedding Model:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="comboBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <item>
+           <property name="text">
+            <string>sentence-transformers/all-MiniLM-L6-v2</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QGroupBox" name="grp_observability">
+     <property name="title">
+      <string>Observability &amp; Tracing</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_observability">
+      <item>
+       <widget class="QCheckBox" name="chk_show_tool_calls">
+        <property name="text">
+         <string>Show Tool Calls in Chat History</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="checkBoxCompressUseProject">
+     <property name="text">
+      <string>context compression: use project settings from current config</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

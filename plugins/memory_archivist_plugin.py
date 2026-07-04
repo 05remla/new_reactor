@@ -21,13 +21,7 @@ def enable_plugin(main_window):
     # Give it a tooltip
     ma_checkbox.setToolTip("Automatically updates the Memory Vault in the background after each response.")
     main_window.ui.ma_checkbox = ma_checkbox
-
-    # Insert it into layout (horizontalLayout_2)
-    idx = main_window.ui.horizontalLayout_2.indexOf(main_window.ui.use_rag_checkbox)
-    if idx != -1:
-        main_window.ui.horizontalLayout_2.insertWidget(idx + 1, ma_checkbox)
-    else:
-        main_window.ui.horizontalLayout_2.addWidget(ma_checkbox)
+    main_window.ui.horizontalLayout_2.insertWidget(1, ma_checkbox)
 
     # ==========================================
     # 2. LOGIC INJECTION (Hook)
@@ -53,7 +47,7 @@ def enable_plugin(main_window):
             return
 
         main_window._is_archiving = True
-        
+
         # Change visual indicator (Flash yellow / archiving text)
         main_window.ui.ma_checkbox.setStyleSheet("color: #f1c40f; font-weight: bold; background-color: #2c3e50; padding: 2px; border-radius: 3px;")
         main_window.ui.ma_checkbox.setText("Archiving...")
@@ -122,7 +116,7 @@ def enable_cli_plugin(app):
             try:
                 history = ""
                 recent_messages = app.history[-10:] if len(app.history) > 10 else app.history
-                
+
                 from langchain_core.messages import HumanMessage, AIMessage
                 for msg in recent_messages:
                     if isinstance(msg, HumanMessage):
@@ -162,9 +156,9 @@ def enable_cli_plugin(app):
                     status_ctx.update(f"[dim yellow]{msg}[/dim yellow]")
 
                 compile_memory(
-                    history, 
-                    model_name=model_name, 
-                    api_base=api_base, 
+                    history,
+                    model_name=model_name,
+                    api_base=api_base,
                     api_key=api_key,
                     status_callback=print_status
                 )
@@ -177,14 +171,14 @@ def enable_cli_plugin(app):
         err_console = Console(stderr=True)
         status_ctx = err_console.status("[dim yellow]Archivist is curating vault in background...[/dim yellow]", spinner="dots")
         status_ctx.start()
-        
+
         # Run non-daemon so the CLI process waits for it to finish before exiting
         t = threading.Thread(target=background_job, daemon=False)
-        
+
         if not hasattr(app, 'background_threads'):
             app.background_threads = []
         app.background_threads.append(t)
-        
+
         t.start()
 
     app.register_hook("on_generation_finished", cli_archivist_hook, priority=80)

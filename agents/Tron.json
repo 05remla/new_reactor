@@ -1,24 +1,27 @@
 {
-    "model_name": "gpt-3.5-turbo",
-    "description": "An agent specializing in task delegation and orchestration",
-    "system_prompt_file": "tron_mk3.md",
+    "model_name": "qwopus3.5-4b-v3-mtp",
+    "description": "An all-purpose, all-in-one agent",
+    "system_prompt_file": "Omnicent.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {
-        "temperature": 0.05,
-        "top_p": 0.95,
+        "temperature": 0.6,
+        "top_p": 0.96,
         "min_p": 0.05,
-        "top_k": 5,
-        "repeat_penalty": 1.12,
+        "top_k": 20,
+        "repeat_penalty": 1.14,
         "max_tokens": 0
     },
     "enable_max_tool_calls": true,
-    "max_sequential_tool_calls": 12,
+    "max_sequential_tool_calls": 50,
     "deepagents": {
-        "inject_subagents_to_prompt": false,
+        "inject_subagents_to_prompt": true,
         "semantic_agent": "Archivist",
         "use_project_deepagents": true,
         "enabled_tools": [
-            "manage_memory"
+            "query_knowledge_base",
+            "clear_scratchpad",
+            "list_memory_namespaces",
+            "write_to_scratchpad"
         ],
         "enabled_subagents": [
             "Archivist",

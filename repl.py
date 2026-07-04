@@ -259,9 +259,9 @@ class ReplApp:
                 err_console.print(f"[dim red]Failed to retrieve memory vault context: {e}[/dim red]")
 
         if da_cfg.get("inject_subagents_to_prompt", False):
-            all_agents = self.config_manager.list_agents()
+            enabled_subs = da_cfg.get("enabled_subagents", self.config.get("da_enabled_subagents", self.config_manager.list_agents()))
             subagents_info = []
-            for a in all_agents:
+            for a in enabled_subs:
                 if a != actual_model:
                     a_conf = self.config_manager.get_agent_config(a)
                     desc = a_conf.get("description", f"AI subagent specialized as {a}.") if a_conf else f"AI subagent specialized as {a}."

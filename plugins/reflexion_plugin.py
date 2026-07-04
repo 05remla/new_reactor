@@ -111,19 +111,15 @@ def enable_plugin(main_window):
     settings_btn = QToolButton(main_window.ui.centralwidget)
     settings_btn.setText("⚙️")
     settings_btn.setToolTip("Reflexion Settings")
+    settings_btn.setStyleSheet("margin-right: 10px;")
     def open_settings():
         dlg = ReflexionSettingsDialog(main_window, main_window)
         dlg.exec_()
     settings_btn.clicked.connect(open_settings)
     main_window.ui.reflexion_settings_btn = settings_btn
 
-    idx = main_window.ui.horizontalLayout_2.indexOf(main_window.ui.use_rag_checkbox)
-    if idx != -1:
-        main_window.ui.horizontalLayout_2.insertWidget(idx + 1, settings_btn)
-        main_window.ui.horizontalLayout_2.insertWidget(idx + 1, reflexion_checkbox)
-    else:
-        main_window.ui.horizontalLayout_2.addWidget(reflexion_checkbox)
-        main_window.ui.horizontalLayout_2.addWidget(settings_btn)
+    main_window.ui.horizontalLayout_2.insertWidget(1, settings_btn)
+    main_window.ui.horizontalLayout_2.insertWidget(1, reflexion_checkbox)
                 
     # 2. LOGIC INJECTION
     def reflexion_finished_hook(full_response):
@@ -144,7 +140,10 @@ def enable_plugin(main_window):
             
             # Restore the original system prompt if we overrode it
             if hasattr(main_window, '_orig_sys_prompt'):
-                main_window.ui.sys_prompt_box.setPlainText(main_window._orig_sys_prompt)
+                if main_window._orig_sys_prompt:
+                    main_window._active_sys_prompt = main_window._orig_sys_prompt
+                elif hasattr(main_window, '_active_sys_prompt'):
+                    del main_window._active_sys_prompt
                 del main_window._orig_sys_prompt
             
             # The reflection is now in the chat and context.
@@ -172,8 +171,8 @@ def enable_plugin(main_window):
                 if os.path.exists(filepath):
                     with open(filepath, "r", encoding="utf-8") as f:
                         prompt_text = f.read()
-                    main_window._orig_sys_prompt = main_window.ui.sys_prompt_box.toPlainText()
-                    main_window.ui.sys_prompt_box.setPlainText(prompt_text)
+                    main_window._orig_sys_prompt = getattr(main_window, '_active_sys_prompt', "")
+                    main_window._active_sys_prompt = prompt_text
 
             reflexion_prompt = main_window.config.get("reflexion_prompt", DEFAULT_REFLEXION_PROMPT)
             main_window.ui.input_box.setPlainText(reflexion_prompt)

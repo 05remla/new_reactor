@@ -34,14 +34,7 @@ def enable_plugin(main_window):
     
     # Store reference so we can access it during the loop and teardown
     main_window.ui.ralph_checkbox = ralph_checkbox
-
-    # Locate where to inject the checkbox in horizontalLayout_2 
-    idx = main_window.ui.horizontalLayout_2.indexOf(main_window.ui.use_rag_checkbox)
-    if idx != -1:
-        # Insert it right after the Use RAG checkbox
-        main_window.ui.horizontalLayout_2.insertWidget(idx + 1, ralph_checkbox)
-    else:
-        main_window.ui.horizontalLayout_2.addWidget(ralph_checkbox)
+    main_window.ui.horizontalLayout_2.insertWidget(1, ralph_checkbox)
                 
     # ==========================================
     # 2. LOGIC INJECTION (Hooking)

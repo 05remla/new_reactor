@@ -491,6 +491,7 @@ class AgentManagerDialog(QWidget):
 
         finally:
             self._is_loading = False
+            self._sync_preset_combobox()
 
     def _update_slider_labels(self):
         if not hasattr(self.ui, 'temp_label_4'): return
@@ -499,9 +500,10 @@ class AgentManagerDialog(QWidget):
         self.ui.min_p_label_4.setText(f"Min P: {self.ui.min_p_slider.value() / 100.0:.2f}")
         self.ui.top_k_label_4.setText(f"Top K: {self.ui.top_k_slider.value()}")
         self.ui.repeat_penalty_label_4.setText(f"Repeat Penalty: {self.ui.repeat_penalty_slider.value() / 100.0:.2f}")
-        if hasattr(self.ui, 'max_output_horizontalSlider'):
-            val = self.ui.max_output_horizontalSlider.value()
-            self.ui.max_output_label_4.setText(f"Max Output Tokens: {'Auto' if val == 0 else str(val)}")
+        val = self.ui.max_output_horizontalSlider.value()
+        self.ui.max_output_label_4.setText(f"Max Output Tokens: {'Auto' if val == 0 else str(val)}")
+        if not getattr(self, '_is_loading', False):
+            self._sync_preset_combobox()
 
     def _on_prompt_selected(self, item):
         self._update_prompt_text(item)
@@ -589,14 +591,55 @@ class AgentManagerDialog(QWidget):
         if not hasattr(self.ui, 'comboBoxInferrancePreset'): return
         cb = self.ui.comboBoxInferrancePreset
         cb.blockSignals(True)
-        current = cb.currentText()
         cb.clear()
         cb.addItem("-- Select Preset --")
         for name in self.config.get("inference_presets", {}).keys():
             cb.addItem(name)
-        if current:
-            cb.setCurrentText(current)
         cb.blockSignals(False)
+
+    def _sync_preset_combobox(self):
+        if getattr(self, '_is_loading', False) and not hasattr(self, 'current_agent_name'): return
+        if not hasattr(self.ui, 'comboBoxInferrancePreset'): return
+        if not hasattr(self, 'current_agent_name'): return
+        agent_cfg = self.cfg_mgr.get_agent_config(self.current_agent_name)
+        if not agent_cfg: return
+        
+        inf = agent_cfg.get("inference_params", {})
+        # If we are not loading, we should use the live slider values instead of the saved config
+        if not getattr(self, '_is_loading', False) and hasattr(self.ui, 'temp_slider'):
+            inf = {
+                "temperature": self.ui.temp_slider.value() / 100.0,
+                "top_p": self.ui.top_p_slider.value() / 100.0,
+                "min_p": self.ui.min_p_slider.value() / 100.0,
+                "top_k": self.ui.top_k_slider.value(),
+                "repeat_penalty": self.ui.repeat_penalty_slider.value() / 100.0,
+                "max_tokens": self.ui.max_output_horizontalSlider.value() if hasattr(self.ui, 'max_output_horizontalSlider') else 0
+            }
+
+        presets = self.config.get("inference_presets", {})
+        
+        matched_preset = "-- Select Preset --"
+        for p_name, p_params in presets.items():
+            match = True
+            for k, v in p_params.items():
+                val1 = inf.get(k)
+                val2 = v
+                if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+                    if abs(float(val1) - float(val2)) > 0.001:
+                        match = False
+                        break
+                elif val1 != val2:
+                    match = False
+                    break
+            if match:
+                matched_preset = p_name
+                break
+                
+        cb = self.ui.comboBoxInferrancePreset
+        if cb.currentText() != matched_preset:
+            cb.blockSignals(True)
+            cb.setCurrentText(matched_preset)
+            cb.blockSignals(False)
 
     def _load_inference_preset(self, name):
         if not name or name == "-- Select Preset --": return

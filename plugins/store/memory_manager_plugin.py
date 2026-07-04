@@ -95,6 +95,7 @@ def enable_plugin(main_window):
     settings_btn = QToolButton(main_window.ui.centralwidget)
     settings_btn.setText("⚙️")
     settings_btn.setToolTip("Memory Manager Settings")
+    settings_btn.setStyleSheet("margin-right: 10px;")
     def open_settings():
         dlg = MemoryManagerSettingsDialog(main_window, main_window)
         dlg.exec_()
@@ -128,7 +129,10 @@ def enable_plugin(main_window):
             
             # Restore the original system prompt if we overrode it
             if hasattr(main_window, '_memory_orig_sys_prompt'):
-                main_window.ui.sys_prompt_box.setPlainText(main_window._memory_orig_sys_prompt)
+                if main_window._memory_orig_sys_prompt:
+                    main_window._active_sys_prompt = main_window._memory_orig_sys_prompt
+                elif hasattr(main_window, '_active_sys_prompt'):
+                    del main_window._active_sys_prompt
                 del main_window._memory_orig_sys_prompt
             
             # The memory review is now in the chat and context.
@@ -156,8 +160,8 @@ def enable_plugin(main_window):
                 if os.path.exists(filepath):
                     with open(filepath, "r", encoding="utf-8") as f:
                         prompt_text = f.read()
-                    main_window._memory_orig_sys_prompt = main_window.ui.sys_prompt_box.toPlainText()
-                    main_window.ui.sys_prompt_box.setPlainText(prompt_text)
+                    main_window._memory_orig_sys_prompt = getattr(main_window, '_active_sys_prompt', "")
+                    main_window._active_sys_prompt = prompt_text
 
             prompt = main_window.config.get("memory_manager_prompt", DEFAULT_MEMORY_PROMPT)
             main_window.ui.input_box.setPlainText(prompt)

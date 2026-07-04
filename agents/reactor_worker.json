@@ -1,0 +1,27 @@
+{
+    "model_name": "ibm/granite-4-h-tiny",
+    "system_prompt_file": "reactor_worker.md",
+    "provider_url": "http://localhost:8081/v1",
+    "inference_params": {
+        "temperature": 0.6,
+        "top_p": 0.96,
+        "min_p": 0.05,
+        "top_k": 20,
+        "repeat_penalty": 1.15,
+        "max_tokens": 0
+    },
+    "enable_max_tool_calls": false,
+    "max_sequential_tool_calls": 1,
+    "use_deepagents": false,
+    "deepagents": {
+        "inject_subagents_to_prompt": false,
+        "semantic_agent": "Archivist",
+        "use_project_deepagents": false,
+        "enabled_tools": [],
+        "enabled_subagents": [],
+        "root_dir": "/home/leo/.pyvirtenvs/new_reactor",
+        "backend": "FilesystemBackend",
+        "virtual": true
+    },
+    "description": "Worker agent for simple, internal tasks."
+}

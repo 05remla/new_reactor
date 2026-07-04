@@ -74,13 +74,7 @@ def enable_plugin(main_window):
     da_checkbox = QCheckBox("Devil's Advocate", main_window.ui.centralwidget)
     da_checkbox.setStyleSheet("color: #f39c12; font-weight: bold;")
     main_window.ui.da_checkbox = da_checkbox
-
-    # Insert it into the layout (beside DeepAgents / LightRAG / Ralph)
-    idx = main_window.ui.horizontalLayout_2.indexOf(main_window.ui.use_rag_checkbox)
-    if idx != -1:
-        main_window.ui.horizontalLayout_2.insertWidget(idx + 1, da_checkbox)
-    else:
-        main_window.ui.horizontalLayout_2.addWidget(da_checkbox)
+    main_window.ui.horizontalLayout_2.insertWidget(1, da_checkbox)
 
     # ==========================================
     # 2. LOGIC INJECTION (Generation Hook)

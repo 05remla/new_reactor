@@ -1,5 +1,5 @@
 {
-    "model_name": "qwopus3.5-4b-v3-mtp@q8_0",
+    "model_name": "qwopus3.5-4b-v3-mtp",
     "system_prompt_file": "tron_mk3.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {

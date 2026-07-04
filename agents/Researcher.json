@@ -1,5 +1,5 @@
 {
-    "model_name": "ibm/granite-4-h-tiny",
+    "model_name": "qwopus3.5-4b-v3-mtp",
     "system_prompt_file": "research_assistant.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {
@@ -7,7 +7,7 @@
         "top_p": 0.96,
         "min_p": 0.05,
         "top_k": 20,
-        "repeat_penalty": 1.14,
+        "repeat_penalty": 1.12,
         "max_tokens": 0
     },
     "enable_max_tool_calls": true,
@@ -17,8 +17,18 @@
         "semantic_agent": "Archivist",
         "use_project_deepagents": true,
         "enabled_tools": [
+            "append_to_note",
+            "clear_scratchpad",
+            "get_long_term_memory",
             "interactive_web_search",
-            "scrape_indexed_urls"
+            "list_memory_namespaces",
+            "list_notes",
+            "read_note",
+            "scrape_indexed_urls",
+            "search_vault",
+            "store_long_term_memory",
+            "write_note",
+            "write_to_scratchpad"
         ],
         "enabled_subagents": []
     },

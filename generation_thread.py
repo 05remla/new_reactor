@@ -25,11 +25,12 @@ class GenerationThread(QThread):
     error_occurred = pyqtSignal(str)
     todos_updated = pyqtSignal(list)
 
-    def __init__(self, model, sys_prompt, messages, config, rag_config, temp, top_p, min_p, top_k, repeat_penalty, max_tokens=None, session_file=None, cfg_mgr=None):
+    def __init__(self, model, sys_prompt, messages, config, rag_config, temp, top_p, min_p, top_k, repeat_penalty, max_tokens=None, session_file=None, cfg_mgr=None, staged_files=None):
         super().__init__()
         self.model = model
         # is sysprompt dynamic???
         self.sys_prompt = sys_prompt
+        self.staged_files = staged_files or []
         self.messages = messages
         self.config = config
         self.rag_config = rag_config
@@ -68,14 +69,19 @@ class GenerationThread(QThread):
                     with open(prompt_path, "r", encoding="utf-8") as f:
                         self.sys_prompt = f.read()
                         
+                        ## dynamic date injection
                         import datetime
-                        self.sys_prompt += "\n\nYour training data is a checkpoint in history and time has since moved forward like time does."
+                        self.sys_prompt += "\n\nCRITICAL INSTRUCTIONS: Your training data is a checkpoint in history and time has since moved beyond it."
+                        self.sys_prompt += "\nThis is current reality. We are living in a time your training data cannot accurately account for. this should always be one of your top considerations."
                         self.sys_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
                 except:
                     pass
 
     def run(self):
         try:
+            if self.sys_prompt and "=== SYSTEM PROMPT & PERSONA ===" not in self.sys_prompt:
+                self.sys_prompt = f"=== SYSTEM PROMPT & PERSONA ===\n{self.sys_prompt.strip()}\n===============================\n"
+
             # Merge consecutive messages of the same role to prevent LangChain prompt template validation errors
             cleaned_messages = []
             for msg in self.messages:
@@ -98,8 +104,29 @@ class GenerationThread(QThread):
                 return
 
             user_message = cleaned_messages[-1]["content"]
-            _name = os.path.splitext(self.config['selected_prompt'])[0].upper()
-            self.status_update.emit(f"🤖 {_name}:   \n({self.model})   \n", True)
+            prompt_file_name = self.agent_cfg.get("system_prompt_file", self.config.get('selected_prompt', 'default.md')) if self.agent_cfg else self.config.get('selected_prompt', 'default.md')
+            actual_model = self.agent_cfg.get("model_name", self.agent_cfg.get("model", self.model)) if self.agent_cfg else self.model
+            try:
+                temp_str = f"{float(self.temp):.2f}"
+            except (ValueError, TypeError):
+                temp_str = str(self.temp)
+            try:
+                top_p_str = f"{float(self.top_p):.2f}"
+            except (ValueError, TypeError):
+                top_p_str = str(self.top_p)
+            try:
+                min_p_str = f"{float(self.min_p):.2f}"
+            except (ValueError, TypeError):
+                min_p_str = str(self.min_p)
+            try:
+                repeat_p_str = f"{float(self.repeat_penalty):.2f}"
+            except (ValueError, TypeError):
+                repeat_p_str = str(self.repeat_penalty)
+
+            header_line1 = f"{self.model} ({prompt_file_name} on {actual_model})"
+            header_line2 = f"([temp: {temp_str}, top_k: {self.top_k}, top_p: {top_p_str}, min_p: {min_p_str}, repeat_p: {repeat_p_str}])"
+            
+            self.status_update.emit(f"🤖 {header_line1}   \n{header_line2}   \n", True)
 
             # Retrieve context from Obsidian-style Memory Tree
             try:
@@ -111,10 +138,46 @@ class GenerationThread(QThread):
                 self.status_update.emit("[🧠 Searching Memory Vault...]   \n", False)
                 vault_context = pre_generation_retrieval(user_message)
                 if "No relevant context found" not in vault_context:
-                    self.sys_prompt += f"\n\n[Relevant Memory Vault Context]\n{vault_context}\n"
+                    self.sys_prompt += f"\n\n=== MEMORY VAULT CONTEXT ===\n{vault_context}\n(System Hint: The above are only partial snippets. If you need more details, use your memory tools (e.g., read_note or manage_memory) to read the full document.)\n============================\n"
                     self.status_update.emit("[✅ Memory Vault context injected]   \n", False)
             except Exception as e:
                 print(f"Failed to retrieve memory vault context: {e}", file=sys.stderr)
+
+            # Retrieve LightRAG Context directly if enabled
+            if self.rag_config.get("use_rag") and not self.cancel_flag:
+                mode = self.rag_config.get("retrieval_mode", "hybrid")
+                self.status_update.emit(f"[🔍 Querying LightRAG ({mode} mode)...]   \n", False)
+                
+                try:
+                    url = f"{self.rag_config.get('base_url')}/query"
+                    payload = {"query": user_message or "", "mode": mode, "only_need_context": True, "model": self.rag_config.get("model")}
+                    headers = {"X-API-Key": self.rag_config.get("api_key")} if self.rag_config.get("api_key") else {}
+                    
+                    resp = requests.post(url, json=payload, headers=headers, timeout=45)
+                    resp.raise_for_status()
+                    d = resp.json()
+                    ctx = d.get("response", d.get("context", str(d))) if isinstance(d, dict) else str(d)
+                    
+                    if ctx and not "No context retrieved due to error." in ctx:
+                        self.sys_prompt += f"\n\n=== LIGHTRAG KNOWLEDGE CONTEXT ===\n(System Hint: Use the following retrieved knowledge context to answer the question. If the context is irrelevant, ignore it and answer from your general knowledge.)\n\n{ctx}\n==================================\n"
+                        self.status_update.emit("[✅ LightRAG knowledge retrieved and injected]   \n   \n", False)
+                except Exception as e:
+                    self.status_update.emit(f"[❌ LightRAG Error: {str(e)}]   \n   \n", False)
+                    print(f"Failed to retrieve LightRAG context: {e}", file=sys.stderr)
+
+            if self.staged_files:
+                files_context = "\n\n=== STAGED FILE CONTENTS ===\n"
+                files_context += "(System Hint: The following are complete documents provided by the user. They are NOT partial snippets.)\n"
+                for fpath in self.staged_files:
+                    if os.path.isfile(fpath):
+                        try:
+                            with open(fpath, "r", encoding="utf-8") as f:
+                                content = f.read()
+                            files_context += f"\n--- File: {os.path.basename(fpath)} ---\n{content}\n--- End of File: {os.path.basename(fpath)} ---\n"
+                        except Exception as e:
+                            files_context += f"\n--- File: {os.path.basename(fpath)} ---\n[Error reading file: {e}]\n--- End of File: {os.path.basename(fpath)} ---\n"
+                files_context += "============================\n"
+                self.sys_prompt += files_context
 
             actual_model = self.agent_cfg.get("model_name", self.agent_cfg.get("model", self.model)) if self.agent_cfg else self.model
 
@@ -148,6 +211,9 @@ class GenerationThread(QThread):
             # 1. DEEP AGENTS INTEGRATION
             # ==========================================
             use_da = self.agent_cfg.get("use_deepagents", self.config.get("use_deepagents", False)) if self.agent_cfg else self.config.get("use_deepagents", False)
+            if self.model == "reactor_worker":
+                use_da = False
+                
             if use_da:
                 if getattr(core_engine, "create_deep_agent", None) is None:
                     self.status_update.emit("<span style='color:#e74c3c;'>[❌ Error: deepagents package not installed. Run `pip install deepagents`]</span>   \n   \n", False)
@@ -156,24 +222,19 @@ class GenerationThread(QThread):
                 self.status_update.emit("<span style='color:#8e44ad;'><b>[🧠 Using DeepAgents (Agentic Planning & Tools)...]</b></span>   \n", False)
 
                 tools = core_engine.get_tools(self.config, self.agent_cfg, cancel_flag_func=lambda: self.cancel_flag)
-                
-                has_rag = any(getattr(t, "name", getattr(t, "__name__", "")) == "query_knowledge_base" for t in tools)
-                if has_rag:
-                    self.status_update.emit("<span style='color:#27ae60;'><b>[🔗 LightRAG provided to agent as a tool]</b></span>   \n   \n", False)
-                else:
-                    self.status_update.emit("   \n", False)
+
 
                 da_cfg = self.agent_cfg.get("deepagents", {}) if self.agent_cfg else {}
                 if da_cfg.get("inject_subagents_to_prompt", False):
-                    all_agents = self.cfg_mgr.list_agents()
+                    enabled_subs = da_cfg.get("enabled_subagents", self.config.get("da_enabled_subagents", self.cfg_mgr.list_agents()))
                     subagents_info = []
-                    for a in all_agents:
+                    for a in enabled_subs:
                         if a != actual_model:
                             a_conf = self.cfg_mgr.get_agent_config(a)
                             desc = a_conf.get("description", f"AI subagent specialized as {a}.") if a_conf else f"AI subagent specialized as {a}."
                             subagents_info.append(f"- {a}: {desc}")
                     if subagents_info:
-                        self.sys_prompt += f"\n\n[Available Subagents]\nYou may use these agents via tool calls if enabled:\n" + "\n".join(subagents_info) + "\n"
+                        self.sys_prompt += f"\n\n=== AVAILABLE SUBAGENTS ===\nYou may use these agents via tool calls if enabled:\n" + "\n".join(subagents_info) + "\n===========================\n"
 
                 agent = core_engine.setup_deep_agent(llm, tools, self.sys_prompt, self.config, self.agent_cfg, app_dir)
 
@@ -285,50 +346,12 @@ class GenerationThread(QThread):
             else:
                 user_name = cleaned_messages[-1].get("name", "User")
                 
-                if self.rag_config["use_rag"] and not self.cancel_flag:
-                    mode = self.rag_config["retrieval_mode"]
-                    self.status_update.emit(f"[🔍 Querying LightRAG ({mode} mode)...]   \n", False)
-
-                    def get_context(inputs):
-                        q = inputs["input"]
-                        if self.cancel_flag: return ""
-                        
-                        url = f"{self.rag_config['base_url']}/query"
-                        payload = {"query": q or "", "mode": mode, "only_need_context": True, "model": self.rag_config["model"]}
-                        headers = {"X-API-Key": self.rag_config["api_key"]} if self.rag_config["api_key"] else {}
-                        try:
-                            resp = requests.post(url, json=payload, headers=headers, timeout=45)
-                            resp.raise_for_status()
-                            d = resp.json()
-                            ctx = d.get("response", d.get("context", str(d))) if isinstance(d, dict) else str(d)
-                            self.status_update.emit("[✅ Knowledge retrieved and injected]   \n   \n", False)
-                            return ctx
-                        except Exception as e:
-                            self.status_update.emit(f"[❌ LightRAG Error: {str(e)}]   \n   \n", False)
-                            return "No context retrieved due to error."
-
-                    rag_template = (
-                        "Use the following retrieved knowledge context to answer the question. "
-                        "If the context is irrelevant, ignore it and answer from your general knowledge.\n\n"
-                        "--- CONTEXT ---\n{context}\n\n"
-                        "--- USER QUESTION ---\n{input}"
-                    )
-
-                    prompt = ChatPromptTemplate.from_messages([
-                        SystemMessage(content=self.sys_prompt),
-                        MessagesPlaceholder(variable_name="history"),
-                        HumanMessagePromptTemplate.from_template(rag_template, name=user_name)
-                    ])
-
-                    chain = RunnablePassthrough.assign(context=RunnableLambda(get_context)) | prompt | llm
-
-                else:
-                    prompt = ChatPromptTemplate.from_messages([
-                        SystemMessage(content=self.sys_prompt),
-                        MessagesPlaceholder(variable_name="history"),
-                        HumanMessagePromptTemplate.from_template("{input}", name=user_name)
-                    ])
-                    chain = prompt | llm
+                prompt = ChatPromptTemplate.from_messages([
+                    SystemMessage(content=self.sys_prompt),
+                    MessagesPlaceholder(variable_name="history"),
+                    HumanMessagePromptTemplate.from_template("{input}", name=user_name)
+                ])
+                chain = prompt | llm
 
                 if self.cancel_flag: return
 

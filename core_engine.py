@@ -252,40 +252,6 @@ def get_tools(config, agent_cfg=None, cancel_flag_func=None):
         if tool_name in funcs:
             tools.append(funcs[tool_name])
 
-    rag_config = config.get("rag_config", {})
-    use_rag = config.get("use_rag", False)
-    if use_rag and "query_knowledge_base" in enabled_tools_config:
-        def query_lightrag(query: str) -> str:
-            """Search the internal LightRAG knowledge base for context on the user's query."""
-            try:
-                if cancel_flag_func and cancel_flag_func():
-                    return "Cancelled by user."
-                base_url = config.get("lightrag_url", "http://localhost:9621")
-                if not base_url.startswith("http"):
-                    base_url = "http://" + base_url
-                url = f"{base_url}/query"
-                payload = {
-                    "query": query, 
-                    "mode": config.get("retrieval_mode", "hybrid"), 
-                    "only_need_context": True, 
-                    "model": config.get("rag_model", config.get("model", "gpt-4o"))
-                }
-                api_key = config.get("lightrag_api_key", "")
-                headers = {"X-API-Key": api_key} if api_key else {}
-                resp = requests.post(url, json=payload, headers=headers, timeout=45)
-                resp.raise_for_status()
-                d = resp.json()
-                return d.get("response", d.get("context", str(d))) if isinstance(d, dict) else str(d)
-            except Exception as e:
-                return f"Error retrieving context: {str(e)}"
-
-        rag_tool = StructuredTool.from_function(
-            func=query_lightrag,
-            name="query_knowledge_base",
-            description="Search the internal LightRAG knowledge base. Use this for specific factual lookup."
-        )
-        tools.append(rag_tool)
-        
     return tools
 
 def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."):
@@ -353,6 +319,18 @@ def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."
                     except Exception as e:
                         print(f"Failed to load subagent {sub_name} from json: {e}", file=sys.stderr)
 
+    import copy
+    import datetime
+    final_subagents = []
+    for s in filtered_subagents:
+        s_copy = copy.copy(s)
+        curr_prompt = s_copy.get("system_prompt", "") or ""
+        curr_prompt += "\n\nYour training data is a checkpoint in history and time has since moved beyond it."
+        curr_prompt += "\nThis is current reality. We are living in a time your training data cannot accuratly account for. this should always be one of your top considerations."
+        curr_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
+        s_copy["system_prompt"] = curr_prompt
+        final_subagents.append(s_copy)
+
     import sqlite3
     from langgraph.checkpoint.sqlite import SqliteSaver
     db_path = os.path.join(app_dir, "agent_checkpoints.db")
@@ -366,7 +344,7 @@ def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."
         system_prompt=sys_prompt,
         tools=tools,
         skills=os.path.join(da_root_dir, 'skills/'),
-        subagents=filtered_subagents,
+        subagents=final_subagents,
         checkpointer=checkpointer
     )
 

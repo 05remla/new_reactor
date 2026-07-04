@@ -19,7 +19,10 @@ def interactive_web_search(query: str, max_results: int = 10):
             Search the web and return a numbered list of results.
             The results are cached internally. You MUST follow up by
             calling `scrape_indexed_urls` with the indices of the pages
-            you want to read.
+            you want to read. **If you call interactive_web_search
+            back to back you lose the ability to retrieve data for the
+            previous search as scrape_indexed_urls needs to be called 
+            immidiatly after interactive_web_search.** 
 
         ARGS:
             1. query: str = "your search query"

@@ -16,13 +16,77 @@ Be concise, helpful, and reference the knowledge you retrieve.
 def pre_generation_retrieval(query: str) -> str:
     """
     Performs a lightweight search against the memory vault.
-    For simplicity, we use the existing search_vault logic, but this could be upgraded to BM25 or Vector Search.
+    Extracts keywords from the query to avoid failing on full sentences.
     """
-    # Calling the actual python function from the tool
-    results = search_vault.invoke({"query": query})
-    if "No matches found" in results:
+    import re
+    
+    def fallback_extract(q):
+        stop_words = {"what", "when", "where", "which", "who", "whom", "whose", "why", "how", 
+                      "this", "that", "these", "those", "is", "are", "was", "were", "be", "been", "being",
+                      "have", "has", "had", "do", "does", "did", "can", "could", "shall", "should", "will", "would",
+                      "may", "might", "must", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", 
+                      "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", 
+                      "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", 
+                      "off", "over", "under", "again", "further", "then", "once", "here", "there", "all", "any", 
+                      "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", 
+                      "own", "same", "so", "than", "too", "very", "just", "don", "now", "tell", "show", "me"}
+
+        words = re.findall(r'\b\w+\b', q.lower())
+        kws = [w for w in words if w not in stop_words and len(w) > 2]
+        return sorted(list(set(kws)), key=len, reverse=True)[:3] or [q]
+
+    keywords = []
+    try:
+        from config_manager import ConfigManager
+        import core_engine
+        from langchain_core.messages import SystemMessage, HumanMessage
+        
+        cfg_mgr = ConfigManager()
+        agent_name = "reactor_worker"
+        agent_cfg = cfg_mgr.get_agent_config(agent_name)
+        if not agent_cfg:
+            agent_name = cfg_mgr.config.get("default_chat_agent", "Tron")
+            agent_cfg = cfg_mgr.get_agent_config(agent_name)
+            
+        llm = core_engine.setup_llm(cfg_mgr.config, agent_cfg, overrides={"temperature": 0.1})
+        sys_msg = (
+            "You are a keyword extraction tool. Given a user's query, extract the most important 1 to 3 keywords "
+            "for a semantic memory search. Output ONLY a comma-separated list of keywords. No explanations, no markdown."
+        )
+        msgs = [
+            SystemMessage(content=sys_msg),
+            HumanMessage(content=f"Query: {query}\n\nKeywords:")
+        ]
+        
+        response = llm.invoke(msgs)
+        resp_text = response.content if hasattr(response, 'content') else str(response)
+        
+        # Clean response
+        resp_text = re.sub(r'<think>.*?</think>', '', resp_text, flags=re.DOTALL)
+        if "```" in resp_text:
+            resp_text = resp_text.split("```")[1].strip()
+            
+        keywords = [k.strip() for k in resp_text.split(",") if k.strip()]
+        
+    except Exception as e:
+        print(f"Failed to use reactor_worker for keyword extraction: {e}")
+        keywords = fallback_extract(query)
+        
+    if not keywords:
+        keywords = fallback_extract(query)
+        
+    keywords = keywords[:3]
+        
+    all_results = []
+    for kw in keywords:
+        res = search_vault.invoke({"query": kw})
+        if "No matches found" not in res:
+            all_results.append(f"--- Matches for '{kw}' ---\n{res}")
+            
+    if not all_results:
         return "No relevant context found in memory."
-    return results
+        
+    return "\n".join(all_results)
 
 def run_memory_agent(query: str, model_name: str = "gpt-4o", update_memory: bool = True) -> str:
     """
