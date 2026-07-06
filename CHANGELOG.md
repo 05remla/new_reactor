@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-07-06
+
+### Added
+- **Dynamic Theming System**: Built a JSON-driven dynamic theming engine (`ui_files/theme.json` and `theme_manager.py`). This allows designers to use string variables (e.g. `@color1`, `@selectionbg`) directly within Qt Designer stylesheets, which are dynamically resolved to their actual hex codes at runtime without requiring `.ui` file recompilation.
+
+### Changed
+- **Optimized Application Startup**: Restructured `main.py` execution sequence to bypass Python's Global Interpreter Lock (GIL) starvation during heavy startup imports. The Qt event loop and `QSplashScreen` now forcefully render instantly via `app.processEvents()`, dramatically speeding up the perceived application load time.
+
 ## [Unreleased] - 2026-07-04
 
 ### Added

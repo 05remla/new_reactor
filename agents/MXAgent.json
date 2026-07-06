@@ -1,14 +1,14 @@
 {
     "model_name": "qwopus3.5-4b-v3-mtp",
-    "description": "An all-purpose, all-in-one agent",
-    "system_prompt_file": "Omnicent.md",
+    "description": "agent with system MX tools",
+    "system_prompt_file": "general_assistant.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {
-        "temperature": 1.7,
-        "top_p": 0.9,
+        "temperature": 0.6,
+        "top_p": 0.96,
         "min_p": 0.05,
-        "top_k": 40,
-        "repeat_penalty": 1.12,
+        "top_k": 20,
+        "repeat_penalty": 1.14,
         "max_tokens": 0
     },
     "enable_max_tool_calls": true,
@@ -19,9 +19,10 @@
         "use_project_deepagents": true,
         "enabled_tools": [
             "query_knowledge_base",
+            "analyze_journal_logs",
             "clear_scratchpad",
-            "list_memory_namespaces",
-            "manage_memory",
+            "file_contents_search",
+            "py_syntax_checker",
             "write_to_scratchpad"
         ],
         "enabled_subagents": [

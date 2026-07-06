@@ -497,11 +497,15 @@ def list_memory_namespaces():
         return f"Error reading memory namespaces: {e}"
 
 
-def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs):
+def analyze_journal_logs(query: str, journalctl_args: list[str] = None, start_chunk: int = 1, max_chunks: int = 5, **kwargs):
     '''
         DESCRIPTION: 
              A map-reduce tool that runs journalctl, chunks the massive output, and 
              uses a sub-agent to summarize each chunk against your query. 
+             It uses pagination to prevent reading too many logs at once.
+             CRITICAL: You MUST use `journalctl_args` to narrow the scope of the search 
+             (e.g., filtering by service, time, or priority) to minimize the data processed. 
+             Do not query raw unfiltered logs.
              IMPORTANT: Before running this tool, always check the scratchpad to see 
              if a previous run was interrupted. If so, you can resume or know what was 
              already processed.
@@ -509,9 +513,11 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs
         ARGS:
             1. query: str = "Find any out of memory errors or failing services"
             2. journalctl_args: list = None (e.g. ['-b', '--since=yesterday', '-u', 'nginx'])
+            3. start_chunk: int = 1 (The chunk number to start processing from, 1-indexed)
+            4. max_chunks: int = 5 (The maximum number of chunks to process in this call)
             
         RETURNS:
-             A concatenated string of summaries for all chunks. If interrupted by the user, 
+             A concatenated string of summaries for the requested chunks, followed by a system message indicating if there are more chunks. If interrupted by the user, 
              it saves partial summaries to the scratchpad and returns what was processed.
 
         EXAMPLES ARGS:
@@ -558,7 +564,10 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs
     chunks = [lines[i:i + chunk_size] for i in range(0, len(lines), chunk_size)]
     total_chunks = len(chunks)
     
-    err_console.print(f"[dim magenta]Sub-agent chunking logs: {len(lines)} lines split into {total_chunks} chunks.[/dim magenta]")
+    end_chunk = min(start_chunk - 1 + max_chunks, total_chunks)
+    chunks_to_process = chunks[start_chunk - 1 : end_chunk]
+    
+    err_console.print(f"[dim magenta]Sub-agent chunking logs: {len(lines)} lines split into {total_chunks} chunks. Processing chunks {start_chunk} to {end_chunk}.[/dim magenta]")
     
     # Load config to initialize LLM
     from config_manager import ConfigManager
@@ -578,7 +587,9 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs
         "model": config.get("model", "gpt-4o"),
         "base_url": config.get("api_base", "https://api.openai.com/v1"),
         "api_key": api_key,
-        "temperature": 0.3
+        "temperature": 0.3,
+        "timeout": 120.0,
+        "max_retries": 0
     }
     
     # Safely handle custom extra_body params if they are passed globally
@@ -589,7 +600,7 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs
     summaries = []
     
     try:
-        for i, chunk in enumerate(chunks, 1):
+        for i, chunk in enumerate(chunks_to_process, start_chunk):
             err_console.print(f"[dim cyan]Summarizing chunk {i}/{total_chunks}...[/dim cyan]")
             chunk_text = "\\n".join(chunk)
             
@@ -621,16 +632,27 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, **kwargs
                 with open(path, 'r') as f:
                     data = json.load(f)
             if not isinstance(data, list): data = []
-            data.append(f"INTERRUPTED LOG ANALYSIS. Query: '{query}'. Analyzed {len(summaries)}/{total_chunks} chunks. Partial findings:\\n{partial_result}")
+            analyzed_count = start_chunk - 1 + len(summaries)
+            data.append(f"INTERRUPTED LOG ANALYSIS. Query: '{query}'. Analyzed {analyzed_count}/{total_chunks} chunks. Partial findings:\\n{partial_result}")
             with open(path, 'w') as f:
                 json.dump(data, f, indent=4)
             err_console.print("[dim green]Partial progress written to scratchpad.json[/dim green]")
         except Exception as e:
             err_console.print(f"[bold red]Failed to save to scratchpad: {e}[/bold red]")
             
-        return f"Interrupted at chunk {len(summaries)}/{total_chunks}. Partial summaries saved to scratchpad.\\n\\n{partial_result}"
+        return f"Interrupted at chunk {analyzed_count}/{total_chunks}. Partial summaries saved to scratchpad.\\n\\n{partial_result}"
         
-    err_console.print(f"[dim green]Sub-agent finished analyzing {total_chunks} chunks.[/dim green]")
+    except Exception as e:
+        err_console.print(f"\\n[bold red]Sub-agent encountered an error: {type(e).__name__} - {str(e)}[/bold red]")
+        partial_result = "\\n\\n".join(summaries)
+        return f"Error encountered during summarization: {type(e).__name__} - {str(e)}\\n\\nPartial summaries:\\n{partial_result}"
+        
+    if end_chunk < total_chunks:
+        summaries.append(f"\\n--- SYSTEM MESSAGE ---\\nAnalyzed chunks {start_chunk} to {end_chunk} out of {total_chunks}. To read the next pages, call analyze_journal_logs again with start_chunk={end_chunk + 1}.")
+    else:
+        summaries.append(f"\\n--- SYSTEM MESSAGE ---\\nFinished analyzing all {total_chunks} chunks.")
+        
+    err_console.print(f"[dim green]Sub-agent finished analyzing chunks {start_chunk} to {end_chunk}.[/dim green]")
     return "\\n\\n".join(summaries)
 
 

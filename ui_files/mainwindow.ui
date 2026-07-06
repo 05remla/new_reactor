@@ -26,7 +26,7 @@
    <string>ITReactor</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">selection-background-color: #be8fd3;
+   <string notr="true">selection-background-color: @selectionbg;
 selection-color: #000000;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -106,8 +106,8 @@ selection-color: #000000;</string>
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ad6dc8; 
-selection-background-color: #be8fd3;
+                  <string notr="true">background-color: @color3; 
+selection-background-color: #7d86b6;
 color: black;</string>
                  </property>
                 </widget>
@@ -127,7 +127,7 @@ color: black;</string>
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: #54d88c; 
+                  <string notr="true">background-color: @color2; 
 color: black;</string>
                  </property>
                  <property name="text">
@@ -162,7 +162,7 @@ color: black;</string>
                   </font>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ef8bce; 
+                  <string notr="true">background-color: @color1; 
 color: black;
 </string>
                  </property>
@@ -258,7 +258,7 @@ color: black;
                    <item>
                     <widget class="QComboBox" name="agent_combo">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #be8fd3;
+                      <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
                      </property>
@@ -308,7 +308,7 @@ background-color: rgb(221, 221, 221);
                <item>
                 <widget class="QPushButton" name="pushButtonManageAgents">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #54d88c; 
+                  <string notr="true">background-color: @color2; 
 color: black;</string>
                  </property>
                  <property name="text">
@@ -358,7 +358,7 @@ color: black;</string>
                       </sizepolicy>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #be8fd3;
+                      <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
                      </property>
@@ -407,7 +407,7 @@ background-color: rgb(221, 221, 221);
                <item>
                 <widget class="QComboBox" name="lmstudio_ip">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: #be8fd3;
+                  <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
                  </property>
@@ -433,7 +433,7 @@ background-color: rgb(221, 221, 221);
                 <widget class="QLineEdit" name="lmstudio_port">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;
+selection-background-color: #7d86b6;
 </string>
                  </property>
                 </widget>
@@ -451,7 +451,7 @@ selection-background-color: #be8fd3;
                <item>
                 <widget class="QPushButton" name="list_btn">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ef8bce; 
+                  <string notr="true">background-color: @color1; 
 color: black;
 </string>
                  </property>
@@ -463,7 +463,7 @@ color: black;
                <item>
                 <widget class="QPushButton" name="load_btn">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #54d88c; 
+                  <string notr="true">background-color: @color2; 
 color: black;</string>
                  </property>
                  <property name="text">
@@ -474,7 +474,7 @@ color: black;</string>
                <item>
                 <widget class="QPushButton" name="unload_btn">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ad6dc8; 
+                  <string notr="true">background-color: @color3; 
 color: black;
 </string>
                  </property>
@@ -563,7 +563,7 @@ color: black;
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: #54d88c; 
+             <string notr="true">background-color: @color2; 
 color: black;
 </string>
             </property>
@@ -591,7 +591,7 @@ color: black;
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">selection-background-color: #be8fd3;</string>
+             <string notr="true">selection-background-color: #7d86b6;</string>
             </property>
             <property name="url" stdset="0">
              <url>
@@ -804,7 +804,7 @@ color: black;
            <property name="styleSheet">
             <string notr="true">background-color: #ffffff;
 alternate-background-color: #ffffff;
-selection-background-color: #be8fd3;</string>
+selection-background-color: #7d86b6;</string>
            </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
@@ -882,7 +882,7 @@ p, li { white-space: pre-wrap; }
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: #ef8bce; 
+            <string notr="true">background-color: @color1; 
 color: black;
 </string>
            </property>
@@ -920,7 +920,7 @@ color: black;
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: #ad6dc8; 
+            <string notr="true">background-color: @color3; 
 color: black;
 </string>
            </property>
@@ -955,7 +955,7 @@ color: black;
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: #54d88c; 
+            <string notr="true">background-color: @color2; 
 color: black;</string>
            </property>
            <property name="text">

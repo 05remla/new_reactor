@@ -17,7 +17,7 @@
    <item row="0" column="0">
     <widget class="QPushButton" name="file_btn">
      <property name="styleSheet">
-      <string notr="true">background-color: #ef8bce; 
+      <string notr="true">background-color: @color1;
 color: black;</string>
      </property>
      <property name="text">
@@ -35,7 +35,7 @@ color: black;</string>
    <item row="2" column="0">
     <widget class="QPushButton" name="submit_btn">
      <property name="styleSheet">
-      <string notr="true">background-color: #54d88c; 
+      <string notr="true">background-color: @color2;
 color: black;
 </string>
      </property>

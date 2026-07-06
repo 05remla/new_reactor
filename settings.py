@@ -19,6 +19,8 @@ class SettingsDialog(QWidget):
         self.config = parent_app.config
         self.ui = Ui_SettingsWindow()
         self.ui.setupUi(self)
+        import theme_manager
+        theme_manager.apply_theme(self)
         self.setWindowFlags(Qt.Window)
         self.setWindowTitle(f"{os.path.basename(os.getcwd())}")
 

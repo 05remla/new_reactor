@@ -22,7 +22,7 @@ class Ui_SettingsWindow(object):
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
         self.pushButtonClose = QtWidgets.QPushButton(SettingsWindow)
-        self.pushButtonClose.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonClose.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonClose.setObjectName("pushButtonClose")
@@ -35,7 +35,7 @@ class Ui_SettingsWindow(object):
         font.setUnderline(True)
         font.setWeight(75)
         self.tabWidget.setFont(font)
-        self.tabWidget.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.tabWidget.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(238, 238, 238);\n"
 "")
         self.tabWidget.setTabPosition(QtWidgets.QTabWidget.North)
@@ -78,7 +78,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonInferrancePresetDelete.setFont(font)
-        self.pushButtonInferrancePresetDelete.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonInferrancePresetDelete.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonInferrancePresetDelete.setObjectName("pushButtonInferrancePresetDelete")
@@ -89,7 +89,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonInferrancePresetSave.setFont(font)
-        self.pushButtonInferrancePresetSave.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonInferrancePresetSave.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonInferrancePresetSave.setObjectName("pushButtonInferrancePresetSave")
@@ -103,7 +103,7 @@ class Ui_SettingsWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBoxInferrancePreset.sizePolicy().hasHeightForWidth())
         self.comboBoxInferrancePreset.setSizePolicy(sizePolicy)
-        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.comboBoxInferrancePreset.setObjectName("comboBoxInferrancePreset")
@@ -150,39 +150,39 @@ class Ui_SettingsWindow(object):
         self.verticalLayout_31 = QtWidgets.QVBoxLayout()
         self.verticalLayout_31.setObjectName("verticalLayout_31")
         self.temp_slider = QtWidgets.QSlider(self.tab_9)
-        self.temp_slider.setStyleSheet("selection-background-color: #54d88c;")
+        self.temp_slider.setStyleSheet("selection-background-color: @color2;")
         self.temp_slider.setMaximum(200)
         self.temp_slider.setOrientation(QtCore.Qt.Horizontal)
         self.temp_slider.setObjectName("temp_slider")
         self.verticalLayout_31.addWidget(self.temp_slider)
         self.top_p_slider = QtWidgets.QSlider(self.tab_9)
-        self.top_p_slider.setStyleSheet("selection-background-color: #54d88c;")
+        self.top_p_slider.setStyleSheet("selection-background-color: @color2;")
         self.top_p_slider.setMaximum(100)
         self.top_p_slider.setOrientation(QtCore.Qt.Horizontal)
         self.top_p_slider.setObjectName("top_p_slider")
         self.verticalLayout_31.addWidget(self.top_p_slider)
         self.min_p_slider = QtWidgets.QSlider(self.tab_9)
-        self.min_p_slider.setStyleSheet("selection-background-color: #54d88c;")
+        self.min_p_slider.setStyleSheet("selection-background-color: @color2;")
         self.min_p_slider.setMaximum(100)
         self.min_p_slider.setOrientation(QtCore.Qt.Horizontal)
         self.min_p_slider.setObjectName("min_p_slider")
         self.verticalLayout_31.addWidget(self.min_p_slider)
         self.top_k_slider = QtWidgets.QSlider(self.tab_9)
-        self.top_k_slider.setStyleSheet("selection-background-color: #54d88c;")
+        self.top_k_slider.setStyleSheet("selection-background-color: @color2;")
         self.top_k_slider.setMinimum(1)
         self.top_k_slider.setMaximum(100)
         self.top_k_slider.setOrientation(QtCore.Qt.Horizontal)
         self.top_k_slider.setObjectName("top_k_slider")
         self.verticalLayout_31.addWidget(self.top_k_slider)
         self.repeat_penalty_slider = QtWidgets.QSlider(self.tab_9)
-        self.repeat_penalty_slider.setStyleSheet("selection-background-color: #54d88c;")
+        self.repeat_penalty_slider.setStyleSheet("selection-background-color: @color2;")
         self.repeat_penalty_slider.setMinimum(100)
         self.repeat_penalty_slider.setMaximum(200)
         self.repeat_penalty_slider.setOrientation(QtCore.Qt.Horizontal)
         self.repeat_penalty_slider.setObjectName("repeat_penalty_slider")
         self.verticalLayout_31.addWidget(self.repeat_penalty_slider)
         self.max_output_horizontalSlider = QtWidgets.QSlider(self.tab_9)
-        self.max_output_horizontalSlider.setStyleSheet("selection-background-color: #54d88c;")
+        self.max_output_horizontalSlider.setStyleSheet("selection-background-color: @color2;")
         self.max_output_horizontalSlider.setMaximum(30000)
         self.max_output_horizontalSlider.setOrientation(QtCore.Qt.Horizontal)
         self.max_output_horizontalSlider.setObjectName("max_output_horizontalSlider")
@@ -195,7 +195,7 @@ class Ui_SettingsWindow(object):
         self.verticalLayout_32.setSpacing(4)
         self.verticalLayout_32.setObjectName("verticalLayout_32")
         self.model_combo = QtWidgets.QComboBox(self.tab_9)
-        self.model_combo.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.model_combo.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.model_combo.setEditable(False)
@@ -210,7 +210,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonModelsGoogle.setFont(font)
-        self.pushButtonModelsGoogle.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonModelsGoogle.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonModelsGoogle.setObjectName("pushButtonModelsGoogle")
         self.horizontalLayout_36.addWidget(self.pushButtonModelsGoogle)
@@ -220,7 +220,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonModelsConfig.setFont(font)
-        self.pushButtonModelsConfig.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonModelsConfig.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonModelsConfig.setObjectName("pushButtonModelsConfig")
@@ -231,7 +231,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonModelsProvider.setFont(font)
-        self.pushButtonModelsProvider.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonModelsProvider.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonModelsProvider.setObjectName("pushButtonModelsProvider")
@@ -242,7 +242,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonModelsLoaded.setFont(font)
-        self.pushButtonModelsLoaded.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonModelsLoaded.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonModelsLoaded.setObjectName("pushButtonModelsLoaded")
         self.horizontalLayout_36.addWidget(self.pushButtonModelsLoaded)
@@ -322,7 +322,7 @@ class Ui_SettingsWindow(object):
         self.pushButtonSystemPromptOpen = QtWidgets.QPushButton(self.tab_7)
         self.pushButtonSystemPromptOpen.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonSystemPromptOpen.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonSystemPromptOpen.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonSystemPromptOpen.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonSystemPromptOpen.setObjectName("pushButtonSystemPromptOpen")
@@ -330,7 +330,7 @@ class Ui_SettingsWindow(object):
         self.pushButtonSystemPromptRevert = QtWidgets.QPushButton(self.tab_7)
         self.pushButtonSystemPromptRevert.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonSystemPromptRevert.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonSystemPromptRevert.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonSystemPromptRevert.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonSystemPromptRevert.setObjectName("pushButtonSystemPromptRevert")
@@ -338,7 +338,7 @@ class Ui_SettingsWindow(object):
         self.pushButtonSystemPromptSave = QtWidgets.QPushButton(self.tab_7)
         self.pushButtonSystemPromptSave.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonSystemPromptSave.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonSystemPromptSave.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonSystemPromptSave.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonSystemPromptSave.setObjectName("pushButtonSystemPromptSave")
         self.verticalLayout_14.addWidget(self.pushButtonSystemPromptSave)
@@ -418,14 +418,14 @@ class Ui_SettingsWindow(object):
         self.pushButtonProvidersRemove = QtWidgets.QPushButton(self.tab_4)
         self.pushButtonProvidersRemove.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonProvidersRemove.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonProvidersRemove.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonProvidersRemove.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonProvidersRemove.setObjectName("pushButtonProvidersRemove")
         self.horizontalLayout_7.addWidget(self.pushButtonProvidersRemove)
         self.pushButtonProvidersAdd = QtWidgets.QPushButton(self.tab_4)
         self.pushButtonProvidersAdd.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonProvidersAdd.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonProvidersAdd.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonProvidersAdd.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonProvidersAdd.setObjectName("pushButtonProvidersAdd")
@@ -508,7 +508,7 @@ class Ui_SettingsWindow(object):
         self.pushButtonSynBrain = QtWidgets.QPushButton(self.tab_2)
         self.pushButtonSynBrain.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonSynBrain.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonSynBrain.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonSynBrain.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonSynBrain.setObjectName("pushButtonSynBrain")
@@ -516,7 +516,7 @@ class Ui_SettingsWindow(object):
         self.pushButtonLTM = QtWidgets.QPushButton(self.tab_2)
         self.pushButtonLTM.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonLTM.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonLTM.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonLTM.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonLTM.setObjectName("pushButtonLTM")
@@ -524,7 +524,7 @@ class Ui_SettingsWindow(object):
         self.pushButtonSTM = QtWidgets.QPushButton(self.tab_2)
         self.pushButtonSTM.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonSTM.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonSTM.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonSTM.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonSTM.setObjectName("pushButtonSTM")
         self.horizontalLayout_2.addWidget(self.pushButtonSTM)
@@ -670,14 +670,14 @@ class Ui_SettingsWindow(object):
         self.pushButtonLightRAGRemove_2 = QtWidgets.QPushButton(self.tab_3)
         self.pushButtonLightRAGRemove_2.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonLightRAGRemove_2.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonLightRAGRemove_2.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonLightRAGRemove_2.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonLightRAGRemove_2.setObjectName("pushButtonLightRAGRemove_2")
         self.horizontalLayout_9.addWidget(self.pushButtonLightRAGRemove_2)
         self.pushButtonLightRAGAdd_2 = QtWidgets.QPushButton(self.tab_3)
         self.pushButtonLightRAGAdd_2.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonLightRAGAdd_2.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonLightRAGAdd_2.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonLightRAGAdd_2.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonLightRAGAdd_2.setObjectName("pushButtonLightRAGAdd_2")
@@ -708,7 +708,7 @@ class Ui_SettingsWindow(object):
         self.verticalLayout_33.setSpacing(4)
         self.verticalLayout_33.setObjectName("verticalLayout_33")
         self.agent_combo = QtWidgets.QComboBox(self.frame)
-        self.agent_combo.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.agent_combo.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.agent_combo.setEditable(False)
@@ -735,7 +735,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonAgentsSave.setFont(font)
-        self.pushButtonAgentsSave.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonAgentsSave.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonAgentsSave.setObjectName("pushButtonAgentsSave")
@@ -746,7 +746,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonAgentsCreate.setFont(font)
-        self.pushButtonAgentsCreate.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonAgentsCreate.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonAgentsCreate.setObjectName("pushButtonAgentsCreate")
@@ -757,7 +757,7 @@ class Ui_SettingsWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonAgentsDelete.setFont(font)
-        self.pushButtonAgentsDelete.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonAgentsDelete.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonAgentsDelete.setObjectName("pushButtonAgentsDelete")
         self.horizontalLayout_37.addWidget(self.pushButtonAgentsDelete)

@@ -24,7 +24,7 @@ class Ui_SettingsWindow(object):
         font.setUnderline(True)
         font.setWeight(75)
         self.tabWidget.setFont(font)
-        self.tabWidget.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.tabWidget.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(238, 238, 238);\n"
 "")
         self.tabWidget.setTabPosition(QtWidgets.QTabWidget.North)
@@ -50,6 +50,8 @@ class Ui_SettingsWindow(object):
         self.verticalLayout_32.setObjectName("verticalLayout_32")
         self.verticalLayout.addLayout(self.verticalLayout_32)
         self.listWidgetAgents = QtWidgets.QListWidget(self.tab_9)
+        self.listWidgetAgents.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+"alternate-background-color: rgb(207, 207, 207);")
         self.listWidgetAgents.setAlternatingRowColors(True)
         self.listWidgetAgents.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.listWidgetAgents.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
@@ -290,7 +292,7 @@ class Ui_SettingsWindow(object):
         self.label_lms_model_2.setObjectName("label_lms_model_2")
         self.verticalLayout_25.addWidget(self.label_lms_model_2)
         self.comboBoxLightRAGAgent = QtWidgets.QComboBox(self.tab)
-        self.comboBoxLightRAGAgent.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.comboBoxLightRAGAgent.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.comboBoxLightRAGAgent.setObjectName("comboBoxLightRAGAgent")
@@ -299,7 +301,7 @@ class Ui_SettingsWindow(object):
         self.label_4.setObjectName("label_4")
         self.verticalLayout_25.addWidget(self.label_4)
         self.comboBoxLightRAGEmbeddingsModel = QtWidgets.QComboBox(self.tab)
-        self.comboBoxLightRAGEmbeddingsModel.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.comboBoxLightRAGEmbeddingsModel.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.comboBoxLightRAGEmbeddingsModel.setObjectName("comboBoxLightRAGEmbeddingsModel")
@@ -387,24 +389,24 @@ class Ui_SettingsWindow(object):
         self.label_lms_model.setObjectName("label_lms_model")
         self.verticalLayout_22.addWidget(self.label_lms_model)
         self.lmstudio_ip = QtWidgets.QComboBox(self.tab_6)
-        self.lmstudio_ip.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.lmstudio_ip.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.lmstudio_ip.setObjectName("lmstudio_ip")
         self.verticalLayout_22.addWidget(self.lmstudio_ip)
         self.list_btn = QtWidgets.QPushButton(self.tab_6)
-        self.list_btn.setStyleSheet("background-color: #ef8bce; \n"
+        self.list_btn.setStyleSheet("background-color: @color1;\n"
 "color: black;\n"
 "")
         self.list_btn.setObjectName("list_btn")
         self.verticalLayout_22.addWidget(self.list_btn)
         self.load_btn = QtWidgets.QPushButton(self.tab_6)
-        self.load_btn.setStyleSheet("background-color: #54d88c; \n"
+        self.load_btn.setStyleSheet("background-color: @color2;\n"
 "color: black;")
         self.load_btn.setObjectName("load_btn")
         self.verticalLayout_22.addWidget(self.load_btn)
         self.unload_btn = QtWidgets.QPushButton(self.tab_6)
-        self.unload_btn.setStyleSheet("background-color: #ad6dc8; \n"
+        self.unload_btn.setStyleSheet("background-color: @color3;\n"
 "color: black;\n"
 "")
         self.unload_btn.setObjectName("unload_btn")

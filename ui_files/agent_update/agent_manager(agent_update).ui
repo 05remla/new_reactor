@@ -49,7 +49,7 @@
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">selection-background-color: #be8fd3;
+      <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(238, 238, 238);
 </string>
      </property>
@@ -133,7 +133,7 @@ background-color: rgb(238, 238, 238);
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: #ef8bce; 
+              <string notr="true">background-color: @color1; 
 color: black;
 </string>
              </property>
@@ -162,7 +162,7 @@ color: black;
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: #54d88c; 
+              <string notr="true">background-color: @color2; 
 color: black;
 </string>
              </property>
@@ -184,7 +184,7 @@ color: black;
               </sizepolicy>
              </property>
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #be8fd3;
+              <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
              </property>
@@ -282,7 +282,7 @@ Inference Parameters</string>
            <item>
             <widget class="QSlider" name="temp_slider">
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #54d88c;</string>
+              <string notr="true">selection-background-color: @color2;</string>
              </property>
              <property name="maximum">
               <number>200</number>
@@ -295,7 +295,7 @@ Inference Parameters</string>
            <item>
             <widget class="QSlider" name="top_p_slider">
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #54d88c;</string>
+              <string notr="true">selection-background-color: @color2;</string>
              </property>
              <property name="maximum">
               <number>100</number>
@@ -308,7 +308,7 @@ Inference Parameters</string>
            <item>
             <widget class="QSlider" name="min_p_slider">
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #54d88c;</string>
+              <string notr="true">selection-background-color: @color2;</string>
              </property>
              <property name="maximum">
               <number>100</number>
@@ -321,7 +321,7 @@ Inference Parameters</string>
            <item>
             <widget class="QSlider" name="top_k_slider">
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #54d88c;</string>
+              <string notr="true">selection-background-color: @color2;</string>
              </property>
              <property name="minimum">
               <number>1</number>
@@ -337,7 +337,7 @@ Inference Parameters</string>
            <item>
             <widget class="QSlider" name="repeat_penalty_slider">
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #54d88c;</string>
+              <string notr="true">selection-background-color: @color2;</string>
              </property>
              <property name="minimum">
               <number>100</number>
@@ -353,7 +353,7 @@ Inference Parameters</string>
            <item>
             <widget class="QSlider" name="max_output_horizontalSlider">
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #54d88c;</string>
+              <string notr="true">selection-background-color: @color2;</string>
              </property>
              <property name="maximum">
               <number>30000</number>
@@ -388,7 +388,7 @@ Inference Parameters</string>
          <item>
           <widget class="QComboBox" name="model_combo">
            <property name="styleSheet">
-            <string notr="true">selection-background-color: #be8fd3;
+            <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
            </property>
@@ -422,7 +422,7 @@ background-color: rgb(221, 221, 221);
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: #ad6dc8; 
+              <string notr="true">background-color: @color3; 
 color: black;</string>
              </property>
              <property name="text">
@@ -450,7 +450,7 @@ color: black;</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: #ef8bce; 
+              <string notr="true">background-color: @color1; 
 color: black;
 </string>
              </property>
@@ -479,7 +479,7 @@ color: black;
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: #54d88c; 
+              <string notr="true">background-color: @color2; 
 color: black;
 </string>
              </property>
@@ -508,7 +508,7 @@ color: black;
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: #ad6dc8; 
+              <string notr="true">background-color: @color3; 
 color: black;</string>
              </property>
              <property name="text">
@@ -1427,7 +1427,7 @@ alternate-background-color: rgb(207, 207, 207);</string>
           <item>
            <widget class="QComboBox" name="agent_combo">
             <property name="styleSheet">
-             <string notr="true">selection-background-color: #be8fd3;
+             <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
             </property>
@@ -1474,7 +1474,7 @@ background-color: rgb(221, 221, 221);
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: #54d88c; 
+               <string notr="true">background-color: @color2; 
 color: black;
 </string>
               </property>
@@ -1503,7 +1503,7 @@ color: black;
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: #ef8bce; 
+               <string notr="true">background-color: @color1; 
 color: black;
 </string>
               </property>
@@ -1532,7 +1532,7 @@ color: black;
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: #54d88c; 
+               <string notr="true">background-color: @color2; 
 color: black;
 </string>
               </property>
@@ -1561,7 +1561,7 @@ color: black;
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: #ad6dc8; 
+               <string notr="true">background-color: @color3; 
 color: black;</string>
               </property>
               <property name="text">

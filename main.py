@@ -1,5 +1,9 @@
 import sys
 import os
+from PyQt5.QtWidgets import QApplication, QSplashScreen
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
+
 if getattr(sys, "frozen", False):
     app_dir = os.path.dirname(sys.executable)
 else:
@@ -7,9 +11,24 @@ else:
 sys.path.append(f"{app_dir}/plugins")
 sys.path.append(app_dir)
 
-import da_patch
-da_patch.apply_deepagents_patches()
+# Initialize App & Splash Screen IMMEDIATELY
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 
+# Optimizations
+sys.argv.append("--disable-gpu")
+sys.argv.append("--disable-software-rasterizer")
+sys.argv.append("--limit-fps=30")
+
+app = QApplication(sys.argv)
+splash_image = os.path.join(app_dir, "ui_files", "images", "splash.jpg")
+splash_pixmap = QPixmap(splash_image)
+splash = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
+splash.show()
+app.processEvents()
+
+# NOW import the rest of the application
 import glob
 import json
 import requests
@@ -20,50 +39,31 @@ from datetime import datetime
 from hybrid_shell.hs import time_stamp
 from hybrid_shell.hs import stringx
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QFileDialog, QInputDialog, QMessageBox, QDockWidget, QListWidget, QTextEdit)
-from PyQt5.QtCore import QThread, pyqtSignal, QEvent, QTimer, Qt, QFileSystemWatcher
-
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough
-from langchain_core.tools import StructuredTool
-from deepagents.backends import FilesystemBackend
-# from deepagents.backends import CompositeBackend
-# from deepagents.backends import LocalShellBackend
-# from deepagents.backends import StateBackend
-import toolz
-import parse_markdown_plugin
-
-try:
-    from deepagents import create_deep_agent
-except ImportError:
-    create_deep_agent = None
-
-# High DPI and WebEngine config MUST be set before QWebEngineView imports
-QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
-
-# Optimizations
-sys.argv.append("--disable-gpu")
-sys.argv.append("--disable-software-rasterizer")
-sys.argv.append("--limit-fps=30")
-
-# from PyQt5.QtWebEngineWidgets import QWebEngineSettings
-# settings = QWebEngineSettings.globalSettings()
-# # Disable features you don't need
-# settings.setAttribute(QWebEngineSettings.PluginsEnabled, False)
-# settings.setAttribute(QWebEngineSettings.WebGLEnabled, False)
-# settings.setAttribute(QWebEngineSettings.PlaybackRequiresUserGesture, True) # Stops auto-playing videos
+    QMainWindow, QWidget, QFileDialog, QInputDialog, QMessageBox, QDockWidget, QListWidget, QTextEdit)
+from PyQt5.QtCore import QThread, pyqtSignal, QEvent, QTimer, QFileSystemWatcher
 
 # Import the UI components
 from mainwindow import Ui_MainWindow
 from settings import Ui_SettingsWindow
 from subwindow import Ui_AddDataWindow
-
-
 from mainwindow import MstyCloneApp
+
+def load_and_start():
+    try:
+        import da_patch
+        da_patch.apply_deepagents_patches()
+        import langchain_openai
+        import langchain_core
+        import deepagents
+        import transformers
+        import torch
+    except Exception:
+        pass
+        
+    global window
+    window = MstyCloneApp(config_filename=config_file)
+    window.show()
+    splash.finish(window)
 
 if __name__ == "__main__":
     import argparse
@@ -77,7 +77,5 @@ if __name__ == "__main__":
     else:
         config_file = os.path.abspath(config_filename)
 
-    app = QApplication(sys.argv)
-    window = MstyCloneApp(config_filename=config_file)
-    window.show()
+    QTimer.singleShot(100, load_and_start)
     sys.exit(app.exec_())

@@ -26,7 +26,7 @@
    <string>ITReactor</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">selection-background-color: #be8fd3;
+   <string notr="true">selection-background-color: #7d86b6;
 selection-color: #000000;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -86,7 +86,7 @@ selection-color: #000000;</string>
               </property>
               <property name="styleSheet">
                <string notr="true">background-color: #ad6dc8; 
-selection-background-color: #be8fd3;
+selection-background-color: #7d86b6;
 color: black;</string>
               </property>
              </widget>
@@ -180,7 +180,7 @@ color: black;</string>
               <item>
                <widget class="QComboBox" name="model_combo">
                 <property name="styleSheet">
-                 <string notr="true">selection-background-color: #be8fd3;
+                 <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
                 </property>
@@ -545,7 +545,7 @@ color: black;
                    </sizepolicy>
                   </property>
                   <property name="styleSheet">
-                   <string notr="true">selection-background-color: #be8fd3;
+                   <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
                   </property>
@@ -586,7 +586,7 @@ background-color: rgb(221, 221, 221);
               <item>
                <widget class="QComboBox" name="prompt_combo">
                 <property name="styleSheet">
-                 <string notr="true">selection-background-color: #be8fd3;
+                 <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
                 </property>
@@ -717,7 +717,7 @@ selection-background-color: #b88bcc;</string>
             <item>
              <widget class="QComboBox" name="rag_model_combo">
               <property name="styleSheet">
-               <string notr="true">selection-background-color: #be8fd3;
+               <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
               </property>
@@ -745,7 +745,7 @@ background-color: rgb(221, 221, 221);
             <item>
              <widget class="QComboBox" name="retrieval_mode_combo">
               <property name="styleSheet">
-               <string notr="true">selection-background-color: #be8fd3;
+               <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
               </property>
@@ -796,7 +796,7 @@ Network Settings</string>
              <widget class="QLineEdit" name="lightrag_ip">
               <property name="styleSheet">
                <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;</string>
+selection-background-color: #7d86b6;</string>
               </property>
              </widget>
             </item>
@@ -811,7 +811,7 @@ selection-background-color: #be8fd3;</string>
              <widget class="QLineEdit" name="lightrag_port">
               <property name="styleSheet">
                <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;</string>
+selection-background-color: #7d86b6;</string>
               </property>
              </widget>
             </item>
@@ -826,7 +826,7 @@ selection-background-color: #be8fd3;</string>
              <widget class="QLineEdit" name="lightrag_key">
               <property name="styleSheet">
                <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;</string>
+selection-background-color: #7d86b6;</string>
               </property>
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>
@@ -900,7 +900,7 @@ color: black;
             <item>
              <widget class="QComboBox" name="lmstudio_ip">
               <property name="styleSheet">
-               <string notr="true">selection-background-color: #be8fd3;
+               <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
               </property>
@@ -926,7 +926,7 @@ background-color: rgb(221, 221, 221);
              <widget class="QLineEdit" name="lmstudio_port">
               <property name="styleSheet">
                <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;
+selection-background-color: #7d86b6;
 </string>
               </property>
              </widget>
@@ -942,7 +942,7 @@ selection-background-color: #be8fd3;
              <widget class="QLineEdit" name="lms_model">
               <property name="styleSheet">
                <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;</string>
+selection-background-color: #7d86b6;</string>
               </property>
              </widget>
             </item>
@@ -1020,7 +1020,7 @@ color: black;
             <item>
              <widget class="QComboBox" name="api_base_combo">
               <property name="styleSheet">
-               <string notr="true">selection-background-color: #be8fd3;
+               <string notr="true">selection-background-color: #7d86b6;
 background-color: rgb(221, 221, 221);
 </string>
               </property>
@@ -1049,7 +1049,7 @@ background-color: rgb(221, 221, 221);
              <widget class="QLineEdit" name="api_key_input">
               <property name="styleSheet">
                <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;</string>
+selection-background-color: #7d86b6;</string>
               </property>
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>
@@ -1117,7 +1117,7 @@ color: black;</string>
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">selection-background-color: #be8fd3;</string>
+             <string notr="true">selection-background-color: #7d86b6;</string>
             </property>
             <property name="url" stdset="0">
              <url>
@@ -1332,7 +1332,7 @@ color: black;</string>
            <property name="styleSheet">
             <string notr="true">background-color: #ffffff;
 alternate-background-color: #ffffff;
-selection-background-color: #be8fd3;</string>
+selection-background-color: #7d86b6;</string>
            </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>

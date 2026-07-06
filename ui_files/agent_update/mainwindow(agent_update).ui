@@ -26,7 +26,7 @@
    <string>ITReactor</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">selection-background-color: #be8fd3;
+   <string notr="true">selection-background-color: @selectionbg;
 selection-color: #000000;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -106,8 +106,8 @@ selection-color: #000000;</string>
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ad6dc8; 
-selection-background-color: #be8fd3;
+                  <string notr="true">background-color: @color3; 
+selection-background-color: @selectionbg;
 color: black;</string>
                  </property>
                 </widget>
@@ -127,7 +127,7 @@ color: black;</string>
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: #54d88c; 
+                  <string notr="true">background-color: @color2; 
 color: black;</string>
                  </property>
                  <property name="text">
@@ -162,7 +162,7 @@ color: black;</string>
                   </font>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ef8bce; 
+                  <string notr="true">background-color: @color1; 
 color: black;
 </string>
                  </property>
@@ -256,7 +256,7 @@ color: black;
                  <item>
                   <widget class="QComboBox" name="model_combo">
                    <property name="styleSheet">
-                    <string notr="true">selection-background-color: #be8fd3;
+                    <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
                    </property>
@@ -365,7 +365,7 @@ Inference Parameters:</string>
                    <item>
                     <widget class="QSlider" name="temp_slider">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
+                      <string notr="true">selection-background-color: @color2;</string>
                      </property>
                      <property name="maximum">
                       <number>200</number>
@@ -378,7 +378,7 @@ Inference Parameters:</string>
                    <item>
                     <widget class="QSlider" name="top_p_slider">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
+                      <string notr="true">selection-background-color: @color2;</string>
                      </property>
                      <property name="maximum">
                       <number>100</number>
@@ -391,7 +391,7 @@ Inference Parameters:</string>
                    <item>
                     <widget class="QSlider" name="min_p_slider">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
+                      <string notr="true">selection-background-color: @color2;</string>
                      </property>
                      <property name="maximum">
                       <number>100</number>
@@ -404,7 +404,7 @@ Inference Parameters:</string>
                    <item>
                     <widget class="QSlider" name="top_k_slider">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
+                      <string notr="true">selection-background-color: @color2;</string>
                      </property>
                      <property name="minimum">
                       <number>1</number>
@@ -420,7 +420,7 @@ Inference Parameters:</string>
                    <item>
                     <widget class="QSlider" name="repeat_penalty_slider">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
+                      <string notr="true">selection-background-color: @color2;</string>
                      </property>
                      <property name="minimum">
                       <number>100</number>
@@ -436,7 +436,7 @@ Inference Parameters:</string>
                    <item>
                     <widget class="QSlider" name="max_output_horizontalSlider">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #54d88c;</string>
+                      <string notr="true">selection-background-color: @color2;</string>
                      </property>
                      <property name="maximum">
                       <number>30000</number>
@@ -503,7 +503,7 @@ Inference Parameters:</string>
                       </font>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: #ef8bce; 
+                      <string notr="true">background-color: @color1; 
 color: black;
 </string>
                      </property>
@@ -532,7 +532,7 @@ color: black;
                       </font>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: #54d88c; 
+                      <string notr="true">background-color: @color2; 
 color: black;
 </string>
                      </property>
@@ -554,7 +554,7 @@ color: black;
                       </sizepolicy>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #be8fd3;
+                      <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
                      </property>
@@ -590,7 +590,7 @@ background-color: rgb(221, 221, 221);
                <item>
                 <widget class="QComboBox" name="rag_model_combo">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: #be8fd3;
+                  <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
                  </property>
@@ -618,7 +618,7 @@ background-color: rgb(221, 221, 221);
                <item>
                 <widget class="QComboBox" name="retrieval_mode_combo">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: #be8fd3;
+                  <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
                  </property>
@@ -669,7 +669,7 @@ Network Settings</string>
                 <widget class="QLineEdit" name="lightrag_key">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;</string>
+selection-background-color: @selectionbg;</string>
                  </property>
                  <property name="echoMode">
                   <enum>QLineEdit::Password</enum>
@@ -698,7 +698,7 @@ selection-background-color: #be8fd3;</string>
                <item>
                 <widget class="QPushButton" name="add_data_btn">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ef8bce; 
+                  <string notr="true">background-color: @color1; 
 color: black;
 </string>
                  </property>
@@ -746,7 +746,7 @@ color: black;
                <item>
                 <widget class="QComboBox" name="lmstudio_ip">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: #be8fd3;
+                  <string notr="true">selection-background-color: @selectionbg;
 background-color: rgb(221, 221, 221);
 </string>
                  </property>
@@ -772,7 +772,7 @@ background-color: rgb(221, 221, 221);
                 <widget class="QLineEdit" name="lmstudio_port">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #be8fd3;
+selection-background-color: @selectionbg;
 </string>
                  </property>
                 </widget>
@@ -790,7 +790,7 @@ selection-background-color: #be8fd3;
                <item>
                 <widget class="QPushButton" name="list_btn">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ef8bce; 
+                  <string notr="true">background-color: @color1; 
 color: black;
 </string>
                  </property>
@@ -802,7 +802,7 @@ color: black;
                <item>
                 <widget class="QPushButton" name="load_btn">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #54d88c; 
+                  <string notr="true">background-color: @color2; 
 color: black;</string>
                  </property>
                  <property name="text">
@@ -813,7 +813,7 @@ color: black;</string>
                <item>
                 <widget class="QPushButton" name="unload_btn">
                  <property name="styleSheet">
-                  <string notr="true">background-color: #ad6dc8; 
+                  <string notr="true">background-color: @color3; 
 color: black;
 </string>
                  </property>
@@ -912,7 +912,7 @@ color: black;
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">background-color: #54d88c; 
+                 <string notr="true">background-color: @color2; 
 color: black;
 </string>
                 </property>
@@ -940,7 +940,7 @@ color: black;
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">selection-background-color: #be8fd3;</string>
+                 <string notr="true">selection-background-color: @selectionbg;</string>
                 </property>
                 <property name="url" stdset="0">
                  <url>
@@ -1011,7 +1011,7 @@ color: black;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">selection-background-color: #be8fd3;</string>
+               <string notr="true">selection-background-color: @selectionbg;</string>
               </property>
               <property name="url" stdset="0">
                <url>
@@ -1251,7 +1251,7 @@ color: black;
            <property name="styleSheet">
             <string notr="true">background-color: #ffffff;
 alternate-background-color: #ffffff;
-selection-background-color: #be8fd3;</string>
+selection-background-color: @selectionbg;</string>
            </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
@@ -1329,7 +1329,7 @@ p, li { white-space: pre-wrap; }
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: #ef8bce; 
+            <string notr="true">background-color: @color1; 
 color: black;
 </string>
            </property>
@@ -1367,7 +1367,7 @@ color: black;
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: #ad6dc8; 
+            <string notr="true">background-color: @color3; 
 color: black;
 </string>
            </property>
@@ -1402,7 +1402,7 @@ color: black;
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: #54d88c; 
+            <string notr="true">background-color: @color2; 
 color: black;</string>
            </property>
            <property name="text">

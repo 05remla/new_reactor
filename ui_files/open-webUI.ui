@@ -31,7 +31,7 @@
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">selection-background-color: #be8fd3;</string>
+        <string notr="true">selection-background-color: #7d86b6;</string>
        </property>
        <property name="url" stdset="0">
         <url>

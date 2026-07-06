@@ -84,7 +84,7 @@ class Ui_Form(object):
         self.pushButtonSynBrain = QtWidgets.QPushButton(Form)
         self.pushButtonSynBrain.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonSynBrain.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonSynBrain.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonSynBrain.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonSynBrain.setObjectName("pushButtonSynBrain")
@@ -92,7 +92,7 @@ class Ui_Form(object):
         self.pushButtonLTM = QtWidgets.QPushButton(Form)
         self.pushButtonLTM.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonLTM.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonLTM.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonLTM.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonLTM.setObjectName("pushButtonLTM")
@@ -100,7 +100,7 @@ class Ui_Form(object):
         self.pushButtonSTM = QtWidgets.QPushButton(Form)
         self.pushButtonSTM.setMinimumSize(QtCore.QSize(0, 20))
         self.pushButtonSTM.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.pushButtonSTM.setStyleSheet("background-color: #ad6dc8; \n"
+        self.pushButtonSTM.setStyleSheet("background-color: @color3; \n"
 "color: black;")
         self.pushButtonSTM.setObjectName("pushButtonSTM")
         self.horizontalLayout_2.addWidget(self.pushButtonSTM)

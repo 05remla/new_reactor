@@ -20,27 +20,10 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFileDialog, QInputDialog, QMessageBox, QDockWidget, QListWidget, QTextEdit)
 from PyQt5.QtCore import QThread, pyqtSignal, QEvent, QTimer, Qt, QFileSystemWatcher
 
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough
-from langchain_core.tools import StructuredTool
-from deepagents.backends import FilesystemBackend
-# from deepagents.backends import CompositeBackend
-# from deepagents.backends import LocalShellBackend
-# from deepagents.backends import StateBackend
-import toolz
-import parse_markdown_plugin
 
-try:
-    from deepagents import create_deep_agent
-except ImportError:
-    create_deep_agent = None
 
 # High DPI and WebEngine config MUST be set before QWebEngineView imports
-QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
+# (These are now set in main.py before QApplication is created)
 
 # Optimizations
 sys.argv.append("--disable-gpu")
@@ -61,13 +44,36 @@ from subwindow import Ui_AddDataWindow
 
 
 from config_manager import ConfigManager
-from generation_thread import GenerationThread
 from settings import SettingsDialog
+
+class SlashCommandPopup(QListWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
+        self.setFocusPolicy(Qt.NoFocus)
+        self.setStyleSheet("background-color: #2b2b2b; color: #a9b7c6; font-size: 13px; border: 1px solid #555;")
+        self.commands = ["/goal", "/schedule", "/browser", "/continue", "/grill-me", "/teamwork-preview"]
+        self.hide()
+
+    def filter_commands(self, prefix):
+        self.clear()
+        matches = [cmd for cmd in self.commands if cmd.startswith(prefix.lower())]
+        for match in matches:
+            self.addItem(match)
+        if matches:
+            self.setCurrentRow(0)
+            # Resize based on content
+            self.resize(200, min(self.count() * 25 + 5, 150))
+            return True
+        return False
+
 class MstyCloneApp(QMainWindow):
     def __init__(self, config_filename="config.json"):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        import theme_manager
+        theme_manager.apply_theme(self)
 
         self.prompts_dir = os.path.join(app_dir, "prompts")
         self.sessions_dir = os.path.join(app_dir, "sessions")
@@ -160,6 +166,19 @@ class MstyCloneApp(QMainWindow):
         self._update_context_len()
         self.is_loading = False
         self.load_session(self.ui.comboBoxSessions.currentText())
+
+        self.slash_popup = SlashCommandPopup(self)
+        self.slash_popup.itemClicked.connect(self._on_slash_command_clicked)
+
+    def _on_slash_command_clicked(self, item):
+        self._commit_slash_command(item.text())
+
+    def _commit_slash_command(self, cmd):
+        self.ui.input_box.setPlainText(cmd + " ")
+        cursor = self.ui.input_box.textCursor()
+        cursor.movePosition(cursor.End)
+        self.ui.input_box.setTextCursor(cursor)
+        self.slash_popup.hide()
 
     def _start_phoenix(self):
         try:
@@ -1074,13 +1093,35 @@ class MstyCloneApp(QMainWindow):
             return True
 
         if obj is self.ui.input_box and event.type() == QEvent.KeyPress:
+            if hasattr(self, 'slash_popup') and self.slash_popup.isVisible():
+                if event.key() == Qt.Key_Up:
+                    row = self.slash_popup.currentRow()
+                    if row > 0:
+                        self.slash_popup.setCurrentRow(row - 1)
+                    return True
+                elif event.key() == Qt.Key_Down:
+                    row = self.slash_popup.currentRow()
+                    if row < self.slash_popup.count() - 1:
+                        self.slash_popup.setCurrentRow(row + 1)
+                    return True
+                elif event.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Tab):
+                    if self.slash_popup.currentItem():
+                        self._commit_slash_command(self.slash_popup.currentItem().text())
+                    return True
+                elif event.key() == Qt.Key_Escape:
+                    self.slash_popup.hide()
+                    return True
+                elif event.key() == Qt.Key_Space:
+                    self.slash_popup.hide()
+                    # Do not return True so the space character is actually typed
+
             # Ctrl+Enter to send message
             if event.key() == Qt.Key_Return and (event.modifiers() & Qt.ControlModifier):
                 if not self.is_generating:
                     self.send_message()
                 return True
             # Scroll User Messages Ctrl+up/down
-            elif event.key() == Qt.Key_Up  and (event.modifiers() & Qt.ControlModifier):
+            elif event.key() == Qt.Key_Up and (event.modifiers() & Qt.ControlModifier):
                 if self.user_message_history and self.history_index > 0:
                     self.history_index -= 1
                     self.ui.input_box.setPlainText(self.user_message_history[self.history_index])
@@ -1099,6 +1140,29 @@ class MstyCloneApp(QMainWindow):
                     self.history_index += 1
                     self.ui.input_box.clear()
                 return True
+
+        if obj is self.ui.input_box and event.type() == QEvent.KeyRelease:
+            # Ignore navigation keys so we don't accidentally reset the popup selection
+            if event.key() in (Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right, Qt.Key_Return, Qt.Key_Enter, Qt.Key_Escape):
+                return super().eventFilter(obj, event)
+
+            text = self.ui.input_box.toPlainText()
+            # Only show if starts with slash and no space has been typed yet
+            if text.startswith("/") and " " not in text:
+                prefix = text
+                if hasattr(self, 'slash_popup'):
+                    if self.slash_popup.filter_commands(prefix):
+                        rect = self.ui.input_box.cursorRect()
+                        from PyQt5.QtCore import QPoint
+                        pt = self.ui.input_box.viewport().mapToGlobal(rect.bottomLeft())
+                        self.slash_popup.move(pt + QPoint(0, 10))
+                        self.slash_popup.show()
+                    else:
+                        self.slash_popup.hide()
+            else:
+                if hasattr(self, 'slash_popup'):
+                    self.slash_popup.hide()
+
         return super().eventFilter(obj, event)
 
     def _apply_provider(self):
@@ -1242,12 +1306,19 @@ class MstyCloneApp(QMainWindow):
     def send_message(self):
         user_text = self.ui.input_box.toPlainText()
         if not user_text: return
+        
+        # Handle /continue specifically
+        if user_text.strip() == "/continue":
+            user_text = "Please continue where you left off."
 
         if not self.user_message_history or self.user_message_history[-1] != user_text:
             self.user_message_history.append(user_text)
         self.history_index = len(self.user_message_history)
 
         self.ui.input_box.clear()
+        if hasattr(self, 'slash_popup'):
+            self.slash_popup.hide()
+
         self.write_to_chat(f"🧑 YOU:   \n{user_text}", is_new_message=True)
         self.messages.append({"role": "user", "content": user_text, "name": "User"})
         
@@ -1281,6 +1352,7 @@ class MstyCloneApp(QMainWindow):
         }
 
         staged_files = getattr(self, 'staged_files', [])
+        from generation_thread import GenerationThread
         self.generation_thread = GenerationThread(
             model=self.ui.agent_combo.currentText().strip(),
             sys_prompt=getattr(self, '_active_sys_prompt', ""),

@@ -20,7 +20,7 @@ class Ui_MainWindow(object):
         font.setBold(False)
         font.setWeight(50)
         MainWindow.setFont(font)
-        MainWindow.setStyleSheet("selection-background-color: #be8fd3;\n"
+        MainWindow.setStyleSheet("selection-background-color: @selectionbg;\n"
 "selection-color: #000000;")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -61,15 +61,15 @@ class Ui_MainWindow(object):
         self.comboBoxSessions.setMinimumSize(QtCore.QSize(280, 28))
         self.comboBoxSessions.setMaximumSize(QtCore.QSize(280, 28))
         self.comboBoxSessions.setBaseSize(QtCore.QSize(0, 0))
-        self.comboBoxSessions.setStyleSheet("background-color: #ad6dc8; \n"
-"selection-background-color: #be8fd3;\n"
+        self.comboBoxSessions.setStyleSheet("background-color: @color3; \n"
+"selection-background-color: @selectionbg;\n"
 "color: black;")
         self.comboBoxSessions.setObjectName("comboBoxSessions")
         self.horizontalLayout_5.addWidget(self.comboBoxSessions)
         self.refresh_sessions_btn = QtWidgets.QPushButton(self.widget)
         self.refresh_sessions_btn.setMinimumSize(QtCore.QSize(40, 28))
         self.refresh_sessions_btn.setMaximumSize(QtCore.QSize(40, 28))
-        self.refresh_sessions_btn.setStyleSheet("background-color: #54d88c; \n"
+        self.refresh_sessions_btn.setStyleSheet("background-color: @color2; \n"
 "color: black;")
         self.refresh_sessions_btn.setObjectName("refresh_sessions_btn")
         self.horizontalLayout_5.addWidget(self.refresh_sessions_btn)
@@ -83,7 +83,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonAutoRename.setFont(font)
-        self.pushButtonAutoRename.setStyleSheet("background-color: #ef8bce; \n"
+        self.pushButtonAutoRename.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.pushButtonAutoRename.setObjectName("pushButtonAutoRename")
@@ -127,7 +127,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         self.agent_combo = QtWidgets.QComboBox(self.tab_model)
-        self.agent_combo.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.agent_combo.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.agent_combo.setEditable(False)
@@ -147,7 +147,7 @@ class Ui_MainWindow(object):
         self.plainTextEditAgentDescription.setObjectName("plainTextEditAgentDescription")
         self.verticalLayout_model.addWidget(self.plainTextEditAgentDescription)
         self.pushButtonManageAgents = QtWidgets.QPushButton(self.tab_model)
-        self.pushButtonManageAgents.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonManageAgents.setStyleSheet("background-color: @color2; \n"
 "color: black;")
         self.pushButtonManageAgents.setObjectName("pushButtonManageAgents")
         self.verticalLayout_model.addWidget(self.pushButtonManageAgents)
@@ -178,7 +178,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBoxInferrancePreset.sizePolicy().hasHeightForWidth())
         self.comboBoxInferrancePreset.setSizePolicy(sizePolicy)
-        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.comboBoxInferrancePreset.setObjectName("comboBoxInferrancePreset")
@@ -201,7 +201,7 @@ class Ui_MainWindow(object):
         self.label_lms_ip.setObjectName("label_lms_ip")
         self.verticalLayout_lmstudio.addWidget(self.label_lms_ip)
         self.lmstudio_ip = QtWidgets.QComboBox(self.tab_lmstudio)
-        self.lmstudio_ip.setStyleSheet("selection-background-color: #be8fd3;\n"
+        self.lmstudio_ip.setStyleSheet("selection-background-color: @selectionbg;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.lmstudio_ip.setObjectName("lmstudio_ip")
@@ -216,7 +216,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_lmstudio.addWidget(self.label_lms_port)
         self.lmstudio_port = QtWidgets.QLineEdit(self.tab_lmstudio)
         self.lmstudio_port.setStyleSheet("background-color: rgb(221, 221, 221);\n"
-"selection-background-color: #be8fd3;\n"
+"selection-background-color: @selectionbg;\n"
 "")
         self.lmstudio_port.setObjectName("lmstudio_port")
         self.verticalLayout_lmstudio.addWidget(self.lmstudio_port)
@@ -227,18 +227,18 @@ class Ui_MainWindow(object):
         self.lms_model.setObjectName("lms_model")
         self.verticalLayout_lmstudio.addWidget(self.lms_model)
         self.list_btn = QtWidgets.QPushButton(self.tab_lmstudio)
-        self.list_btn.setStyleSheet("background-color: #ef8bce; \n"
+        self.list_btn.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.list_btn.setObjectName("list_btn")
         self.verticalLayout_lmstudio.addWidget(self.list_btn)
         self.load_btn = QtWidgets.QPushButton(self.tab_lmstudio)
-        self.load_btn.setStyleSheet("background-color: #54d88c; \n"
+        self.load_btn.setStyleSheet("background-color: @color2; \n"
 "color: black;")
         self.load_btn.setObjectName("load_btn")
         self.verticalLayout_lmstudio.addWidget(self.load_btn)
         self.unload_btn = QtWidgets.QPushButton(self.tab_lmstudio)
-        self.unload_btn.setStyleSheet("background-color: #ad6dc8; \n"
+        self.unload_btn.setStyleSheet("background-color: @color3; \n"
 "color: black;\n"
 "")
         self.unload_btn.setObjectName("unload_btn")
@@ -269,7 +269,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pushButtonParseMD.setFont(font)
-        self.pushButtonParseMD.setStyleSheet("background-color: #54d88c; \n"
+        self.pushButtonParseMD.setStyleSheet("background-color: @color2; \n"
 "color: black;\n"
 "")
         self.pushButtonParseMD.setObjectName("pushButtonParseMD")
@@ -284,7 +284,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.chat_display.sizePolicy().hasHeightForWidth())
         self.chat_display.setSizePolicy(sizePolicy)
         self.chat_display.setMinimumSize(QtCore.QSize(400, 0))
-        self.chat_display.setStyleSheet("selection-background-color: #be8fd3;")
+        self.chat_display.setStyleSheet("selection-background-color: @selectionbg;")
         self.chat_display.setProperty("url", QtCore.QUrl("about:blank"))
         self.chat_display.setObjectName("chat_display")
         self.verticalLayout_8.addWidget(self.chat_display)
@@ -370,7 +370,7 @@ class Ui_MainWindow(object):
         self.input_box.setFont(font)
         self.input_box.setStyleSheet("background-color: #ffffff;\n"
 "alternate-background-color: #ffffff;\n"
-"selection-background-color: #be8fd3;")
+"selection-background-color: @selectionbg;")
         self.input_box.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.input_box.setFrameShadow(QtWidgets.QFrame.Plain)
         self.input_box.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -395,7 +395,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.clear_btn.setFont(font)
-        self.clear_btn.setStyleSheet("background-color: #ef8bce; \n"
+        self.clear_btn.setStyleSheet("background-color: @color1; \n"
 "color: black;\n"
 "")
         self.clear_btn.setObjectName("clear_btn")
@@ -412,7 +412,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.stop_btn.setFont(font)
-        self.stop_btn.setStyleSheet("background-color: #ad6dc8; \n"
+        self.stop_btn.setStyleSheet("background-color: @color3; \n"
 "color: black;\n"
 "")
         self.stop_btn.setObjectName("stop_btn")
@@ -428,7 +428,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.send_btn.setFont(font)
-        self.send_btn.setStyleSheet("background-color: #54d88c; \n"
+        self.send_btn.setStyleSheet("background-color: @color2; \n"
 "color: black;")
         self.send_btn.setFlat(False)
         self.send_btn.setObjectName("send_btn")
