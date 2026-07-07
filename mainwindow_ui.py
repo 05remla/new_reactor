@@ -62,7 +62,7 @@ class Ui_MainWindow(object):
         self.comboBoxSessions.setMaximumSize(QtCore.QSize(280, 28))
         self.comboBoxSessions.setBaseSize(QtCore.QSize(0, 0))
         self.comboBoxSessions.setStyleSheet("background-color: @color3; \n"
-"selection-background-color: @selectionbg;\n"
+"selection-background-color: #7d86b6;\n"
 "color: black;")
         self.comboBoxSessions.setObjectName("comboBoxSessions")
         self.horizontalLayout_5.addWidget(self.comboBoxSessions)
@@ -127,7 +127,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         self.agent_combo = QtWidgets.QComboBox(self.tab_model)
-        self.agent_combo.setStyleSheet("selection-background-color: @selectionbg;\n"
+        self.agent_combo.setStyleSheet("selection-background-color: #7d86b6;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.agent_combo.setEditable(False)
@@ -178,7 +178,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBoxInferrancePreset.sizePolicy().hasHeightForWidth())
         self.comboBoxInferrancePreset.setSizePolicy(sizePolicy)
-        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: @selectionbg;\n"
+        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: #7d86b6;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.comboBoxInferrancePreset.setObjectName("comboBoxInferrancePreset")
@@ -201,7 +201,7 @@ class Ui_MainWindow(object):
         self.label_lms_ip.setObjectName("label_lms_ip")
         self.verticalLayout_lmstudio.addWidget(self.label_lms_ip)
         self.lmstudio_ip = QtWidgets.QComboBox(self.tab_lmstudio)
-        self.lmstudio_ip.setStyleSheet("selection-background-color: @selectionbg;\n"
+        self.lmstudio_ip.setStyleSheet("selection-background-color: #7d86b6;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.lmstudio_ip.setObjectName("lmstudio_ip")
@@ -216,7 +216,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_lmstudio.addWidget(self.label_lms_port)
         self.lmstudio_port = QtWidgets.QLineEdit(self.tab_lmstudio)
         self.lmstudio_port.setStyleSheet("background-color: rgb(221, 221, 221);\n"
-"selection-background-color: @selectionbg;\n"
+"selection-background-color: #7d86b6;\n"
 "")
         self.lmstudio_port.setObjectName("lmstudio_port")
         self.verticalLayout_lmstudio.addWidget(self.lmstudio_port)
@@ -284,7 +284,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.chat_display.sizePolicy().hasHeightForWidth())
         self.chat_display.setSizePolicy(sizePolicy)
         self.chat_display.setMinimumSize(QtCore.QSize(400, 0))
-        self.chat_display.setStyleSheet("selection-background-color: @selectionbg;")
+        self.chat_display.setStyleSheet("selection-background-color: #7d86b6;")
         self.chat_display.setProperty("url", QtCore.QUrl("about:blank"))
         self.chat_display.setObjectName("chat_display")
         self.verticalLayout_8.addWidget(self.chat_display)
@@ -370,7 +370,7 @@ class Ui_MainWindow(object):
         self.input_box.setFont(font)
         self.input_box.setStyleSheet("background-color: #ffffff;\n"
 "alternate-background-color: #ffffff;\n"
-"selection-background-color: @selectionbg;")
+"selection-background-color: #7d86b6;")
         self.input_box.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.input_box.setFrameShadow(QtWidgets.QFrame.Plain)
         self.input_box.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -383,23 +383,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_11.setObjectName("horizontalLayout_11")
         spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_11.addItem(spacerItem5)
-        self.clear_btn = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.clear_btn.setEnabled(True)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.clear_btn.sizePolicy().hasHeightForWidth())
-        self.clear_btn.setSizePolicy(sizePolicy)
-        self.clear_btn.setMinimumSize(QtCore.QSize(0, 20))
-        self.clear_btn.setMaximumSize(QtCore.QSize(16777215, 20))
-        font = QtGui.QFont()
-        font.setPointSize(8)
-        self.clear_btn.setFont(font)
-        self.clear_btn.setStyleSheet("background-color: @color1; \n"
-"color: black;\n"
-"")
-        self.clear_btn.setObjectName("clear_btn")
-        self.horizontalLayout_11.addWidget(self.clear_btn)
         self.stop_btn = QtWidgets.QPushButton(self.dockWidgetContents)
         self.stop_btn.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -581,7 +564,6 @@ class Ui_MainWindow(object):
 "</style></head><body style=\" font-family:\'Sans Serif\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.input_box.setPlaceholderText(_translate("MainWindow", "[ctrl] + up for recall      //      [ctrl] + [enter] to invoke model     //     drag and drop documents here"))
-        self.clear_btn.setText(_translate("MainWindow", "Clear"))
         self.stop_btn.setText(_translate("MainWindow", "Stop"))
         self.send_btn.setText(_translate("MainWindow", "Send"))
         self.actionSettings.setText(_translate("MainWindow", "Settings"))

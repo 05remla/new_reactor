@@ -306,7 +306,8 @@ class MstyCloneApp(QMainWindow):
             for file_path in self.staged_files:
                 lbl = QLabel()
                 lbl.setPixmap(QPixmap(":/images/wordpad_32x.png"))
-                lbl.setToolTip(f"{os.path.basename(file_path)}\n(Right-click for options)")
+                lbl.setStyleSheet("margin-right: 5px;")
+                lbl.setToolTip(f"{os.path.basename(file_path)}")
                 lbl.setContextMenuPolicy(Qt.CustomContextMenu)
                 lbl.customContextMenuRequested.connect(lambda pos, fp=file_path: self._show_staged_file_menu(pos, fp))
                 
@@ -860,9 +861,10 @@ class MstyCloneApp(QMainWindow):
         self.ui.comboBoxSessions.currentTextChanged.connect(self.comboBoxSessionsSignal)
         
         # Buttons
-        self.ui.clear_btn.clicked.connect(self.clear_chat)
         self.ui.send_btn.clicked.connect(self.send_message)
         self.ui.stop_btn.clicked.connect(self.stop_generation)
+        if hasattr(self.ui, 'unload_btn'):
+            self.ui.unload_btn.clicked.connect(self.unload_model)
         if hasattr(self.ui, 'pushButtonAutoRename'):
             self.ui.pushButtonAutoRename.clicked.connect(self._llm_rename_session)
         
@@ -1375,13 +1377,89 @@ class MstyCloneApp(QMainWindow):
         self.generation_thread.chunk_received.connect(lambda t: self.write_to_chat(t, False))
         self.generation_thread.error_occurred.connect(self._on_generation_error)
         self.generation_thread.finished.connect(self._on_generation_finished)
+        
+        self.toggle_input(False)
         self.generation_thread.start()
 
     def stop_generation(self):
         if self.generation_thread and self.generation_thread.isRunning():
             self.generation_thread.cancel_flag = True
+            
+            try:
+                import threading
+                import requests
+                
+                agent_name = self.ui.agent_combo.currentText().strip()
+                agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+                api_base = agent_cfg.get("provider_url") or self.config.get("api_base", "")
+                lmstudio_url = self.config.get("lmstudio_url", "")
+                
+                url_to_check = api_base if api_base else lmstudio_url
+                if url_to_check:
+                    import re
+                    match = re.match(r'(https?://[^/:]+(?::\d+)?)/?', url_to_check)
+                    if match:
+                        base_server_url = match.group(1)
+                        
+                        def force_unload():
+                            try:
+                                models_resp = requests.get(f"{base_server_url}/v1/models", timeout=2)
+                                if models_resp.status_code == 200:
+                                    data = models_resp.json()
+                                    for model in data.get("data", []):
+                                        m_id = model.get("id")
+                                        if m_id:
+                                            requests.post(
+                                                f"{base_server_url}/api/v1/models/unload",
+                                                json={"instance_id": m_id},
+                                                timeout=2
+                                            )
+                            except Exception:
+                                pass
+                                
+                        threading.Thread(target=force_unload, daemon=True).start()
+            except Exception:
+                pass
+                
             self.write_to_chat(" 🛑 **[Cancelled]**")
             self.toggle_input(True)
+
+    def unload_model(self):
+        try:
+            import threading
+            import requests
+            
+            agent_name = self.ui.agent_combo.currentText().strip()
+            agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+            api_base = agent_cfg.get("provider_url") or self.config.get("api_base", "")
+            lmstudio_url = self.config.get("lmstudio_url", "")
+            
+            url_to_check = api_base if api_base else lmstudio_url
+            if url_to_check:
+                import re
+                match = re.match(r'(https?://[^/:]+(?::\d+)?)/?', url_to_check)
+                if match:
+                    base_server_url = match.group(1)
+                    
+                    def force_unload():
+                        try:
+                            models_resp = requests.get(f"{base_server_url}/v1/models", timeout=2)
+                            if models_resp.status_code == 200:
+                                data = models_resp.json()
+                                for model in data.get("data", []):
+                                    m_id = model.get("id")
+                                    if m_id:
+                                        requests.post(
+                                            f"{base_server_url}/api/v1/models/unload",
+                                            json={"instance_id": m_id},
+                                            timeout=2
+                                        )
+                        except Exception:
+                            pass
+                            
+                    threading.Thread(target=force_unload, daemon=True).start()
+        except Exception:
+            pass
 
     def _on_generation_error(self, err_msg):
         self.write_to_chat(err_msg)

@@ -8,7 +8,7 @@
         "top_p": 0.96,
         "min_p": 0.05,
         "top_k": 20,
-        "repeat_penalty": 1.14,
+        "repeat_penalty": 1.15,
         "max_tokens": 0
     },
     "enable_max_tool_calls": true,

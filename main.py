@@ -59,7 +59,7 @@ def load_and_start():
         import torch
     except Exception:
         pass
-        
+
     global window
     window = MstyCloneApp(config_filename=config_file)
     window.show()
