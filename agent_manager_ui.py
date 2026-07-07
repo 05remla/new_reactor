@@ -15,6 +15,8 @@ class Ui_SettingsWindow(object):
     def setupUi(self, SettingsWindow):
         SettingsWindow.setObjectName("SettingsWindow")
         SettingsWindow.resize(593, 779)
+        SettingsWindow.setStyleSheet("selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.gridLayout_3 = QtWidgets.QGridLayout(SettingsWindow)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.horizontalLayout = QtWidgets.QHBoxLayout()
@@ -35,7 +37,7 @@ class Ui_SettingsWindow(object):
         font.setUnderline(True)
         font.setWeight(75)
         self.tabWidget.setFont(font)
-        self.tabWidget.setStyleSheet("selection-background-color: @selectionbg;\n"
+        self.tabWidget.setStyleSheet("selection-background-color: #7d86b6;\n"
 "background-color: rgb(238, 238, 238);\n"
 "")
         self.tabWidget.setTabPosition(QtWidgets.QTabWidget.North)
@@ -103,7 +105,7 @@ class Ui_SettingsWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBoxInferrancePreset.sizePolicy().hasHeightForWidth())
         self.comboBoxInferrancePreset.setSizePolicy(sizePolicy)
-        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: @selectionbg;\n"
+        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: #7d86b6;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.comboBoxInferrancePreset.setObjectName("comboBoxInferrancePreset")
@@ -195,7 +197,7 @@ class Ui_SettingsWindow(object):
         self.verticalLayout_32.setSpacing(4)
         self.verticalLayout_32.setObjectName("verticalLayout_32")
         self.model_combo = QtWidgets.QComboBox(self.tab_9)
-        self.model_combo.setStyleSheet("selection-background-color: @selectionbg;\n"
+        self.model_combo.setStyleSheet("selection-background-color: #7d86b6;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.model_combo.setEditable(False)
@@ -708,7 +710,7 @@ class Ui_SettingsWindow(object):
         self.verticalLayout_33.setSpacing(4)
         self.verticalLayout_33.setObjectName("verticalLayout_33")
         self.agent_combo = QtWidgets.QComboBox(self.frame)
-        self.agent_combo.setStyleSheet("selection-background-color: @selectionbg;\n"
+        self.agent_combo.setStyleSheet("selection-background-color: #7d86b6;\n"
 "background-color: rgb(221, 221, 221);\n"
 "")
         self.agent_combo.setEditable(False)

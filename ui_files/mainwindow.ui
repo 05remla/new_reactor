@@ -23,7 +23,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>ITReactor</string>
+   <string>Foundry Qt</string>
   </property>
   <property name="styleSheet">
    <string notr="true">selection-background-color: @selectionbg;
@@ -107,7 +107,6 @@ selection-color: #000000;</string>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">background-color: @color3; 
-selection-background-color: #7d86b6;
 color: black;</string>
                  </property>
                 </widget>
@@ -258,9 +257,9 @@ color: black;
                    <item>
                     <widget class="QComboBox" name="agent_combo">
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #7d86b6;
-background-color: rgb(221, 221, 221);
-</string>
+                      <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
                      </property>
                      <property name="editable">
                       <bool>false</bool>
@@ -358,9 +357,9 @@ color: black;</string>
                       </sizepolicy>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">selection-background-color: #7d86b6;
-background-color: rgb(221, 221, 221);
-</string>
+                      <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
                      </property>
                     </widget>
                    </item>
@@ -407,8 +406,7 @@ background-color: rgb(221, 221, 221);
                <item>
                 <widget class="QComboBox" name="lmstudio_ip">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: #7d86b6;
-background-color: rgb(221, 221, 221);
+                  <string notr="true">background-color: rgb(221, 221, 221);
 </string>
                  </property>
                 </widget>
@@ -433,7 +431,6 @@ background-color: rgb(221, 221, 221);
                 <widget class="QLineEdit" name="lmstudio_port">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(221, 221, 221);
-selection-background-color: #7d86b6;
 </string>
                  </property>
                 </widget>
@@ -495,6 +492,22 @@ color: black;
                   </size>
                  </property>
                 </spacer>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tab">
+              <attribute name="title">
+               <string>Project Tree</string>
+              </attribute>
+              <layout class="QGridLayout" name="gridLayout_4">
+               <item row="0" column="0">
+                <widget class="QTreeWidget" name="treeWidget">
+                 <column>
+                  <property name="text">
+                   <string notr="true">1</string>
+                  </property>
+                 </column>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -591,7 +604,7 @@ color: black;
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">selection-background-color: #7d86b6;</string>
+             <string notr="true"/>
             </property>
             <property name="url" stdset="0">
              <url>
@@ -653,6 +666,7 @@ color: black;
     <addaction name="menuConfig"/>
     <addaction name="menuPlugins_2"/>
     <addaction name="actionView_Agent_Todos"/>
+    <addaction name="actionStart_Profiling"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -803,8 +817,7 @@ color: black;
            </property>
            <property name="styleSheet">
             <string notr="true">background-color: #ffffff;
-alternate-background-color: #ffffff;
-selection-background-color: #7d86b6;</string>
+alternate-background-color: #ffffff;</string>
            </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
@@ -1132,6 +1145,14 @@ color: black;</string>
   <action name="actionShortcuts">
    <property name="text">
     <string>Shortcuts</string>
+   </property>
+  </action>
+  <action name="actionStart_Profiling">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Start Profiling</string>
    </property>
   </action>
  </widget>

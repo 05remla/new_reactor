@@ -15,6 +15,8 @@ class Ui_SettingsWindow(object):
     def setupUi(self, SettingsWindow):
         SettingsWindow.setObjectName("SettingsWindow")
         SettingsWindow.resize(561, 656)
+        SettingsWindow.setStyleSheet("selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.gridLayout_4 = QtWidgets.QGridLayout(SettingsWindow)
         self.gridLayout_4.setObjectName("gridLayout_4")
         self.tabWidget = QtWidgets.QTabWidget(SettingsWindow)

@@ -62,7 +62,6 @@ class Ui_MainWindow(object):
         self.comboBoxSessions.setMaximumSize(QtCore.QSize(280, 28))
         self.comboBoxSessions.setBaseSize(QtCore.QSize(0, 0))
         self.comboBoxSessions.setStyleSheet("background-color: @color3; \n"
-"selection-background-color: #7d86b6;\n"
 "color: black;")
         self.comboBoxSessions.setObjectName("comboBoxSessions")
         self.horizontalLayout_5.addWidget(self.comboBoxSessions)
@@ -127,9 +126,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         self.agent_combo = QtWidgets.QComboBox(self.tab_model)
-        self.agent_combo.setStyleSheet("selection-background-color: #7d86b6;\n"
-"background-color: rgb(221, 221, 221);\n"
-"")
+        self.agent_combo.setStyleSheet("background-color: rgb(221, 221, 221);\n"
+"selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.agent_combo.setEditable(False)
         self.agent_combo.setFrame(True)
         self.agent_combo.setObjectName("agent_combo")
@@ -178,9 +177,9 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBoxInferrancePreset.sizePolicy().hasHeightForWidth())
         self.comboBoxInferrancePreset.setSizePolicy(sizePolicy)
-        self.comboBoxInferrancePreset.setStyleSheet("selection-background-color: #7d86b6;\n"
-"background-color: rgb(221, 221, 221);\n"
-"")
+        self.comboBoxInferrancePreset.setStyleSheet("background-color: rgb(221, 221, 221);\n"
+"selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.comboBoxInferrancePreset.setObjectName("comboBoxInferrancePreset")
         self.horizontalLayout_9.addWidget(self.comboBoxInferrancePreset)
         self.verticalLayout_7.addLayout(self.horizontalLayout_9)
@@ -201,8 +200,7 @@ class Ui_MainWindow(object):
         self.label_lms_ip.setObjectName("label_lms_ip")
         self.verticalLayout_lmstudio.addWidget(self.label_lms_ip)
         self.lmstudio_ip = QtWidgets.QComboBox(self.tab_lmstudio)
-        self.lmstudio_ip.setStyleSheet("selection-background-color: #7d86b6;\n"
-"background-color: rgb(221, 221, 221);\n"
+        self.lmstudio_ip.setStyleSheet("background-color: rgb(221, 221, 221);\n"
 "")
         self.lmstudio_ip.setObjectName("lmstudio_ip")
         self.verticalLayout_lmstudio.addWidget(self.lmstudio_ip)
@@ -216,7 +214,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_lmstudio.addWidget(self.label_lms_port)
         self.lmstudio_port = QtWidgets.QLineEdit(self.tab_lmstudio)
         self.lmstudio_port.setStyleSheet("background-color: rgb(221, 221, 221);\n"
-"selection-background-color: #7d86b6;\n"
 "")
         self.lmstudio_port.setObjectName("lmstudio_port")
         self.verticalLayout_lmstudio.addWidget(self.lmstudio_port)
@@ -246,6 +243,15 @@ class Ui_MainWindow(object):
         spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_lmstudio.addItem(spacerItem2)
         self.tabs.addTab(self.tab_lmstudio, "")
+        self.tab = QtWidgets.QWidget()
+        self.tab.setObjectName("tab")
+        self.gridLayout_4 = QtWidgets.QGridLayout(self.tab)
+        self.gridLayout_4.setObjectName("gridLayout_4")
+        self.treeWidget = QtWidgets.QTreeWidget(self.tab)
+        self.treeWidget.setObjectName("treeWidget")
+        self.treeWidget.headerItem().setText(0, "1")
+        self.gridLayout_4.addWidget(self.treeWidget, 0, 0, 1, 1)
+        self.tabs.addTab(self.tab, "")
         self.verticalLayout.addWidget(self.tabs)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
@@ -284,7 +290,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.chat_display.sizePolicy().hasHeightForWidth())
         self.chat_display.setSizePolicy(sizePolicy)
         self.chat_display.setMinimumSize(QtCore.QSize(400, 0))
-        self.chat_display.setStyleSheet("selection-background-color: #7d86b6;")
+        self.chat_display.setStyleSheet("")
         self.chat_display.setProperty("url", QtCore.QUrl("about:blank"))
         self.chat_display.setObjectName("chat_display")
         self.verticalLayout_8.addWidget(self.chat_display)
@@ -369,8 +375,7 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         self.input_box.setFont(font)
         self.input_box.setStyleSheet("background-color: #ffffff;\n"
-"alternate-background-color: #ffffff;\n"
-"selection-background-color: #7d86b6;")
+"alternate-background-color: #ffffff;")
         self.input_box.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.input_box.setFrameShadow(QtWidgets.QFrame.Plain)
         self.input_box.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -498,6 +503,9 @@ class Ui_MainWindow(object):
         self.actionSettings_2.setObjectName("actionSettings_2")
         self.actionShortcuts = QtWidgets.QAction(MainWindow)
         self.actionShortcuts.setObjectName("actionShortcuts")
+        self.actionStart_Profiling = QtWidgets.QAction(MainWindow)
+        self.actionStart_Profiling.setCheckable(True)
+        self.actionStart_Profiling.setObjectName("actionStart_Profiling")
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionSettings_2)
         self.menuFile.addAction(self.actionExit)
@@ -509,6 +517,7 @@ class Ui_MainWindow(object):
         self.menuSession.addAction(self.menuConfig.menuAction())
         self.menuSession.addAction(self.menuPlugins_2.menuAction())
         self.menuSession.addAction(self.actionView_Agent_Todos)
+        self.menuSession.addAction(self.actionStart_Profiling)
         self.menuHelp.addAction(self.actionHelp)
         self.menuHelp.addAction(self.actionShortcuts)
         self.menuTemplates.addAction(self.actionTemplatesImport)
@@ -532,7 +541,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "ITReactor"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Foundry Qt"))
         self.label.setText(_translate("MainWindow", "  Session:"))
         self.refresh_sessions_btn.setText(_translate("MainWindow", "↻"))
         self.pushButtonAutoRename.setText(_translate("MainWindow", "auto rename"))
@@ -547,6 +556,7 @@ class Ui_MainWindow(object):
         self.load_btn.setText(_translate("MainWindow", "Load Model"))
         self.unload_btn.setText(_translate("MainWindow", "Unload Model"))
         self.tabs.setTabText(self.tabs.indexOf(self.tab_lmstudio), _translate("MainWindow", "LMStudio"))
+        self.tabs.setTabText(self.tabs.indexOf(self.tab), _translate("MainWindow", "Project Tree"))
         self.pushButtonParseMD.setText(_translate("MainWindow", "parse md"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuSession.setTitle(_translate("MainWindow", "Edit"))
@@ -601,6 +611,7 @@ class Ui_MainWindow(object):
         self.actionView_Input_Box.setText(_translate("MainWindow", "View Input Box"))
         self.actionSettings_2.setText(_translate("MainWindow", "Settings"))
         self.actionShortcuts.setText(_translate("MainWindow", "Shortcuts"))
+        self.actionStart_Profiling.setText(_translate("MainWindow", "Start Profiling"))
 from PyQt5 import QtWebEngineWidgets
 
 

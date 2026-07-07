@@ -1,14 +1,14 @@
 {
     "model_name": "qwopus3.5-4b-v3-mtp",
-    "description": "An all-purpose, all-in-one agent",
-    "system_prompt_file": "Omnicent.md",
+    "description": "Sysiphus deligator",
+    "system_prompt_file": "Sisyphus2.md",
     "provider_url": "http://localhost:8081/v1",
     "inference_params": {
         "temperature": 0.6,
         "top_p": 0.96,
         "min_p": 0.05,
         "top_k": 20,
-        "repeat_penalty": 1.15,
+        "repeat_penalty": 1.12,
         "max_tokens": 0
     },
     "enable_max_tool_calls": true,
@@ -20,7 +20,7 @@
         "enabled_tools": [
             "query_knowledge_base",
             "clear_scratchpad",
-            "list_memory_namespaces",
+            "file_contents_search",
             "manage_memory",
             "write_to_scratchpad"
         ],

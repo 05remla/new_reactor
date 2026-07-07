@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>702</width>
-    <height>547</height>
+    <width>902</width>
+    <height>546</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,11 +24,13 @@
        <widget class="QListWidget" name="listWidget">
         <property name="font">
          <font>
-          <pointsize>11</pointsize>
+          <family>Gayathri Thin</family>
+          <pointsize>14</pointsize>
+          <underline>false</underline>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">alternate-background-color: rgb(206, 206, 206);</string>
+         <string notr="true">alternate-background-color: rgb(230, 230, 230);</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -36,8 +38,26 @@
         <property name="frameShadow">
          <enum>QFrame::Plain</enum>
         </property>
+        <property name="tabKeyNavigation">
+         <bool>true</bool>
+        </property>
         <property name="alternatingRowColors">
          <bool>true</bool>
+        </property>
+        <property name="resizeMode">
+         <enum>QListView::Fixed</enum>
+        </property>
+        <property name="spacing">
+         <number>30</number>
+        </property>
+        <property name="gridSize">
+         <size>
+          <width>30</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="itemAlignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
         <property name="sortingEnabled">
          <bool>true</bool>
@@ -87,7 +107,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>702</width>
+     <width>902</width>
      <height>22</height>
     </rect>
    </property>

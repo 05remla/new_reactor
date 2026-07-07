@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>⚛️ New Reactor</h1>
+  <h1>⚛️ Foundry Qt</h1>
   <p><b>A powerful, open-source Msty.ai-like desktop client for interacting with LLMs and orchestrating AI agents.</b></p>
   <p>
     <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python Version">
@@ -13,9 +13,9 @@
 
 ## 📖 Overview
 
-**New Reactor** is a dual-interface (GUI & CLI) application designed for power users, developers, and researchers who want full control over their local and remote LLM workflows. By leveraging LangChain, PyQt5, and Pydantic, New Reactor serves as a comprehensive hub for conversational AI, agentic task automation, and RAG (Retrieval-Augmented Generation).
+**Foundry Qt** is a dual-interface (GUI & CLI) application designed for power users, developers, and researchers who want full control over their local and remote LLM workflows. By leveraging LangChain, PyQt5, and Pydantic, Foundry Qt serves as a comprehensive hub for conversational AI, agentic task automation, and RAG (Retrieval-Augmented Generation).
 
-Whether you want a sleek, persistent desktop chat environment, or a rapid command-line interface for pipeable automated workflows, New Reactor operates from a single, unified configuration ecosystem.
+Whether you want a sleek, persistent desktop chat environment, or a rapid command-line interface for pipeable automated workflows, Foundry Qt operates from a single, unified configuration ecosystem.
 
 ## ✨ Key Features
 
@@ -63,7 +63,7 @@ Whether you want a sleek, persistent desktop chat environment, or a rapid comman
 
 ## 🎮 Usage
 
-New Reactor allows you to seamlessly bounce between the graphical desktop application and the terminal. Both interfaces share the exact same state and configuration!
+Foundry Qt allows you to seamlessly bounce between the graphical desktop application and the terminal. Both interfaces share the exact same state and configuration!
 
 ### The Graphical Interface (GUI)
 Launch the rich desktop application:
@@ -83,7 +83,7 @@ cat system_logs.txt | python repl.py "Summarize these errors"
 ```
 
 ## ⚙️ Configuration
-The heart of New Reactor is its centralized `ConfigManager`. Settings are saved automatically as you interact with the UI. You can modify provider URLs, API keys, LightRAG settings, and inference sliders (Temperature, Top-K, etc.) directly via the **Settings Dialog**, which is natively accessible via both `main.py` and `repl.py --config`.
+The heart of Foundry Qt is its centralized `ConfigManager`. Settings are saved automatically as you interact with the UI. You can modify provider URLs, API keys, LightRAG settings, and inference sliders (Temperature, Top-K, etc.) directly via the **Settings Dialog**, which is natively accessible via both `main.py` and `repl.py --config`.
 
 ## 🛠️ Architecture
 

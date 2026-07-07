@@ -17,7 +17,7 @@ from datetime import datetime
 from hybrid_shell.hs import time_stamp
 from hybrid_shell.hs import stringx
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QFileDialog, QInputDialog, QMessageBox, QDockWidget, QListWidget, QTextEdit)
+    QApplication, QMainWindow, QWidget, QFileDialog, QInputDialog, QMessageBox, QDockWidget, QListWidget, QTextEdit, QTreeWidgetItem)
 from PyQt5.QtCore import QThread, pyqtSignal, QEvent, QTimer, Qt, QFileSystemWatcher
 
 
@@ -169,6 +169,8 @@ class MstyCloneApp(QMainWindow):
 
         self.slash_popup = SlashCommandPopup(self)
         self.slash_popup.itemClicked.connect(self._on_slash_command_clicked)
+        
+        self._populate_project_tree()
 
     def _on_slash_command_clicked(self, item):
         self._commit_slash_command(item.text())
@@ -179,6 +181,33 @@ class MstyCloneApp(QMainWindow):
         cursor.movePosition(cursor.End)
         self.ui.input_box.setTextCursor(cursor)
         self.slash_popup.hide()
+
+    def _populate_project_tree(self):
+        da_root_dir = self.config.get("da_root_dir", os.path.join(app_dir, "workspace"))
+        if hasattr(self.ui, 'treeWidget'):
+            self.ui.treeWidget.clear()
+            self.ui.treeWidget.setHeaderLabels(["Project Files"])
+            
+            if not os.path.exists(da_root_dir):
+                return
+    
+            def add_items(parent, path):
+                try:
+                    for element in sorted(os.listdir(path)):
+                        element_path = os.path.join(path, element)
+                        item = QTreeWidgetItem(parent, [element])
+                        item.setData(0, Qt.UserRole, element_path)
+                        
+                        if os.path.isdir(element_path):
+                            add_items(item, element_path)
+                except PermissionError:
+                    pass
+    
+            root_name = os.path.basename(os.path.normpath(da_root_dir)) or da_root_dir
+            root_item = QTreeWidgetItem(self.ui.treeWidget, [root_name])
+            root_item.setData(0, Qt.UserRole, da_root_dir)
+            add_items(root_item, da_root_dir)
+            root_item.setExpanded(True)
 
     def _start_phoenix(self):
         try:
@@ -221,6 +250,8 @@ class MstyCloneApp(QMainWindow):
             # Update View
             # if hasattr(self, 'ui') and hasattr(self.ui, 'phoenix_view'):
             #     self.ui.phoenix_view.setUrl(QUrl("http://localhost:6006"))
+            from PyQt5.QtGui import QDesktopServices
+            QDesktopServices.openUrl(QUrl("http://localhost:6006"))
                 
         except Exception as e:
             print(f"[Tracing Warning] Failed to start Arize Phoenix tracing: {e}")
@@ -244,6 +275,12 @@ class MstyCloneApp(QMainWindow):
                 self.ui.phoenix_view.setHtml(disabled_html)
         except Exception as e:
             print(f"[Tracing Warning] Failed to stop Arize Phoenix tracing: {e}")
+
+    def _toggle_profiling(self, checked):
+        if checked:
+            self._start_phoenix()
+        else:
+            self._stop_phoenix()
 
     def _is_main_instance(self):
         ret = False
@@ -844,6 +881,8 @@ class MstyCloneApp(QMainWindow):
         self.ui.actionTemplatesOpen_Folder.triggered.connect(
             lambda: stringx(f'pcmanfm-qt {self.session_templates}', wait=False))        
         
+        self.ui.actionStart_Profiling.toggled.connect(self._toggle_profiling)
+
         # Plugins
         self._init_plugins()
         self.ui.actionView_Agent_Todos.toggled.connect(self.toggle_todos_widget)
