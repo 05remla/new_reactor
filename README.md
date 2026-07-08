@@ -20,8 +20,8 @@ Whether you want a sleek, persistent desktop chat environment, or a rapid comman
 ## ✨ Key Features
 
 - 🖥️ **Dual Interfaces**: 
-  - **Graphical Interface (`main.py`)**: A highly polished, responsive PyQt5 application featuring persistent chat views, markdown rendering, and modular dock widgets (Todo lists, scratchpads).
-  - **Command Line REPL (`repl.py`)**: A thin, pipeable CLI perfectly suited for terminal warriors and automated bash scripting.
+  - **Foundry Qt (`main.py`)**: A highly polished, responsive PyQt5 graphical application featuring persistent chat views, markdown rendering, and modular dock widgets (Todo lists, scratchpads).
+  - **Foundry CLI (`repl.py`)**: A thin, pipeable command-line interface perfectly suited for terminal warriors and automated bash scripting.
 - 🔌 **Universal Model Support**: Plug-and-play support for local inference engines (like **LM Studio**) and cloud providers (OpenAI, Gemini, custom endpoints).
 - 🧠 **Agentic Orchestration**: Built-in support for **DeepAgents** allowing your models to act as autonomous agents with access to filesystems and custom tools.
 - 📚 **LightRAG Integration**: Seamlessly connect to a local LightRAG server to ground your conversations with localized, retrieved documents.
@@ -65,14 +65,14 @@ Whether you want a sleek, persistent desktop chat environment, or a rapid comman
 
 Foundry Qt allows you to seamlessly bounce between the graphical desktop application and the terminal. Both interfaces share the exact same state and configuration!
 
-### The Graphical Interface (GUI)
+### Foundry Qt (GUI)
 Launch the rich desktop application:
 ```bash
 python main.py
 ```
 *Pro Tip: You can pass `--cfg-file /path/to/config.json` to load isolated workspaces!*
 
-### The Command Line Interface (REPL)
+### Foundry CLI (REPL)
 Launch a quick terminal interaction:
 ```bash
 python repl.py "What is the capital of France?"

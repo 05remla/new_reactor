@@ -22,7 +22,7 @@ sys.argv.append("--disable-software-rasterizer")
 sys.argv.append("--limit-fps=30")
 
 app = QApplication(sys.argv)
-splash_image = os.path.join(app_dir, "ui_files", "images", "splash.jpg")
+splash_image = os.path.join(app_dir, "ui_files", "images", "splash.png")
 splash_pixmap = QPixmap(splash_image)
 splash = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
 splash.show()

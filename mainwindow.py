@@ -150,6 +150,16 @@ class MstyCloneApp(QMainWindow):
         self.scratchpad_dock.hide()
         self.addDockWidget(Qt.RightDockWidgetArea, self.scratchpad_dock)
         
+        # FILE CONTENTS DOCK
+        from PyQt5.QtWidgets import QTabWidget
+        self.file_contents_dock = QDockWidget("File Contents", self)
+        self.file_contents_tabs = QTabWidget()
+        self.file_contents_tabs.setTabsClosable(True)
+        self.file_contents_tabs.tabCloseRequested.connect(self._close_file_tab)
+        self.file_contents_dock.setWidget(self.file_contents_tabs)
+        self.file_contents_dock.hide()
+        self.addDockWidget(Qt.RightDockWidgetArea, self.file_contents_dock)
+        
         self.scratchpad_file = os.path.join(app_dir, 'scratchpad.json')
         if not os.path.exists(self.scratchpad_file):
             with open(self.scratchpad_file, 'w') as f: json.dump([], f)
@@ -171,6 +181,9 @@ class MstyCloneApp(QMainWindow):
         self.slash_popup.itemClicked.connect(self._on_slash_command_clicked)
         
         self._populate_project_tree()
+        
+        if hasattr(self.ui, 'dockWidget_4'):
+            QTimer.singleShot(100, lambda: self.resizeDocks([self.ui.dockWidget_4], [self.width()], Qt.Horizontal))
 
     def _on_slash_command_clicked(self, item):
         self._commit_slash_command(item.text())
@@ -208,6 +221,60 @@ class MstyCloneApp(QMainWindow):
             root_item.setData(0, Qt.UserRole, da_root_dir)
             add_items(root_item, da_root_dir)
             root_item.setExpanded(True)
+
+    def _open_file_in_tab(self, item, column):
+        file_path = item.data(0, Qt.UserRole)
+        if not file_path or not os.path.isfile(file_path):
+            return
+            
+        for i in range(self.file_contents_tabs.count()):
+            if self.file_contents_tabs.tabToolTip(i) == file_path:
+                self.file_contents_tabs.setCurrentIndex(i)
+                self.file_contents_dock.show()
+                if hasattr(self.ui, 'actionView_File_Contents'):
+                    self.ui.actionView_File_Contents.setChecked(True)
+                return
+                
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            from PyQt5.QtWidgets import QPlainTextEdit
+            text_edit = QPlainTextEdit()
+            text_edit.setPlainText(content)
+            text_edit.setReadOnly(True)
+            text_edit.setStyleSheet("background-color: white; color: black; font-family: monospace; font-size: 13px;")
+            
+            tab_name = os.path.basename(file_path)
+            idx = self.file_contents_tabs.addTab(text_edit, tab_name)
+            self.file_contents_tabs.setTabToolTip(idx, file_path)
+            self.file_contents_tabs.setCurrentIndex(idx)
+            
+            self.file_contents_dock.show()
+            if hasattr(self.ui, 'actionView_File_Contents'):
+                self.ui.actionView_File_Contents.setChecked(True)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to open file:\n{e}")
+
+    def _tree_right_click_menu(self, pos):
+        item = self.ui.treeWidget.itemAt(pos)
+        if not item:
+            return
+        file_path = item.data(0, Qt.UserRole)
+        if not file_path or not os.path.isfile(file_path):
+            return
+            
+        from PyQt5.QtWidgets import QMenu
+        menu = QMenu(self)
+        open_action = menu.addAction("Open in Editor")
+        action = menu.exec_(self.ui.treeWidget.viewport().mapToGlobal(pos))
+        
+        if action == open_action:
+            editor = self.config.get("editor", "featherpad")
+            import subprocess
+            subprocess.Popen([editor, file_path])
+            
+    def _close_file_tab(self, index):
+        self.file_contents_tabs.removeTab(index)
 
     def _start_phoenix(self):
         try:
@@ -248,10 +315,8 @@ class MstyCloneApp(QMainWindow):
             print("[Tracing] Arize Phoenix instrumentation active on port 6006")
             
             # Update View
-            # if hasattr(self, 'ui') and hasattr(self.ui, 'phoenix_view'):
-            #     self.ui.phoenix_view.setUrl(QUrl("http://localhost:6006"))
-            from PyQt5.QtGui import QDesktopServices
-            QDesktopServices.openUrl(QUrl("http://localhost:6006"))
+            if hasattr(self, 'ui') and hasattr(self.ui, 'phoenix_view'):
+                self.ui.phoenix_view.setUrl(QUrl("http://localhost:6006"))
                 
         except Exception as e:
             print(f"[Tracing Warning] Failed to start Arize Phoenix tracing: {e}")
@@ -360,6 +425,12 @@ class MstyCloneApp(QMainWindow):
             self.todo_dock.show()
         else:
             self.todo_dock.hide()
+
+    def toggle_file_contents_widget(self):
+        if hasattr(self.ui, 'actionView_File_Contents') and self.ui.actionView_File_Contents.isChecked():
+            self.file_contents_dock.show()
+        else:
+            self.file_contents_dock.hide()
 
     def toggle_scratchpad_widget(self):
         if self.scratchpad_dock.isVisible():
@@ -860,6 +931,11 @@ class MstyCloneApp(QMainWindow):
         # Menus
         self.ui.actionSessionRename.triggered.connect(self._rename_session)
         self.ui.actionSettings_2.triggered.connect(self.open_settings_window)
+        if hasattr(self.ui, 'actionOpen_Browser'):
+            import webbrowser
+            self.ui.actionOpen_Browser.triggered.connect(
+                lambda: webbrowser.open("http://localhost:6006")
+            )
         self.ui.actionOpenConfig.triggered.connect(
             lambda: stringx(f'featherpad {self.config_file}', wait=False))        
         self.ui.actionSessionReset.triggered.connect(
@@ -886,6 +962,13 @@ class MstyCloneApp(QMainWindow):
         # Plugins
         self._init_plugins()
         self.ui.actionView_Agent_Todos.toggled.connect(self.toggle_todos_widget)
+        if hasattr(self.ui, 'actionView_File_Contents'):
+            self.ui.actionView_File_Contents.toggled.connect(self.toggle_file_contents_widget)
+            
+        if hasattr(self.ui, 'treeWidget'):
+            self.ui.treeWidget.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.ui.treeWidget.customContextMenuRequested.connect(self._tree_right_click_menu)
+            self.ui.treeWidget.itemDoubleClicked.connect(self._open_file_in_tab)
         
         from PyQt5.QtWidgets import QAction
         self.actionToggleScratchpad = QAction("Toggle Scratchpad", self)
