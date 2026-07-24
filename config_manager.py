@@ -60,7 +60,8 @@ class ConfigManager:
             "editor_cmd": "/usr/bin/micro",
             "system_prompt": "You are a brilliant, analytical Unix CLI agent. Obey the user's prompt. Use tools if necessary.",
             "default_chat_agent": "Tron",
-            "embedding_agent": ""
+            "embedding_agent": "",
+            "model_reasoning_tags": {}
         }
         self.load_config()
         self.initialized = True
@@ -110,7 +111,9 @@ class ConfigManager:
             print(f"Error saving config: {e}")
 
     def get_agents_dir(self):
-        agents_dir = os.path.join(self.app_dir, "agents")
+        da_root = self.config.get("da_root_dir", f"{self.app_dir}/workspace")
+        base_dir = os.path.dirname(os.path.normpath(da_root))
+        agents_dir = os.path.join(base_dir, "agents")
         os.makedirs(agents_dir, exist_ok=True)
         return agents_dir
 

@@ -377,12 +377,22 @@ class ReplApp:
                                     if reasoning_val:
                                         err_console.print(f"[dim cyan]Thinking:\n{reasoning_val}[/dim cyan]")
                                         
+                                    agent_name = self.config.get("default_chat_agent", "Tron")
+                                    agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+                                    model_name = agent_cfg.get("model_name", self.config.get("model", "llama3"))
+                                    reasoning_tags = self.config.get("model_reasoning_tags", {})
+                                    tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+                                    tag_open = tags[0]
+                                    tag_close = tags[1] if len(tags) > 1 else "</think>"
+                                    
                                     import re
-                                    inline_thoughts = re.findall(r'<think>(.*?)</think>', content_val, flags=re.DOTALL)
+                                    escaped_open = re.escape(tag_open)
+                                    escaped_close = re.escape(tag_close)
+                                    inline_thoughts = re.findall(f'{escaped_open}(.*?){escaped_close}', content_val, flags=re.DOTALL)
                                     for thought in inline_thoughts:
                                         err_console.print(f"[dim cyan]Thinking:\n{thought.strip()}[/dim cyan]")
                                         
-                                    cleaned_content = re.sub(r'<think>.*?</think>', '', content_val, flags=re.DOTALL).strip()
+                                    cleaned_content = re.sub(f'{escaped_open}.*?{escaped_close}', '', content_val, flags=re.DOTALL).strip()
                                     self.final_answer = cleaned_content
                                         
                                 elif getattr(last_msg, "type", "") == "tool":
@@ -556,7 +566,7 @@ def main():
     if args.tmp:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S")
         session_filename = f"tmp_{timestamp}.json"
-        sessions_dir = os.path.join(app_dir, "sessions")
+        sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
         if not os.path.exists(sessions_dir):
             os.makedirs(sessions_dir)
         session_arg = os.path.join(sessions_dir, session_filename)
@@ -583,14 +593,14 @@ def main():
         session_filename = os.path.basename(session_arg)
         if not session_filename.endswith(".json"):
             session_filename += ".json"
-        sessions_dir = os.path.join(app_dir, "sessions")
+        sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
         if not os.path.exists(sessions_dir):
             os.makedirs(sessions_dir)
         session_arg = os.path.join(sessions_dir, session_filename)
     elif config.get("session_auto_save", False):
         last_session = config.get("last_selected_session")
         if last_session:
-            sessions_dir = os.path.join(app_dir, "sessions")
+            sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
             if not os.path.exists(sessions_dir):
                 os.makedirs(sessions_dir)
             session_arg = os.path.join(sessions_dir, last_session)

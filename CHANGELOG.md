@@ -2,15 +2,83 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).   
+   
+## [Unreleased] - 2026-07-16   
+   
+### Added
+- **Workspace Manager**: Built `workspace_manager.py` to handle the logic for `workspace_manager_ui.py`. Includes creating workspaces, populating tree widgets with workspaces' files, copying items between source and destination workspaces, and deleting items.   
+- **Config Selector**: Wired up the edit `pushButton` in `config_selector.py` to launch the Workspace Manager window.   
+- **Main Window Integration**: Connected `pushButtonWorkspaceMan` in `mainwindow.py` to spawn the Workspace Manager natively. Also configured the project tree view to automatically refresh whenever the Workspace Manager window is closed, ensuring new files and changes are immediately visible.   
+- **Drag & Drop Workspace Copying**: Added intuitive drag-and-drop file support directly inside the Workspace Manager. Users can now click and drag files/folders seamlessly between or within the source and destination tree views to instantly copy them exactly where they want.   
+- **Context Menu Delete**: Implemented a right-click context menu within the Workspace Manager's tree widgets, allowing users to quickly delete all currently selected files and directories.   
+- **Keyboard Shortcuts**: Hitting the `Escape` key inside the Workspace Manager will now instantly deselect all selected items across active tree widgets. Pressing the `Delete` key will act identically to the delete buttons, securely erasing the selected items.   
+- **Universal Delete Confirmations**: Audited deletion functions project-wide (including Sessions in the main Settings window) to guarantee that all file and structural deletions trigger a confirmation dialog before successfully running.   
+- **Agent Space Auto-Initialization**: Modifed `workspace_manager.py` to automatically scaffold a dedicated `agent_space` subdirectory inside every newly generated workspace folder.   
+- **DeepAgents Tool Configuration**: Added all deepagents default tools directly into the tool manager UI in `agent_manager.py`. Toggling them hooks into `HarnessProfile` and `register_harness_profile` dynamically in `core_engine.py` to strip out default tools that users explicitly uncheck!   
+- **On-Demand Context Compression**: Implemented a new `/compress` slash command in `mainwindow.py` that, when typed, forces the `context_compressor_hook` to run immediately regardless of your threshold settings. It compresses the entire active chat history minus the two most recent messages to free up tokens.   
 
+
+
+
+
+### Fixed
+- **Config Selector Crash**: Fixed an issue in `config_selector.py` where clicking the Edit or Start buttons without an active selection would result in an `AttributeError` (NoneType) and crash the application.
+- **Workspace Manager Missing Buttons**: Added `hasattr` fail-safes to `workspace_manager.py` to prevent application crashes when interface buttons are deleted from the underlying `workspace_manager_ui.ui` layout.
+
+
+### Changed
+- **UI Tree Directory Sorting**: Updated `workspace_manager.py` and `mainwindow.py` tree widgets to explicitly sort directories on top of files, ensuring a cleaner visual hierarchy.
+- **Workspace Manager Integration**: Wired up the `pushButtonClose` in the Workspace Manager window to actually close it.
+- **Config Selector Auto-Refresh**: Converted `config_selector.py` to instantiate the Workspace Manager natively instead of via a detached subprocess. The Config Selector's config list will now automatically clear and refresh itself whenever the Workspace Manager is closed, seamlessly displaying newly created workspaces.
+- **Workspace UI Labeling**: Adjusted `labelProjectFilesName` in `mainwindow.py` to dynamically display the active workspace name (calculated as the parent directory of `da_root_dir`) for better situational awareness.
+
+
+   
+## [Unreleased] - 2026-07-13   
+   
+### Changed   
+- **Input Dock Height**: Set the main window input `dockWidget` to have an initial height of 200 pixels on startup using `resizeDocks` instead of `setFixedHeight` to preserve user resizeability.   
+- **Context Dock Width**: Overrode `resizeEvent` in `MstyCloneApp` to automatically stretch the Context dock (`dockWidget_4`) to the max window width whenever the main window is resized.   
+   
+## [Unreleased] - 2026-07-11   
+   
+### Added   
+- **TreeWidget Drag-and-Drop**: Enabled dragging items directly from the project tree (`treeWidget`) and dropping them into the main input box for rapid file staging. Added support for multi-item dragging and extraction of the file path using the underlying user roles.   
+   
+### Changed   
+- **File Contents Tabs UI**: Fixed the tab headers in the `File Contents` dock to have a uniform width (150px) and left-aligned text with automatic ellipsis elision for long file names. Also updated the close button icon to use a custom resource instead of the OS default.   
+- **Threaded Auto-Rename**: Moved the `auto rename` session logic from the main UI thread to a background `QThread` worker to prevent the application from freezing while waiting for the LLM to generate the new filename.   
+
+
+## [Unreleased] - 2026-07-10   
+   
+### Fixed   
+- **Clear Checkpoints Button**: Connected `pushButtonClearCheckpointDb` in Settings to delete checkpoint files (`agent_checkpoints*`) located one directory level above `da_root_dir`.   
+   
+### Changed   
+- **Prompt Tools Header**: Changed "=== AVAILABLE USER TOOLS ===" to "===== AVAILABLE TOOLS =====" in the agent system prompts (`agent_manager.py` and `generation_thread.py`).   
+
+   
+## [Unreleased] - 2026-07-09   
+   
+### Fixed   
+- **Markdown Parser Plugin Crash**: Added missing `import parse_markdown_plugin` in `mainwindow.py` which was causing a fatal crash (`NameError`) when the `pushButtonParseMD` (parse md) button was clicked.   
+   
 ## [Unreleased] - 2026-07-06
 
 ### Added
+- **Directory Context Menu**: Added a right-click context menu to directories in the project tree to open them in the system's preferred file browser.
 - **Dynamic Theming System**: Built a JSON-driven dynamic theming engine (`ui_files/theme.json` and `theme_manager.py`). This allows designers to use string variables (e.g. `@color1`, `@selectionbg`) directly within Qt Designer stylesheets, which are dynamically resolved to their actual hex codes at runtime without requiring `.ui` file recompilation.
 
 ### Changed
+- **Storage Relocation**: Moved the instantiation paths for `agent_checkpoints.db` and the `sessions/` directory to default to one directory above the configured `da_root_dir` (to keep program files out of the agent workspace) instead of the global application root.
 - **Optimized Application Startup**: Restructured `main.py` execution sequence to bypass Python's Global Interpreter Lock (GIL) starvation during heavy startup imports. The Qt event loop and `QSplashScreen` now forcefully render instantly via `app.processEvents()`, dramatically speeding up the perceived application load time.
+
+### Fixed
+- **UI Dock Stacking**: Modified the `File Contents` dock to automatically stack (tabify) on top of the existing `Context` dock when opened, instead of occupying a separate space, and ensured it is brought to the front when a new file is opened.
+- **Project Tree Refresh**: Wired up the `treeWidget` to automatically refresh and display any newly created or modified files immediately after an agent completes its turn, as well as asynchronously after the Auto-Archivist background thread finishes curating the Memory Vault.
+- **Startup Session Load Errors**: Modified `load_session` to silently catch and skip corrupted or missing session files during the application's initial startup sequence, preventing an intrusive warning dialog from blocking the UI.
 
 ## [Unreleased] - 2026-07-04
 

@@ -79,6 +79,12 @@ class GenerationThread(QThread):
 
     def run(self):
         try:
+            actual_model = self.agent_cfg.get("model_name", self.agent_cfg.get("model", self.model)) if self.agent_cfg else self.model
+            reasoning_tags = self.config.get("model_reasoning_tags", {})
+            tags = reasoning_tags.get(actual_model, ["<think>", "</think>"])
+            tag_open = tags[0]
+            tag_close = tags[1] if len(tags) > 1 else "</think>"
+
             if self.sys_prompt and "=== SYSTEM PROMPT & PERSONA ===" not in self.sys_prompt:
                 self.sys_prompt = f"=== SYSTEM PROMPT & PERSONA ===\n{self.sys_prompt.strip()}\n===============================\n"
 
@@ -236,6 +242,28 @@ class GenerationThread(QThread):
                     if subagents_info:
                         self.sys_prompt += f"\n\n=== AVAILABLE SUBAGENTS ===\nYou may use these agents via tool calls if enabled:\n" + "\n".join(subagents_info) + "\n===========================\n"
 
+                if da_cfg.get("enable_middleware_user_tools", True) and tools:
+                    tools_info = []
+                    for t in tools:
+                        t_name = getattr(t, "name", getattr(t, "__name__", "Unknown Tool"))
+                        t_desc = getattr(t, "description", getattr(t, "__doc__", "No description available."))
+                        if t_desc:
+                            lines = [l.strip() for l in t_desc.split('\n')]
+                            desc_lines = []
+                            in_desc = False
+                            for l in lines:
+                                if l.startswith("DESCRIPTION:"): in_desc = True; continue
+                                if l.startswith("ARGS:") or l.startswith("RETURNS:"): break
+                                if in_desc and l: desc_lines.append(l)
+                            
+                            if desc_lines:
+                                t_desc = " ".join(desc_lines)
+                            else:
+                                t_desc = next((l for l in lines if l and l != "DESCRIPTION:"), "No description available.")
+                        tools_info.append(f"- {t_name}: {t_desc}")
+                    if tools_info:
+                        self.sys_prompt += f"\n\n===== AVAILABLE TOOLS =====\nYou have the following tools enabled. Use them via tool calls:\n" + "\n".join(tools_info) + "\n============================\n"
+
                 agent = core_engine.setup_deep_agent(llm, tools, self.sys_prompt, self.config, self.agent_cfg, app_dir)
 
                 if self.session_file:
@@ -314,16 +342,16 @@ class GenerationThread(QThread):
 
                             if reasoning:
                                 if not is_reasoning:
-                                    assistant_response += "<think>\n"
-                                    self.chunk_received.emit("<br>&lt;think&gt;<br>")
+                                    assistant_response += f"{tag_open}\n"
+                                    self.chunk_received.emit(f"<br>{tag_open.replace('<', '&lt;').replace('>', '&gt;')}<br>")
                                     is_reasoning = True
                                 assistant_response += reasoning
                                 self.chunk_received.emit(reasoning.replace("<", "&lt;").replace(">", "&gt;"))
 
                             if content_str:
                                 if is_reasoning:
-                                    assistant_response += "\n</think>\n"
-                                    self.chunk_received.emit("<br>&lt;/think&gt;<br>")
+                                    assistant_response += f"\n{tag_close}\n"
+                                    self.chunk_received.emit(f"<br>{tag_close.replace('<', '&lt;').replace('>', '&gt;')}<br>")
                                     is_reasoning = False
                                 assistant_response += content_str
                                 self.chunk_received.emit(content_str.replace("<", "&lt;").replace(">", "&gt;"))
@@ -335,8 +363,8 @@ class GenerationThread(QThread):
                                         self.status_update.emit(f"   \n<span style='color:#26a55c;'><i>[🔧 Agent calling tool: {tc['name']}]</i></span>   \n", False)
 
                 if is_reasoning:
-                    assistant_response += "\n</think>\n"
-                    self.chunk_received.emit("<br>&lt;/think&gt;<br>")
+                    assistant_response += f"\n{tag_close}\n"
+                    self.chunk_received.emit(f"<br>{tag_close.replace('<', '&lt;').replace('>', '&gt;')}<br>")
 
                 self.finished.emit(assistant_response)
 
@@ -380,23 +408,23 @@ class GenerationThread(QThread):
                         
                     if reasoning:
                         if not is_reasoning:
-                            assistant_response += "<think>\n"
-                            self.chunk_received.emit("<br>&lt;think&gt;<br>")
+                            assistant_response += f"{tag_open}\n"
+                            self.chunk_received.emit(f"<br>{tag_open.replace('<', '&lt;').replace('>', '&gt;')}<br>")
                             is_reasoning = True
                         assistant_response += reasoning
                         self.chunk_received.emit(reasoning.replace("<", "&lt;").replace(">", "&gt;"))
 
                     if content_str:
                         if is_reasoning:
-                            assistant_response += "\n</think>\n"
-                            self.chunk_received.emit("<br>&lt;/think&gt;<br>")
+                            assistant_response += f"\n{tag_close}\n"
+                            self.chunk_received.emit(f"<br>{tag_close.replace('<', '&lt;').replace('>', '&gt;')}<br>")
                             is_reasoning = False
                         assistant_response += content_str
                         self.chunk_received.emit(content_str.replace("<", "&lt;").replace(">", "&gt;"))
 
                 if is_reasoning:
-                    assistant_response += "\n</think>\n"
-                    self.chunk_received.emit("<br>&lt;/think&gt;<br>")
+                    assistant_response += f"\n{tag_close}\n"
+                    self.chunk_received.emit(f"<br>{tag_close.replace('<', '&lt;').replace('>', '&gt;')}<br>")
 
                 self.finished.emit(assistant_response)
 

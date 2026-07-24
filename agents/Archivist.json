@@ -7,7 +7,7 @@
         "top_p": 0.96,
         "min_p": 0.05,
         "top_k": 20,
-        "repeat_penalty": 1.13,
+        "repeat_penalty": 1.12,
         "max_tokens": 0
     },
     "deepagents": {
@@ -15,7 +15,6 @@
         "use_project_deepagents": true,
         "enabled_tools": [
             "append_to_note",
-            "clear_scratchpad",
             "list_notes",
             "manage_memory",
             "read_note",
@@ -23,7 +22,11 @@
             "write_note"
         ],
         "enabled_subagents": [],
-        "inject_subagents_to_prompt": false
+        "inject_subagents_to_prompt": false,
+        "enable_middleware_memory": true,
+        "enable_middleware_tools": true,
+        "enable_middleware_skills": true,
+        "disable_general_purpose": false
     },
     "enable_max_tool_calls": true,
     "max_sequential_tool_calls": 50,

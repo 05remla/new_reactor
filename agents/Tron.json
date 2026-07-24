@@ -14,19 +14,26 @@
     "enable_max_tool_calls": true,
     "max_sequential_tool_calls": 50,
     "deepagents": {
-        "inject_subagents_to_prompt": true,
+        "inject_subagents_to_prompt": false,
         "semantic_agent": "Archivist",
         "use_project_deepagents": true,
         "enabled_tools": [
             "query_knowledge_base",
+            "analyze_journal_logs",
             "clear_scratchpad",
             "file_contents_search",
-            "manage_memory",
+            "interactive_web_search",
+            "py_syntax_checker",
+            "scrape_indexed_urls",
             "write_to_scratchpad"
         ],
         "enabled_subagents": [
             "Archivist",
             "Researcher"
-        ]
+        ],
+        "enable_middleware_memory": false,
+        "enable_middleware_tools": true,
+        "enable_middleware_skills": false,
+        "disable_general_purpose": true
     }
 }

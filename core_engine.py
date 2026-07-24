@@ -258,6 +258,15 @@ def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."
     if create_deep_agent is None:
         raise ImportError("deepagents package not installed.")
 
+    import deepagents.graph
+    if not hasattr(deepagents.graph, "ORIGINAL_BASE_AGENT_PROMPT"):
+        deepagents.graph.ORIGINAL_BASE_AGENT_PROMPT = deepagents.graph.BASE_AGENT_PROMPT
+        
+    if "custom_base_prompt" in config:
+        deepagents.graph.BASE_AGENT_PROMPT = config["custom_base_prompt"]
+    else:
+        deepagents.graph.BASE_AGENT_PROMPT = deepagents.graph.ORIGINAL_BASE_AGENT_PROMPT
+
     if agent_cfg is None:
         agent_cfg = {}
         
@@ -298,7 +307,7 @@ def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."
     enabled_subagents_names = da_cfg.get("enabled_subagents", config.get("da_enabled_subagents", default_subagents))
     filtered_subagents = [s for s in my_subagents if s.get("name") in enabled_subagents_names]
 
-    agents_dir = os.path.join(app_dir, "agents")
+    agents_dir = os.path.join(os.path.dirname(os.path.normpath(da_root_dir)), "agents")
     if os.path.exists(agents_dir):
         for sub_name in enabled_subagents_names:
             if not any(s.get("name") == sub_name for s in filtered_subagents):
@@ -333,17 +342,53 @@ def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."
 
     import sqlite3
     from langgraph.checkpoint.sqlite import SqliteSaver
-    db_path = os.path.join(app_dir, "agent_checkpoints.db")
+    import deepagents.middleware.patch_tool_calls
+    if not hasattr(deepagents.middleware.patch_tool_calls.PatchToolCallsMiddleware, "_original_before_agent"):
+        deepagents.middleware.patch_tool_calls.PatchToolCallsMiddleware._original_before_agent = deepagents.middleware.patch_tool_calls.PatchToolCallsMiddleware.before_agent
+
+    if da_cfg.get("enable_middleware_tools", True) is False:
+        deepagents.middleware.patch_tool_calls.PatchToolCallsMiddleware.before_agent = lambda self, state, runtime: None
+    else:
+        deepagents.middleware.patch_tool_calls.PatchToolCallsMiddleware.before_agent = deepagents.middleware.patch_tool_calls.PatchToolCallsMiddleware._original_before_agent
+
+    import deepagents.middleware.subagents
+    if not hasattr(deepagents.middleware.subagents.SubAgentMiddleware, "_original_init"):
+        deepagents.middleware.subagents.SubAgentMiddleware._original_init = deepagents.middleware.subagents.SubAgentMiddleware.__init__
+
+    def custom_subagent_init(self, *args, **kwargs):
+        if da_cfg.get("disable_general_purpose", False):
+            if "subagents" in kwargs and kwargs["subagents"]:
+                kwargs["subagents"] = [s for s in kwargs["subagents"] if s.get("name") != "general-purpose"]
+        deepagents.middleware.subagents.SubAgentMiddleware._original_init(self, *args, **kwargs)
+
+    deepagents.middleware.subagents.SubAgentMiddleware.__init__ = custom_subagent_init
+
+    memory_sources = [os.path.join(da_root_dir, "AGENTS.md"), os.path.join(da_root_dir, "memory_store.json")] if da_cfg.get("enable_middleware_memory", True) else None
+    skills_sources = [os.path.join(da_root_dir, 'skills/')] if da_cfg.get("enable_middleware_skills", True) else None
+
+    db_path = os.path.join(os.path.dirname(os.path.normpath(da_root_dir)), "agent_checkpoints.db")
     conn = sqlite3.connect(db_path, check_same_thread=False)
     checkpointer = SqliteSaver(conn)
+
+    try:
+        from deepagents import HarnessProfile, register_harness_profile
+        excluded = da_cfg.get("excluded_tools", [])
+        if excluded:
+            model_name = getattr(llm, "model_name", None) or getattr(llm, "model", "default_model")
+            register_harness_profile(
+                model_name,
+                HarnessProfile(excluded_tools=frozenset(excluded))
+            )
+    except ImportError:
+        pass
 
     agent = create_deep_agent(
         model=llm,
         backend=backend,
-        memory=[os.path.join(da_root_dir, "AGENTS.md"), os.path.join(da_root_dir, "memory_store.json")],
+        memory=memory_sources,
         system_prompt=sys_prompt,
         tools=tools,
-        skills=os.path.join(da_root_dir, 'skills/'),
+        skills=skills_sources,
         subagents=final_subagents,
         checkpointer=checkpointer
     )

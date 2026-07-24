@@ -1,5 +1,6 @@
 # markdown_plugin.py
 import os
+import json
 from PyQt5.QtWidgets import QCheckBox
 
 PLUGIN_META = {
@@ -24,6 +25,22 @@ def parse_markdown(main_window):
     """
     Injects JS/CSS and parses all plain markdown in the web engine view.
     """
+    thinking_tag_open = "<think>"
+    thinking_tag_close = "</think>"
+    
+    try:
+        if hasattr(main_window, 'ui') and hasattr(main_window.ui, 'agent_combo'):
+            agent_name = main_window.ui.agent_combo.currentText().strip()
+            if hasattr(main_window, 'config_manager') and agent_name:
+                agent_cfg = main_window.config_manager.get_agent_config(agent_name) or {}
+                model_name = agent_cfg.get("model_name", main_window.config.get("model", "llama3")) if hasattr(main_window, 'config') else agent_cfg.get("model_name", "llama3")
+                reasoning_tags = main_window.config_manager.config.get("model_reasoning_tags", {})
+                tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+                thinking_tag_open = tags[0]
+                thinking_tag_close = tags[1] if len(tags) > 1 else "</think>"
+    except Exception:
+        pass
+
     marked_js = get_asset_content(__file__, "marked.min.js")
     highlight_js = get_asset_content(__file__, "highlight.min.js")
     github_dark_css = get_asset_content(__file__, "github-dark.min.css")
@@ -49,6 +66,15 @@ def parse_markdown(main_window):
     # Then run our parsing logic
     parse_script = """
     {
+        const open_tag = TAG_OPEN_PLACEHOLDER;
+        const close_tag = TAG_CLOSE_PLACEHOLDER;
+        
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+        }
+        const open_regex = new RegExp(escapeRegExp(open_tag), 'gi');
+        const close_regex = new RegExp(escapeRegExp(close_tag), 'gi');
+
         // Reconfigure marked if needed
         // Assuming messages are inside div tags, lets iterate through them
         const messages = document.querySelectorAll('div');
@@ -69,8 +95,8 @@ def parse_markdown(main_window):
                 content = content.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
                 
                 // Convert <think> blocks to collapsible details
-                content = content.replace(/<think>/gi, '\\n\\n<details class="reasoning-details" style="color:#7f8c8d; font-style:italic; margin-bottom:10px;"><summary style="cursor:pointer; font-weight:bold;">Thinking Process</summary>\\n\\n');
-                content = content.replace(/<\\/think>/gi, '\\n\\n</details>\\n\\n');
+                content = content.replace(open_regex, '\\n\\n<details class="reasoning-details" style="color:#7f8c8d; font-style:italic; margin-bottom:10px;"><summary style="cursor:pointer; font-weight:bold;">Thinking Process</summary>\\n\\n');
+                content = content.replace(close_regex, '\\n\\n</details>\\n\\n');
                 
                 // Some contents are natively bolded (User text)
                 // Let's parse with marked
@@ -89,6 +115,8 @@ def parse_markdown(main_window):
         });
     }
     """
+    parse_script = parse_script.replace("TAG_OPEN_PLACEHOLDER", json.dumps(thinking_tag_open))
+    parse_script = parse_script.replace("TAG_CLOSE_PLACEHOLDER", json.dumps(thinking_tag_close))
     main_window.ui.chat_display.page().runJavaScript(parse_script)
 
 def enable_plugin(main_window):

@@ -75,9 +75,7 @@ class Ui_Form(object):
         self.checkBoxDASubagents.setObjectName("checkBoxDASubagents")
         self.gridLayout_13.addWidget(self.checkBoxDASubagents, 1, 0, 1, 1)
         self.gridLayout.addWidget(self.groupBox_2, 4, 0, 1, 1)
-        self.checkBoxSubagentsToPrompt = QtWidgets.QCheckBox(Form)
-        self.checkBoxSubagentsToPrompt.setObjectName("checkBoxSubagentsToPrompt")
-        self.gridLayout.addWidget(self.checkBoxSubagentsToPrompt, 5, 0, 1, 1)
+
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setContentsMargins(6, -1, 6, 6)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
@@ -129,7 +127,7 @@ class Ui_Form(object):
         self.checkBoxDATools.setText(_translate("Form", "CheckBox"))
         self.groupBox_2.setTitle(_translate("Form", "subagents"))
         self.checkBoxDASubagents.setText(_translate("Form", "CheckBox"))
-        self.checkBoxSubagentsToPrompt.setText(_translate("Form", "inject subagent list into system prompt"))
+
         self.pushButtonSynBrain.setText(_translate("Form", "synthetic brain"))
         self.pushButtonLTM.setText(_translate("Form", "long-term mem"))
         self.pushButtonSTM.setText(_translate("Form", "short-term mem"))

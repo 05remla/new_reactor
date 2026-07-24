@@ -12,6 +12,7 @@ import json
 import requests
 import re
 import shutil
+import parse_markdown_plugin
 from string import Template
 from datetime import datetime
 from hybrid_shell.hs import time_stamp
@@ -52,7 +53,7 @@ class SlashCommandPopup(QListWidget):
         self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
         self.setFocusPolicy(Qt.NoFocus)
         self.setStyleSheet("background-color: #2b2b2b; color: #a9b7c6; font-size: 13px; border: 1px solid #555;")
-        self.commands = ["/goal", "/schedule", "/browser", "/continue", "/grill-me", "/teamwork-preview"]
+        self.commands = ["/goal", "/schedule", "/browser", "/continue", "/grill-me", "/teamwork-preview", "/compress"]
         self.hide()
 
     def filter_commands(self, prefix):
@@ -67,7 +68,26 @@ class SlashCommandPopup(QListWidget):
             return True
         return False
 
+class RenameWorker(QThread):
+    finished = pyqtSignal(str)
+    error = pyqtSignal(str)
+
+    def __init__(self, llm, msgs, parent=None):
+        super().__init__(parent)
+        self.llm = llm
+        self.msgs = msgs
+
+    def run(self):
+        try:
+            response = self.llm.invoke(self.msgs)
+            response_text = response.content if hasattr(response, 'content') else str(response)
+            self.finished.emit(response_text)
+        except Exception as e:
+            self.error.emit(str(e))
+
 class MstyCloneApp(QMainWindow):
+    context_compressed_signal = pyqtSignal()
+
     def __init__(self, config_filename="config.json"):
         super().__init__()
         self.ui = Ui_MainWindow()
@@ -76,12 +96,10 @@ class MstyCloneApp(QMainWindow):
         theme_manager.apply_theme(self)
 
         self.prompts_dir = os.path.join(app_dir, "prompts")
-        self.sessions_dir = os.path.join(app_dir, "sessions")
         self.session_file = None
         self.session_templates = os.path.join(app_dir, "session_templates")
         self.config_file = config_filename if os.path.isabs(config_filename) else os.path.join(app_dir, config_filename)
         self._init_prompt_directory()
-        self._init_sessions_directory()
 
         # manage the saving of config when more than one instance running:
         self.mainInstance = self._is_main_instance()
@@ -99,12 +117,30 @@ class MstyCloneApp(QMainWindow):
 
         self.config_manager = ConfigManager(self.config_file)
         self.config = self.config_manager.config
+        
+        da_root = self.config.get("da_root_dir", os.path.join(app_dir, "workspace"))
+        self.sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
+        self._init_sessions_directory()
+        
         self._populate_ui_from_config()
         self._connect_signals()
+        
+        if hasattr(self.ui, 'plainTextEditAgentDescription'):
+            font = self.ui.plainTextEditAgentDescription.font()
+            from PyQt5.QtGui import QFontInfo
+            current_pt = QFontInfo(font).pointSize()
+            if current_pt > 0:
+                font.setPointSize(current_pt - 1)
+            self.ui.plainTextEditAgentDescription.setFont(font)
 
         self.ui.chat_display.setHtml("<html><head><style>::-webkit-scrollbar { display: none; }</style></head><body style='background-color:#eeeeee; color:2b2b2b; font-family:sans-serif; font-size:13px;'><h3></h3></body></html>")
+        self.ui.chat_display.setAcceptDrops(True)
+        self.ui.chat_display.installEventFilter(self)
         self.ui.input_box.installEventFilter(self)
         self.ui.input_box.viewport().installEventFilter(self)
+        
+        # Set initial dockWidget height to 200 without breaking resizability
+        QTimer.singleShot(100, lambda: self.resizeDocks([self.ui.dockWidget], [200], Qt.Vertical))
         
         # Enable drag and drop
         self.ui.input_box.setAcceptDrops(True)
@@ -151,14 +187,47 @@ class MstyCloneApp(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.scratchpad_dock)
         
         # FILE CONTENTS DOCK
-        from PyQt5.QtWidgets import QTabWidget
+        from PyQt5.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QLineEdit
         self.file_contents_dock = QDockWidget("File Contents", self)
+        
+        self.file_contents_container = QWidget()
+        self.file_contents_layout = QVBoxLayout(self.file_contents_container)
+        self.file_contents_layout.setContentsMargins(0, 0, 0, 0)
+        self.file_contents_layout.setSpacing(0)
+        
         self.file_contents_tabs = QTabWidget()
         self.file_contents_tabs.setTabsClosable(True)
+        self.file_contents_tabs.setElideMode(Qt.ElideRight)
+        self.file_contents_tabs.setStyleSheet("""
+            QTabBar::tab {
+                width: 150px;
+                text-align: left;
+                padding-left: 10px;
+            }
+            QTabBar::close-button {
+                image: url(:/images/close.png);
+                subcontrol-position: right;
+            }
+        """)
         self.file_contents_tabs.tabCloseRequested.connect(self._close_file_tab)
-        self.file_contents_dock.setWidget(self.file_contents_tabs)
+        self.file_contents_tabs.setAcceptDrops(True)
+        self.file_contents_tabs.installEventFilter(self)
+        
+        self.file_search_input = QLineEdit()
+        self.file_search_input.setPlaceholderText("Search in file...")
+        self.file_search_input.setStyleSheet("background-color: #ffffff; color: #000000; border: 1px solid #555; padding: 2px;")
+        
+        self.file_contents_layout.addWidget(self.file_contents_tabs)
+        self.file_contents_layout.addWidget(self.file_search_input)
+        
+        self.file_contents_dock.setWidget(self.file_contents_container)
         self.file_contents_dock.hide()
         self.addDockWidget(Qt.RightDockWidgetArea, self.file_contents_dock)
+        
+        self.file_search_input.textChanged.connect(self._highlight_file_search)
+        self.file_contents_tabs.currentChanged.connect(lambda idx: self._highlight_file_search(self.file_search_input.text()))
+        if hasattr(self.ui, 'dockWidget_4'):
+            self.tabifyDockWidget(self.ui.dockWidget_4, self.file_contents_dock)
         
         self.scratchpad_file = os.path.join(app_dir, 'scratchpad.json')
         if not os.path.exists(self.scratchpad_file):
@@ -175,7 +244,7 @@ class MstyCloneApp(QMainWindow):
         self.refresh_prompts(True)
         self._update_context_len()
         self.is_loading = False
-        self.load_session(self.ui.comboBoxSessions.currentText())
+        self.load_session(self.ui.comboBoxSessions.currentText(), is_startup=True)
 
         self.slash_popup = SlashCommandPopup(self)
         self.slash_popup.itemClicked.connect(self._on_slash_command_clicked)
@@ -195,22 +264,48 @@ class MstyCloneApp(QMainWindow):
         self.ui.input_box.setTextCursor(cursor)
         self.slash_popup.hide()
 
+    def _open_workspace_manager(self):
+        import workspace_manager
+        self.ws_manager = workspace_manager.WorkspaceManager()
+        self.ws_manager.setAttribute(Qt.WA_DeleteOnClose)
+        self.ws_manager.destroyed.connect(lambda: self._populate_project_tree())
+        self.ws_manager.show()
+
     def _populate_project_tree(self):
         da_root_dir = self.config.get("da_root_dir", os.path.join(app_dir, "workspace"))
+        
+        if hasattr(self.ui, 'labelProjectFilesName'):
+            workspace_name = os.path.basename(os.path.dirname(os.path.normpath(da_root_dir)))
+            if not workspace_name:
+                workspace_name = "workspace"
+            self.ui.labelProjectFilesName.setText(workspace_name)
+            
         if hasattr(self.ui, 'treeWidget'):
             self.ui.treeWidget.clear()
             self.ui.treeWidget.setHeaderLabels(["Project Files"])
+            self.ui.treeWidget.setDragEnabled(True)
+            self.ui.treeWidget.setSelectionMode(self.ui.treeWidget.ExtendedSelection)
             
             if not os.path.exists(da_root_dir):
                 return
     
             def add_items(parent, path):
                 try:
-                    for element in sorted(os.listdir(path)):
+                    def sort_key(name):
+                        return (not os.path.isdir(os.path.join(path, name)), name.lower())
+                        
+                    for element in sorted(os.listdir(path), key=sort_key):
                         element_path = os.path.join(path, element)
                         item = QTreeWidgetItem(parent, [element])
                         item.setData(0, Qt.UserRole, element_path)
                         
+                        if element == "memory_vault":
+                            from PyQt5.QtGui import QColor, QFont
+                            font = item.font(0)
+                            font.setBold(True)
+                            item.setFont(0, font)
+                            item.setForeground(0, QColor("#27ae60"))
+                            
                         if os.path.isdir(element_path):
                             add_items(item, element_path)
                 except PermissionError:
@@ -231,6 +326,7 @@ class MstyCloneApp(QMainWindow):
             if self.file_contents_tabs.tabToolTip(i) == file_path:
                 self.file_contents_tabs.setCurrentIndex(i)
                 self.file_contents_dock.show()
+                self.file_contents_dock.raise_()
                 if hasattr(self.ui, 'actionView_File_Contents'):
                     self.ui.actionView_File_Contents.setChecked(True)
                 return
@@ -239,10 +335,40 @@ class MstyCloneApp(QMainWindow):
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             from PyQt5.QtWidgets import QPlainTextEdit
-            text_edit = QPlainTextEdit()
+            
+            class FileViewerTextEdit(QPlainTextEdit):
+                def contextMenuEvent(self, event):
+                    menu = self.createStandardContextMenu()
+                    menu.addSeparator()
+                    wrap_action = menu.addAction("Word Wrap")
+                    wrap_action.setCheckable(True)
+                    wrap_action.setChecked(self.lineWrapMode() == QPlainTextEdit.WidgetWidth)
+                    
+                    # We have to execute the menu and handle the action
+                    action = menu.exec_(event.globalPos())
+                    if action == wrap_action:
+                        if wrap_action.isChecked():
+                            self.setLineWrapMode(QPlainTextEdit.WidgetWidth)
+                        else:
+                            self.setLineWrapMode(QPlainTextEdit.NoWrap)
+
+            text_edit = FileViewerTextEdit()
             text_edit.setPlainText(content)
             text_edit.setReadOnly(True)
+            text_edit.setLineWrapMode(QPlainTextEdit.WidgetWidth) # On by default
             text_edit.setStyleSheet("background-color: white; color: black; font-family: monospace; font-size: 13px;")
+            
+            try:
+                from syntax_highlighter import CodeHighlighter
+                ext = os.path.splitext(file_path)[1].lower()
+                if ext in ['.py', '.pyw']:
+                    text_edit.highlighter = CodeHighlighter(text_edit.document(), 'python')
+                elif ext in ['.sh', '.bash']:
+                    text_edit.highlighter = CodeHighlighter(text_edit.document(), 'bash')
+                elif ext in ['.md', '.markdown', '.txt', '']:
+                    text_edit.highlighter = CodeHighlighter(text_edit.document(), 'markdown')
+            except Exception as e:
+                print(f"Error initializing syntax highlighter: {e}")
             
             tab_name = os.path.basename(file_path)
             idx = self.file_contents_tabs.addTab(text_edit, tab_name)
@@ -250,31 +376,102 @@ class MstyCloneApp(QMainWindow):
             self.file_contents_tabs.setCurrentIndex(idx)
             
             self.file_contents_dock.show()
+            self.file_contents_dock.raise_()
             if hasattr(self.ui, 'actionView_File_Contents'):
                 self.ui.actionView_File_Contents.setChecked(True)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to open file:\n{e}")
 
+    def _insert_path_to_input(self, item, column):
+        file_path = item.data(0, Qt.UserRole)
+        if not file_path:
+            return
+        da_root_dir = self.config.get("da_root_dir", os.path.join(app_dir, "workspace"))
+        try:
+            rel_path = os.path.relpath(file_path, da_root_dir)
+            if rel_path == '.':
+                agent_path = '/'
+            else:
+                # Always format with a leading slash so da_root_dir is considered "/"
+                agent_path = f"/{rel_path}"
+        except ValueError:
+            agent_path = file_path
+            
+        cursor = self.ui.input_box.textCursor()
+        cursor.insertText(f'"{agent_path}" ')
+        
     def _tree_right_click_menu(self, pos):
         item = self.ui.treeWidget.itemAt(pos)
         if not item:
             return
         file_path = item.data(0, Qt.UserRole)
-        if not file_path or not os.path.isfile(file_path):
+        if not file_path or not os.path.exists(file_path):
             return
             
         from PyQt5.QtWidgets import QMenu
+        from PyQt5.QtGui import QDesktopServices
+        from PyQt5.QtCore import QUrl
         menu = QMenu(self)
-        open_action = menu.addAction("Open in Editor")
+        
+        open_internally_action = None
+        open_externally_action = None
+        open_dir_action = None
+        
+        if os.path.isfile(file_path):
+            open_internally_action = menu.addAction("Open Internally")
+            open_externally_action = menu.addAction("Open Externally")
+        elif os.path.isdir(file_path):
+            open_dir_action = menu.addAction("Open in File Browser")
+            
         action = menu.exec_(self.ui.treeWidget.viewport().mapToGlobal(pos))
         
-        if action == open_action:
+        if action and action == open_internally_action:
+            self._open_file_in_tab(item, 0)
+        elif action and action == open_externally_action:
             editor = self.config.get("editor", "featherpad")
             import subprocess
             subprocess.Popen([editor, file_path])
+        elif action and action == open_dir_action:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
             
     def _close_file_tab(self, index):
         self.file_contents_tabs.removeTab(index)
+
+    def _highlight_file_search(self, text):
+        from PyQt5.QtWidgets import QTextEdit
+        from PyQt5.QtGui import QTextCharFormat, QColor, QTextCursor
+        
+        current_widget = self.file_contents_tabs.currentWidget()
+        if not current_widget:
+            return
+            
+        current_widget.setExtraSelections([])
+        
+        if not text or len(text) < 3:
+            return
+            
+        document = current_widget.document()
+        
+        from PyQt5.QtGui import QFont
+        format = QTextCharFormat()
+        format.setBackground(QColor("red"))
+        format.setForeground(QColor("white"))
+        format.setFontWeight(QFont.Bold)
+        
+        selections = []
+        doc_cursor = QTextCursor(document)
+        
+        while True:
+            doc_cursor = document.find(text, doc_cursor)
+            if doc_cursor.isNull():
+                break
+                
+            selection = QTextEdit.ExtraSelection()
+            selection.format = format
+            selection.cursor = doc_cursor
+            selections.append(selection)
+            
+        current_widget.setExtraSelections(selections)
 
     def _start_phoenix(self):
         try:
@@ -365,6 +562,31 @@ class MstyCloneApp(QMainWindow):
         if self.mainInstance:
             os.remove(flag)
 
+    def launch_config_selector_and_exit(self):
+        from PyQt5.QtWidgets import QMessageBox
+        reply = QMessageBox.question(
+            self, 
+            "Change Project", 
+            "Are you sure you want to change projects? This will close the current application.",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+            
+        import subprocess
+        import sys
+        import os
+        from PyQt5.QtWidgets import QApplication
+        
+        script_path = os.path.join(app_dir, "config_selector.py")
+        
+        # Launch the new script as an independent process
+        subprocess.Popen([sys.executable, script_path])
+        
+        # Close all windows and exit the current app cleanly
+        QApplication.closeAllWindows()
+        QApplication.quit()
+
     def _remove_staged_file(self, file_path):
         if hasattr(self, 'staged_files') and file_path in self.staged_files:
             self.staged_files.remove(file_path)
@@ -429,6 +651,7 @@ class MstyCloneApp(QMainWindow):
     def toggle_file_contents_widget(self):
         if hasattr(self.ui, 'actionView_File_Contents') and self.ui.actionView_File_Contents.isChecked():
             self.file_contents_dock.show()
+            self.file_contents_dock.raise_()
         else:
             self.file_contents_dock.hide()
 
@@ -462,15 +685,18 @@ class MstyCloneApp(QMainWindow):
         except:
             pass
 
-    def context_compressor_hook(self, full_response):
-        if not self.config.get("enable_context_compression", False): return
+    def context_compressor_hook(self, full_response=None, force=False):
+        if not force and not self.config.get("enable_context_compression", False): return
         threshold = self.config.get("context_compress_threshold", 15)
-        if len(self.messages) > threshold:
+        if force or len(self.messages) > threshold:
             import threading, requests
             def worker():
-                if len(self.messages) <= threshold: return
-                msgs_to_compress = self.messages[:5]
-                rest = self.messages[5:]
+                if not force and len(self.messages) <= threshold: return
+                if force and len(self.messages) <= 2: return
+                
+                num_to_compress = max(len(self.messages) - 2, 1) if force else 5
+                msgs_to_compress = self.messages[:num_to_compress]
+                rest = self.messages[num_to_compress:]
                 text_to_compress = "\n".join([f"{m.get('role', 'unknown')}: {m.get('content', '')}" for m in msgs_to_compress])
                 prompt = f"Summarize the following previous conversation chronologically and concisely. Retain all important facts, tasks, and context.\n\n{text_to_compress}"
                 
@@ -499,6 +725,7 @@ class MstyCloneApp(QMainWindow):
                             summary = resp_json["choices"][0]["message"]["content"]
                             new_sys_msg = {"role": "system", "content": f"[Summary of prior conversation]:\n{summary}"}
                             self.messages = [new_sys_msg] + rest
+                            self.context_compressed_signal.emit()
                         else:
                             print(f"Compressor error: No 'choices' in response. {resp_json}")
                     else:
@@ -583,11 +810,34 @@ class MstyCloneApp(QMainWindow):
                 HumanMessage(content=user_prompt)
             ]
 
-            response = llm.invoke(msgs)
-            response_text = response.content if hasattr(response, 'content') else str(response)
+            self.rename_worker = RenameWorker(llm, msgs, parent=self)
+            self.rename_worker.finished.connect(self._on_rename_worker_finished)
+            self.rename_worker.error.connect(self._on_rename_worker_error)
+            self.rename_worker.start()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Auto Rename Failed", f"An error occurred: {e}")
+            self.ui.pushButtonAutoRename.setText("auto rename")
+            self.ui.pushButtonAutoRename.setEnabled(True)
+
+    def _on_rename_worker_finished(self, response_text):
+        try:
+            agent_name = "reactor_worker"
+            agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+            if not agent_cfg:
+                agent_name = self.config.get("default_chat_agent", "Tron")
+                agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+                
+            model_name = agent_cfg.get("model_name", self.config.get("model", "llama3"))
+            reasoning_tags = self.config.get("model_reasoning_tags", {})
+            tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+            tag_open = tags[0]
+            tag_close = tags[1] if len(tags) > 1 else "</think>"
+            escaped_open = re.escape(tag_open)
+            escaped_close = re.escape(tag_close)
             
-            # Remove <think> reasoning blocks if present
-            response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL)
+            # Remove reasoning blocks if present
+            response_text = re.sub(f'{escaped_open}.*?{escaped_close}', '', response_text, flags=re.DOTALL)
             
             # Clean and sanitize the filename
             if "```" in response_text:
@@ -640,6 +890,11 @@ class MstyCloneApp(QMainWindow):
         finally:
             self.ui.pushButtonAutoRename.setText("auto rename")
             self.ui.pushButtonAutoRename.setEnabled(True)
+
+    def _on_rename_worker_error(self, err_msg):
+        QMessageBox.critical(self, "Auto Rename Failed", f"An error occurred while generating filename: {err_msg}")
+        self.ui.pushButtonAutoRename.setText("auto rename")
+        self.ui.pushButtonAutoRename.setEnabled(True)
         
     def _rename_session(self):
         path, _ = QFileDialog.getSaveFileName(self, "Rename Chat Session", self.sessions_dir, "JSON Files (*.json)")
@@ -709,10 +964,13 @@ class MstyCloneApp(QMainWindow):
             # Optional: Show a quick temporary message in the chat that it saved
             if notify:
                 self.write_to_chat("<span style='color:#2ecc71;'><i>[Session saved successfully]</i></span><br>", is_new_message=True)
+                
+            if hasattr(self, '_populate_project_tree'):
+                self._populate_project_tree()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save session:\n{str(e)}")
 
-    def load_session(self, file=None):
+    def load_session(self, file=None, is_startup=False):
         fallback = self.ui.comboBoxSessions.currentIndex()
 
         if file == None:
@@ -783,7 +1041,10 @@ class MstyCloneApp(QMainWindow):
                 
             except Exception as e:
                 self.ui.comboBoxSessions.setCurrentIndex(fallback)
-                QMessageBox.critical(self, "Error", f"Failed to load session:\n{str(e)}\n\nsession file will be deleted")
+                if not is_startup:
+                    QMessageBox.critical(self, "Error", f"Failed to load session:\n{str(e)}\n\nsession file will be deleted")
+                else:
+                    print(f"Failed to load session on startup: {e}. Skipping session load.")
                 
                 
     def _init_prompt_directory(self):
@@ -814,7 +1075,7 @@ class MstyCloneApp(QMainWindow):
         self.ui.comboBoxSessions.disconnect()
         self.ui.comboBoxSessions.clear()
         self.ui.comboBoxSessions.addItems(
-            [item for item in os.listdir(self.sessions_dir)])
+            sorted([item for item in os.listdir(self.sessions_dir)], key=lambda s: s.lower()))
             
         if not current_item == None:
             self.ui.comboBoxSessions.setCurrentText(current_item)
@@ -913,13 +1174,22 @@ class MstyCloneApp(QMainWindow):
                 
         self._save_config()
 
+    def _on_context_compressed(self):
+        self.write_to_chat("<br><span style='color:#e67e22;'><i>🤖 [System: Context automatically compressed to save tokens]</i></span><br>", is_new_message=True)
+        self._update_context_len()
+
     ## SIGNALZ
     def _connect_signals(self):
         # Configuration Save Triggers
+        if hasattr(self.ui, 'actionChange_Project'):
+            self.ui.actionChange_Project.triggered.connect(self.launch_config_selector_and_exit)
+            
         self.ui.agent_combo.currentTextChanged.connect(self._save_config)
         self.ui.agent_combo.currentTextChanged.connect(self._sync_preset_combobox)
         self.ui.agent_combo.currentTextChanged.connect(self._update_agent_description)
         self.ui.comboBoxSessions.currentTextChanged.connect(self._save_config)
+        
+        self.context_compressed_signal.connect(self._on_context_compressed)
         
         # Deep Agents hook
         if hasattr(self.ui, 'use_deepagents_checkbox'):
@@ -968,7 +1238,7 @@ class MstyCloneApp(QMainWindow):
         if hasattr(self.ui, 'treeWidget'):
             self.ui.treeWidget.setContextMenuPolicy(Qt.CustomContextMenu)
             self.ui.treeWidget.customContextMenuRequested.connect(self._tree_right_click_menu)
-            self.ui.treeWidget.itemDoubleClicked.connect(self._open_file_in_tab)
+            self.ui.treeWidget.itemDoubleClicked.connect(self._insert_path_to_input)
         
         from PyQt5.QtWidgets import QAction
         self.actionToggleScratchpad = QAction("Toggle Scratchpad", self)
@@ -987,8 +1257,13 @@ class MstyCloneApp(QMainWindow):
         self.ui.stop_btn.clicked.connect(self.stop_generation)
         if hasattr(self.ui, 'unload_btn'):
             self.ui.unload_btn.clicked.connect(self.unload_model)
+        if hasattr(self.ui, 'unload_all_btn'):
+            self.ui.unload_all_btn.clicked.connect(self.unload_model)
         if hasattr(self.ui, 'pushButtonAutoRename'):
             self.ui.pushButtonAutoRename.clicked.connect(self._llm_rename_session)
+            
+        if hasattr(self.ui, 'pushButtonWorkspaceMan'):
+            self.ui.pushButtonWorkspaceMan.clicked.connect(self._open_workspace_manager)
         
         self.ui.refresh_sessions_btn.clicked.connect(self._update_session_combobox)
 
@@ -1005,6 +1280,9 @@ class MstyCloneApp(QMainWindow):
             self.ui.pushButtonStartPhoenix.clicked.connect(self._start_phoenix)
         if hasattr(self.ui, 'pushButtonStopPhoenix'):
             self.ui.pushButtonStopPhoenix.clicked.connect(self._stop_phoenix)
+            
+        if hasattr(self.ui, 'pushButtonProjectTreeRefresh'):
+            self.ui.pushButtonProjectTreeRefresh.clicked.connect(self._populate_project_tree)
         
     def _open_agent_manager(self):
         from agent_manager import AgentManagerDialog
@@ -1124,17 +1402,39 @@ class MstyCloneApp(QMainWindow):
         text_widget.setTextCursor(cursor)
         text_widget.setFocus()
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self.ui, 'dockWidget_4'):
+            self.resizeDocks([self.ui.dockWidget_4], [self.width()], Qt.Horizontal)
+
     def eventFilter(self, obj, event):
         input_box = getattr(self.ui, 'input_box', None)
         is_input_viewport = input_box and obj is input_box.viewport()
         
         # Handle Drag and Drop for files
-        if obj in (input_box, input_box.viewport() if input_box else None):
-            if event.type() == QEvent.DragEnter:
-                if event.mimeData().hasUrls():
+        if obj is getattr(self, 'file_contents_tabs', None) or obj is getattr(self.ui, 'chat_display', None):
+            if event.type() in (QEvent.DragEnter, QEvent.DragMove):
+                tree_widget = getattr(self.ui, 'treeWidget', None)
+                if tree_widget and event.source() in (tree_widget, tree_widget.viewport()):
                     event.acceptProposedAction()
                     return True
             elif event.type() == QEvent.Drop:
+                tree_widget = getattr(self.ui, 'treeWidget', None)
+                if tree_widget and event.source() in (tree_widget, tree_widget.viewport()):
+                    for item in tree_widget.selectedItems():
+                        self._open_file_in_tab(item, 0)
+                    event.acceptProposedAction()
+                    return True
+                    
+        if obj in (input_box, input_box.viewport() if input_box else None):
+            if event.type() in (QEvent.DragEnter, QEvent.DragMove):
+                tree_widget = getattr(self.ui, 'treeWidget', None)
+                if event.mimeData().hasUrls() or event.mimeData().hasFormat("application/x-qabstractitemmodeldatalist") or (tree_widget and event.source() in (tree_widget, tree_widget.viewport())):
+                    event.acceptProposedAction()
+                    return True
+            elif event.type() == QEvent.Drop:
+                handled = False
+                tree_widget = getattr(self.ui, 'treeWidget', None)
                 if event.mimeData().hasUrls():
                     for url in event.mimeData().urls():
                         file_path = url.toLocalFile()
@@ -1143,6 +1443,19 @@ class MstyCloneApp(QMainWindow):
                                 self.staged_files = []
                             if file_path not in self.staged_files:
                                 self.staged_files.append(file_path)
+                    handled = True
+                if (tree_widget and event.source() in (tree_widget, tree_widget.viewport())) or event.mimeData().hasFormat("application/x-qabstractitemmodeldatalist"):
+                    if tree_widget:
+                        for item in tree_widget.selectedItems():
+                            file_path = item.data(0, Qt.UserRole)
+                            if file_path and os.path.isfile(file_path):
+                                if not hasattr(self, 'staged_files'):
+                                    self.staged_files = []
+                                if file_path not in self.staged_files:
+                                    self.staged_files.append(file_path)
+                        handled = True
+
+                if handled:
                     self.update_staged_files_indicator()
                     event.acceptProposedAction()
                     return True
@@ -1431,6 +1744,15 @@ class MstyCloneApp(QMainWindow):
         user_text = self.ui.input_box.toPlainText()
         if not user_text: return
         
+        # Handle /compress specifically
+        if user_text.strip() == "/compress":
+            self.context_compressor_hook(None, force=True)
+            self.ui.input_box.clear()
+            self.write_to_chat("<br><span style='color:#3498db;'><i>🤖 [System: Manual compression triggered...]</i></span><br>", is_new_message=True)
+            if hasattr(self, 'slash_popup'):
+                self.slash_popup.hide()
+            return
+            
         # Handle /continue specifically
         if user_text.strip() == "/continue":
             user_text = "Please continue where you left off."
@@ -1548,8 +1870,9 @@ class MstyCloneApp(QMainWindow):
 
     def unload_model(self):
         try:
-            import threading
             import requests
+            from PyQt5.QtCore import QThread, pyqtSignal
+            from PyQt5.QtWidgets import QMessageBox
             
             agent_name = self.ui.agent_combo.currentText().strip()
             agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
@@ -1563,23 +1886,41 @@ class MstyCloneApp(QMainWindow):
                 if match:
                     base_server_url = match.group(1)
                     
-                    def force_unload():
-                        try:
-                            models_resp = requests.get(f"{base_server_url}/v1/models", timeout=2)
-                            if models_resp.status_code == 200:
-                                data = models_resp.json()
-                                for model in data.get("data", []):
-                                    m_id = model.get("id")
-                                    if m_id:
-                                        requests.post(
-                                            f"{base_server_url}/api/v1/models/unload",
-                                            json={"instance_id": m_id},
-                                            timeout=2
-                                        )
-                        except Exception:
-                            pass
-                            
-                    threading.Thread(target=force_unload, daemon=True).start()
+                    class UnloadWorker(QThread):
+                        finished = pyqtSignal(int)
+                        error = pyqtSignal(str)
+                        
+                        def run(self):
+                            count = 0
+                            try:
+                                models_resp = requests.get(f"{base_server_url}/v1/models", timeout=2)
+                                if models_resp.status_code == 200:
+                                    data = models_resp.json()
+                                    for model in data.get("data", []):
+                                        m_id = model.get("id")
+                                        if m_id:
+                                            resp = requests.post(
+                                                f"{base_server_url}/api/v1/models/unload",
+                                                json={"instance_id": m_id},
+                                                timeout=2
+                                            )
+                                            if resp.status_code == 200:
+                                                count += 1
+                                self.finished.emit(count)
+                            except Exception as e:
+                                self.error.emit(str(e))
+                                
+                    self._unload_worker = UnloadWorker()
+                    
+                    def on_finished(count):
+                        QMessageBox.information(self, "Models Unloaded", f"Successfully unloaded {count} model(s).")
+                        
+                    def on_error(err):
+                        QMessageBox.warning(self, "Unload Error", f"Failed to unload models: {err}")
+                        
+                    self._unload_worker.finished.connect(on_finished)
+                    self._unload_worker.error.connect(on_error)
+                    self._unload_worker.start()
         except Exception:
             pass
 
@@ -1603,12 +1944,24 @@ class MstyCloneApp(QMainWindow):
     def _on_generation_finished(self, full_response):
         if not self.generation_thread.cancel_flag:
             import re
-            cleaned_response = re.sub(r'<think>.*?</think>', '', full_response, flags=re.DOTALL).strip()
+            
+            agent_name = self.ui.agent_combo.currentText().strip()
+            agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+            model_name = agent_cfg.get("model_name", self.config.get("model", "llama3"))
+            reasoning_tags = self.config.get("model_reasoning_tags", {})
+            tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+            tag_open = tags[0]
+            tag_close = tags[1] if len(tags) > 1 else "</think>"
+            escaped_open = re.escape(tag_open)
+            escaped_close = re.escape(tag_close)
+            
+            cleaned_response = re.sub(f'{escaped_open}.*?{escaped_close}', '', full_response, flags=re.DOTALL).strip()
             safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', self.generation_thread.model)[:64]
             self.messages.append({"role": "assistant", "content": cleaned_response, "name": safe_name})
             self._update_context_len()
         self.toggle_input(True)
         self.save_session(self.session_file)
+        self._populate_project_tree()
 
         # Trigger hooks
         for priority, callback in self.hooks.get("on_generation_finished", []):

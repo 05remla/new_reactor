@@ -62,7 +62,14 @@ def pre_generation_retrieval(query: str) -> str:
         resp_text = response.content if hasattr(response, 'content') else str(response)
         
         # Clean response
-        resp_text = re.sub(r'<think>.*?</think>', '', resp_text, flags=re.DOTALL)
+        model_name = agent_cfg.get("model_name", cfg_mgr.config.get("model", "llama3")) if agent_cfg else cfg_mgr.config.get("model", "llama3")
+        reasoning_tags = cfg_mgr.config.get("model_reasoning_tags", {})
+        tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+        tag_open = tags[0]
+        tag_close = tags[1] if len(tags) > 1 else "</think>"
+        escaped_open = re.escape(tag_open)
+        escaped_close = re.escape(tag_close)
+        resp_text = re.sub(f'{escaped_open}.*?{escaped_close}', '', resp_text, flags=re.DOTALL)
         if "```" in resp_text:
             resp_text = resp_text.split("```")[1].strip()
             

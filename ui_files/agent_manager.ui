@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>593</width>
-    <height>779</height>
+    <width>598</width>
+    <height>685</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -47,6 +47,190 @@ color: black;
      </item>
     </layout>
    </item>
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="bottomMargin">
+      <number>14</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_model_2">
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(51, 51, 51);</string>
+       </property>
+       <property name="text">
+        <string>Agents:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frame">
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_33">
+          <property name="spacing">
+           <number>4</number>
+          </property>
+          <item>
+           <widget class="QComboBox" name="agent_combo">
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
+            </property>
+            <property name="editable">
+             <bool>false</bool>
+            </property>
+            <property name="frame">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayoutAgentDesc">
+            <item>
+             <widget class="QLabel" name="labelAgentDesc">
+              <property name="text">
+               <string>Description:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEditAgentDescription">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(255, 255, 255);</string>
+              </property>
+              <property name="placeholderText">
+               <string>Enter subagent description here...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_37">
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonAgentsSave">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>8</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: @color1; 
+color: black;
+</string>
+              </property>
+              <property name="text">
+               <string>save</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonAgentsCreate">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>8</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: @color2; 
+color: black;
+</string>
+              </property>
+              <property name="text">
+               <string>create</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonAgentsDelete">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>8</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: @color3; 
+color: black;</string>
+              </property>
+              <property name="text">
+               <string>delete</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
    <item row="1" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="font">
@@ -80,29 +264,204 @@ background-color: rgb(238, 238, 238);
       </attribute>
       <layout class="QGridLayout" name="gridLayout_12">
        <item row="0" column="0">
-        <widget class="QLabel" name="label_model">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
+        <layout class="QVBoxLayout" name="verticalLayout_32">
+         <property name="spacing">
+          <number>4</number>
          </property>
-         <property name="styleSheet">
-          <string notr="true">color: rgb(51, 51, 51);</string>
-         </property>
-         <property name="text">
-          <string>Model:</string>
-         </property>
-        </widget>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_10">
+           <item>
+            <widget class="QLabel" name="label_model">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(51, 51, 51);</string>
+             </property>
+             <property name="text">
+              <string>Model:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonThinkingTags">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>22</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>22</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string>thinking tags</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: @color1; 
+color: black;
+</string>
+             </property>
+             <property name="text">
+              <string>X</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QComboBox" name="model_combo">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
+           </property>
+           <property name="editable">
+            <bool>false</bool>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_36">
+           <item>
+            <widget class="QPushButton" name="pushButtonModelsGoogle">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: @color3; 
+color: black;</string>
+             </property>
+             <property name="text">
+              <string>from google</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonModelsConfig">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: @color1; 
+color: black;
+</string>
+             </property>
+             <property name="text">
+              <string>from config</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonModelsProvider">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: @color2; 
+color: black;
+</string>
+             </property>
+             <property name="text">
+              <string>from provider</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonModelsLoaded">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: @color3; 
+color: black;</string>
+             </property>
+             <property name="text">
+              <string>loaded</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
-       <item row="3" column="0">
-        <widget class="Line" name="line_9">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
+       <item row="5" column="0">
         <layout class="QVBoxLayout" name="verticalLayout_29">
          <property name="spacing">
           <number>4</number>
@@ -193,9 +552,9 @@ color: black;
               </sizepolicy>
              </property>
              <property name="styleSheet">
-              <string notr="true">selection-background-color: #7d86b6;
-background-color: rgb(221, 221, 221);
-</string>
+              <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
              </property>
             </widget>
            </item>
@@ -203,24 +562,7 @@ background-color: rgb(221, 221, 221);
          </item>
         </layout>
        </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_gen_params">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">color: rgb(51, 51, 51);</string>
-         </property>
-         <property name="text">
-          <string>
-Inference Parameters</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
+       <item row="3" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_35">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_30">
@@ -376,7 +718,31 @@ Inference Parameters</string>
          </item>
         </layout>
        </item>
-       <item row="5" column="0">
+       <item row="2" column="0">
+        <widget class="Line" name="line_9">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_gen_params">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: rgb(51, 51, 51);</string>
+         </property>
+         <property name="text">
+          <string>
+Inference Parameters</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
         <spacer name="spacerItem">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -388,146 +754,6 @@ Inference Parameters</string>
           </size>
          </property>
         </spacer>
-       </item>
-       <item row="1" column="0">
-        <layout class="QVBoxLayout" name="verticalLayout_32">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QComboBox" name="model_combo">
-           <property name="styleSheet">
-            <string notr="true">selection-background-color: #7d86b6;
-background-color: rgb(221, 221, 221);
-</string>
-           </property>
-           <property name="editable">
-            <bool>false</bool>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_36">
-           <item>
-            <widget class="QPushButton" name="pushButtonModelsGoogle">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: @color3; 
-color: black;</string>
-             </property>
-             <property name="text">
-              <string>from google</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButtonModelsConfig">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: @color1; 
-color: black;
-</string>
-             </property>
-             <property name="text">
-              <string>from config</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButtonModelsProvider">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: @color2; 
-color: black;
-</string>
-             </property>
-             <property name="text">
-              <string>from provider</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButtonModelsLoaded">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: @color3; 
-color: black;</string>
-             </property>
-             <property name="text">
-              <string>loaded</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
        </item>
       </layout>
      </widget>
@@ -608,7 +834,9 @@ color: black;</string>
           <widget class="QListWidget" name="listWidgetPrompts">
            <property name="styleSheet">
             <string notr="true">background-color: rgb(255, 255, 255);
-alternate-background-color: rgb(207, 207, 207);</string>
+alternate-background-color: rgb(207, 207, 207);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
            </property>
            <property name="alternatingRowColors">
             <bool>true</bool>
@@ -682,7 +910,9 @@ alternate-background-color: rgb(207, 207, 207);</string>
              </property>
              <property name="styleSheet">
               <string notr="true">background-color: rgb(255, 255, 255);
-alternate-background-color: rgb(207, 207, 207);</string>
+alternate-background-color: rgb(207, 207, 207);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
              </property>
             </widget>
            </item>
@@ -838,7 +1068,9 @@ color: black;</string>
             <widget class="QListWidget" name="listWidgetProviders">
              <property name="styleSheet">
               <string notr="true">background-color: rgb(255, 255, 255);
-alternate-background-color: rgb(207, 207, 207);</string>
+alternate-background-color: rgb(207, 207, 207);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
              </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
@@ -876,7 +1108,10 @@ alternate-background-color: rgb(207, 207, 207);</string>
                <item>
                 <widget class="QPlainTextEdit" name="plainTextEditProviderDescription">
                  <property name="styleSheet">
-                  <string notr="true">background-color: rgb(255, 255, 255);</string>
+                  <string notr="true">background-color: rgb(255, 255, 255);
+alternate-background-color: rgb(207, 207, 207);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
                  </property>
                 </widget>
                </item>
@@ -972,173 +1207,6 @@ color: black;
        <string>Deepagents</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="6" column="0">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>542</width>
-           <height>22</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="4" column="0">
-        <widget class="QGroupBox" name="groupBox_2">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>140</height>
-          </size>
-         </property>
-         <property name="title">
-          <string>subagents</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_13">
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="checkBoxDASubagents">
-            <property name="text">
-             <string>CheckBox</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QGroupBox" name="groupBox_tools">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>110</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true"/>
-         </property>
-         <property name="title">
-          <string>tools</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_6">
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="checkBoxDATools">
-            <property name="text">
-             <string>CheckBox</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QCheckBox" name="checkBoxSubagentsToPrompt">
-         <property name="text">
-          <string>inject subagent list into system prompt</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QGroupBox" name="groupBox">
-         <property name="styleSheet">
-          <string notr="true"/>
-         </property>
-         <property name="title">
-          <string>backend</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_8">
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="lineEditDARootDir">
-            <property name="styleSheet">
-             <string notr="true">background-color: rgb(255, 255, 255);</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QComboBox" name="comboBoxDABackend">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true"/>
-            </property>
-            <property name="editable">
-             <bool>false</bool>
-            </property>
-            <item>
-             <property name="text">
-              <string>FilesystemBackend</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>StoreBackend</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>CompositeBackend</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>LocalShellBackend</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>StateBackend</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>mode:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>root dir:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QCheckBox" name="checkBoxDABackendVirtual">
-            <property name="text">
-             <string>virtual</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="checkBoxBackendUseProject">
-         <property name="text">
-          <string>backend: use project settings (beckend settings defined in current config)</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item row="3" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <property name="leftMargin">
@@ -1223,6 +1291,337 @@ color: black;</string>
          </item>
         </layout>
        </item>
+       <item row="2" column="0">
+        <widget class="QGroupBox" name="groupBox_tools">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>110</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="title">
+          <string>tools</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_6">
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="checkBoxDATools">
+            <property name="text">
+             <string>CheckBox</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBoxBackendUseProject">
+         <property name="text">
+          <string>backend: use project settings (beckend settings defined in current config)</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>555</width>
+           <height>125</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="groupBox">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="title">
+          <string>backend</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_8">
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="lineEditDARootDir">
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(255, 255, 255);</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="comboBoxDABackend">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
+            </property>
+            <property name="editable">
+             <bool>false</bool>
+            </property>
+            <item>
+             <property name="text">
+              <string>FilesystemBackend</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>StoreBackend</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>CompositeBackend</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>LocalShellBackend</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>StateBackend</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>mode:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>root dir:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QCheckBox" name="checkBoxDABackendVirtual">
+            <property name="text">
+             <string>virtual</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_5">
+      <attribute name="title">
+       <string>Deepagents 2</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_11">
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>110</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>subagents</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_13">
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="checkBoxDASubagents">
+            <property name="text">
+             <string>CheckBox</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <property name="topMargin">
+          <number>20</number>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="checkBoxDisableGeneralPurpose">
+           <property name="text">
+            <string>disable general-purpose subagent</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="0">
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>85</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_6">
+      <attribute name="title">
+       <string>Deepagents 3</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_14">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBoxModifyBaseAgentPrompt">
+         <property name="text">
+          <string>modify deepagents base_agent_prompt</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>base_agent_prompt</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_9">
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QPlainTextEdit" name="plainTextEditBaseAgentPrompt"/>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <item>
+               <widget class="QPushButton" name="pushButtonBaseAgentPromptReset">
+                <property name="text">
+                 <string>reset</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonBaseAgentPromptLoad">
+                <property name="text">
+                 <string>load</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonBaseAgentPromptSave">
+                <property name="text">
+                 <string>save</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <layout class="QVBoxLayout" name="verticalLayout_8">
+         <property name="topMargin">
+          <number>20</number>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="checkBoxMiddlewareMemory">
+           <property name="text">
+            <string>enable deepagents MemoryMiddleware (.before_agent prompt inject)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBoxMiddlewareTools">
+           <property name="text">
+            <string>enable deepagents PatchToolCallsMiddleware (.before_agent prompt inject)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBoxMiddlewareSkills">
+           <property name="text">
+            <string>enable deepagents SkillsMiddleware (.before_agent prompt inject)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBoxMiddlewareUserTools">
+           <property name="text">
+            <string>enable user-defined tools prompt injected instructions</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBoxMiddlewareSubagents">
+           <property name="text">
+            <string>enable deepagents subagents</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="0">
+        <spacer name="verticalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>110</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab">
@@ -1230,22 +1629,6 @@ color: black;</string>
        <string>Runtime</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="2" column="0">
-        <widget class="QGroupBox" name="grp_observability">
-         <property name="title">
-          <string>Observability &amp; Tracing</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_observability">
-          <item>
-           <widget class="QCheckBox" name="chk_show_tool_calls">
-            <property name="text">
-             <string>Show Tool Calls in Chat History</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
        <item row="1" column="0">
         <widget class="QGroupBox" name="grp_loop">
          <property name="title">
@@ -1281,6 +1664,35 @@ color: black;</string>
              </widget>
             </item>
            </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="2" column="0">
+        <widget class="QGroupBox" name="grp_observability">
+         <property name="title">
+          <string>Observability &amp; Tracing</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_observability">
+          <item>
+           <widget class="QCheckBox" name="chk_show_tool_calls">
+            <property name="text">
+             <string>Show Tool Calls in Chat History</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -1356,6 +1768,11 @@ color: black;</string>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
+              </property>
               <item>
                <property name="text">
                 <string>Local (Offline CPU)</string>
@@ -1404,6 +1821,11 @@ color: black;</string>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
+              </property>
               <item>
                <property name="text">
                 <string>sentence-transformers/all-MiniLM-L6-v2</string>
@@ -1416,18 +1838,12 @@ color: black;</string>
          </layout>
         </widget>
        </item>
-       <item row="3" column="0">
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+       <item row="4" column="0">
+        <widget class="QPushButton" name="pushButtonPromptDebug">
+         <property name="text">
+          <string>show compiled runtime prompt</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1504,7 +1920,9 @@ color: black;</string>
           <widget class="QListWidget" name="listWidgetLightRAG_2">
            <property name="styleSheet">
             <string notr="true">background-color: rgb(255, 255, 255);
-alternate-background-color: rgb(207, 207, 207);</string>
+alternate-background-color: rgb(207, 207, 207);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
            </property>
            <property name="alternatingRowColors">
             <bool>true</bool>
@@ -1580,190 +1998,6 @@ color: black;
       </layout>
      </widget>
     </widget>
-   </item>
-   <item row="0" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <property name="spacing">
-      <number>6</number>
-     </property>
-     <property name="bottomMargin">
-      <number>14</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="label_model_2">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(51, 51, 51);</string>
-       </property>
-       <property name="text">
-        <string>Agents:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QFrame" name="frame">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Plain</enum>
-       </property>
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <layout class="QVBoxLayout" name="verticalLayout_33">
-          <property name="spacing">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QComboBox" name="agent_combo">
-            <property name="styleSheet">
-             <string notr="true">selection-background-color: #7d86b6;
-background-color: rgb(221, 221, 221);
-</string>
-            </property>
-            <property name="editable">
-             <bool>false</bool>
-            </property>
-            <property name="frame">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayoutAgentDesc">
-            <item>
-             <widget class="QLabel" name="labelAgentDesc">
-              <property name="text">
-               <string>Description:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="lineEditAgentDescription">
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(255, 255, 255);</string>
-              </property>
-              <property name="placeholderText">
-               <string>Enter subagent description here...</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_37">
-            <item>
-             <spacer name="horizontalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButtonAgentsSave">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: @color1; 
-color: black;
-</string>
-              </property>
-              <property name="text">
-               <string>save</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButtonAgentsCreate">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: @color2; 
-color: black;
-</string>
-              </property>
-              <property name="text">
-               <string>create</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButtonAgentsDelete">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: @color3; 
-color: black;</string>
-              </property>
-              <property name="text">
-               <string>delete</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>

@@ -132,6 +132,69 @@ class TwoStepRouterWidget(QWidget):
     def on_enable_toggled(self, checked):
         self.is_active = checked
 
+    def on_route_status_update(self, html_str):
+        self.main_window.write_to_chat(html_str, is_new_message=False)
+        
+    def on_route_error(self, err_msg):
+        self.main_window.write_to_chat(f"<br><span style='color:#e74c3c;'>[Two-Step Routing Error: {err_msg}]</span><br>", False)
+        self.main_window.toggle_input(True)
+        
+    def on_route_finished(self, agent_name, final_user_message):
+        main_window = self.main_window
+        # Now we actually write the user's message to the chat
+        main_window.write_to_chat(f"🧑 YOU:\n{final_user_message}", is_new_message=True)
+        main_window.write_to_chat(f"<b><span style='color:#3498db;'><i>[Routed to {agent_name}]</i></span></b><br>\n", is_new_message=False)
+        
+        if not main_window.user_message_history or main_window.user_message_history[-1] != final_user_message:
+            main_window.user_message_history.append(final_user_message)
+        main_window.history_index = len(main_window.user_message_history)
+        main_window.messages.append({"role": "user", "content": final_user_message, "name": "User"})
+        if hasattr(main_window, '_update_context_len'):
+            main_window._update_context_len()
+        
+        # Find the chosen agent's prompt
+        agent_prompt = "You are a helpful AI assistant."
+        for a in self.agents:
+            if a['name'].lower() == agent_name.lower():
+                agent_prompt = a['prompt']
+                break
+        
+        # Use the global variables for RAG and DeepAgents
+        rag_cfg = {
+            "use_rag": getattr(main_window.ui, 'use_rag_checkbox', None) is not None and main_window.ui.use_rag_checkbox.isChecked(),
+            "base_url": main_window.config.get("lightrag_url", "").rstrip("/"),
+            "api_key": main_window.config.get("lightrag_api_key", ""),
+            "retrieval_mode": main_window.ui.retrieval_mode_combo.currentText() if hasattr(main_window.ui, 'retrieval_mode_combo') else "local",
+            "model": main_window.ui.rag_model_combo.currentText().strip() if hasattr(main_window.ui, 'rag_model_combo') else ""
+        }
+        
+        from main import GenerationThread
+        
+        # Create standard GenThread with injected sys prompt from the agent
+        main_window.generation_thread = GenerationThread(
+            model=main_window.ui.model_combo.currentText().strip() if hasattr(main_window.ui, 'model_combo') else main_window.config.get("model", ""),
+            sys_prompt=agent_prompt,
+            messages=main_window.messages,
+            config=main_window.config,
+            rag_config=rag_cfg,
+            temp=main_window.ui.temp_slider.value() / 100.0 if hasattr(main_window.ui, 'temp_slider') else 0.7,
+            top_p=main_window.ui.top_p_slider.value() / 100.0 if hasattr(main_window.ui, 'top_p_slider') else 1.0,
+            min_p=main_window.ui.min_p_slider.value() / 100.0 if hasattr(main_window.ui, 'min_p_slider') else 0.05,
+            top_k=main_window.ui.top_k_slider.value() if hasattr(main_window.ui, 'top_k_slider') else 40,
+            repeat_penalty=main_window.ui.repeat_penalty_slider.value() / 100.0 if hasattr(main_window.ui, 'repeat_penalty_slider') else 1.1,
+            max_tokens=main_window.ui.max_output_horizontalSlider.value() if hasattr(main_window.ui, 'max_output_horizontalSlider') else None
+        )
+
+        if hasattr(main_window, '_on_todos_updated'):
+            main_window.generation_thread.todos_updated.connect(main_window._on_todos_updated)
+        main_window.generation_thread.status_update.connect(main_window.write_to_chat)
+        main_window.generation_thread.chunk_received.connect(lambda t: main_window.write_to_chat(t, False))
+        if hasattr(main_window, '_on_generation_error'):
+            main_window.generation_thread.error_occurred.connect(main_window._on_generation_error)
+        if hasattr(main_window, '_on_generation_finished'):
+            main_window.generation_thread.finished.connect(main_window._on_generation_finished)
+        main_window.generation_thread.start()
+
 
 class TwoStepRouterThread(QThread):
     route_finished = pyqtSignal(str, str) # agent_name, final_user_message
@@ -151,7 +214,7 @@ class TwoStepRouterThread(QThread):
             from langchain_core.messages import HumanMessage, SystemMessage
             
             api_base = self.mw.config.get("api_base", "")
-            model_name = self.mw.ui.model_combo.currentText().strip()
+            model_name = self.mw.ui.model_combo.currentText().strip() if hasattr(self.mw.ui, 'model_combo') else self.mw.config.get("model", "")
             # Use a low temp for the router to ensure stable JSON extraction
             llm = ChatOpenAI(base_url=api_base, api_key=self.mw.config.get("api_key", ""), model=model_name, temperature=0.1)
             
@@ -243,67 +306,9 @@ def enable_plugin(main_window):
         # Start the background router thread
         main_window.two_step_thread = TwoStepRouterThread(main_window, user_text)
         
-        def on_route_status_update(html_str):
-            main_window.write_to_chat(html_str, is_new_message=False)
-            
-        def on_route_error(err_msg):
-            main_window.write_to_chat(f"<br><span style='color:#e74c3c;'>[Two-Step Routing Error: {err_msg}]</span><br>", False)
-            main_window.toggle_input(True)
-            
-        def on_route_finished(agent_name, final_user_message):
-            # Now we actually write the user's message to the chat
-            main_window.write_to_chat(f"🧑 YOU:\\n{final_user_message}", is_new_message=True)
-            main_window.write_to_chat(f"<b><span style='color:#3498db;'><i>[Routed to {agent_name}]</i></span></b><br>\\n", is_new_message=False)
-            
-            if not main_window.user_message_history or main_window.user_message_history[-1] != final_user_message:
-                main_window.user_message_history.append(final_user_message)
-            main_window.history_index = len(main_window.user_message_history)
-            main_window.messages.append({"role": "user", "content": final_user_message, "name": "User"})
-            main_window._update_context_len()
-            
-            # Find the chosen agent's prompt
-            agent_prompt = "You are a helpful AI assistant."
-            for a in gc.agents:
-                if a['name'].lower() == agent_name.lower():
-                    agent_prompt = a['prompt']
-                    break
-            
-            # Use the global variables for RAG and DeepAgents
-            rag_cfg = {
-                "use_rag": main_window.ui.use_rag_checkbox.isChecked(),
-                "base_url": main_window.config.get("lightrag_url", "").rstrip("/"),
-                "api_key": main_window.config.get("lightrag_api_key", ""),
-                "retrieval_mode": main_window.ui.retrieval_mode_combo.currentText(),
-                "model": main_window.ui.rag_model_combo.currentText().strip()
-            }
-            
-            from main import GenerationThread
-            
-            # Create standard GenThread with injected sys prompt from the agent
-            main_window.generation_thread = GenerationThread(
-                model=main_window.ui.model_combo.currentText().strip(),
-                sys_prompt=agent_prompt,
-                messages=main_window.messages,
-                config=main_window.config,
-                rag_config=rag_cfg,
-                temp=main_window.ui.temp_slider.value() / 100.0,
-                top_p=main_window.ui.top_p_slider.value() / 100.0,
-                min_p=main_window.ui.min_p_slider.value() / 100.0,
-                top_k=main_window.ui.top_k_slider.value(),
-                repeat_penalty=main_window.ui.repeat_penalty_slider.value() / 100.0,
-                max_tokens=main_window.ui.max_output_horizontalSlider.value() if hasattr(main_window.ui, 'max_output_horizontalSlider') else None
-            )
-
-            main_window.generation_thread.todos_updated.connect(main_window._on_todos_updated)
-            main_window.generation_thread.status_update.connect(main_window.write_to_chat)
-            main_window.generation_thread.chunk_received.connect(lambda t: main_window.write_to_chat(t, False))
-            main_window.generation_thread.error_occurred.connect(main_window._on_generation_error)
-            main_window.generation_thread.finished.connect(main_window._on_generation_finished)
-            main_window.generation_thread.start()
-
-        main_window.two_step_thread.route_status.connect(on_route_status_update)
-        main_window.two_step_thread.route_error.connect(on_route_error)
-        main_window.two_step_thread.route_finished.connect(on_route_finished)
+        main_window.two_step_thread.route_status.connect(gc.on_route_status_update)
+        main_window.two_step_thread.route_error.connect(gc.on_route_error)
+        main_window.two_step_thread.route_finished.connect(gc.on_route_finished)
         main_window.two_step_thread.start()
 
     main_window.send_message = two_step_send_message

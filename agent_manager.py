@@ -30,6 +30,20 @@ class AgentManagerDialog(QWidget):
         self.setWindowFlags(Qt.Window)
         self.setWindowTitle("Agent Manager")
         
+        if hasattr(self.ui, 'plainTextEditPrompt'):
+            from PyQt5.QtGui import QFontInfo
+            font = self.ui.plainTextEditPrompt.font()
+            current_pt = QFontInfo(font).pointSize()
+            if current_pt > 0:
+                font.setPointSize(current_pt - 2)
+            self.ui.plainTextEditPrompt.setFont(font)
+            try:
+                from syntax_highlighter import CodeHighlighter
+                self.ui.plainTextEditPrompt.highlighter = CodeHighlighter(self.ui.plainTextEditPrompt.document(), 'markdown')
+            except Exception as e:
+                pass
+
+        
         # Initialize global lists (presets, providers)
         self._refresh_preset_combobox()
         self._refresh_providers()
@@ -37,6 +51,7 @@ class AgentManagerDialog(QWidget):
         # We start by listing all agents in the agents/ folder
         self._populate_agents_list()
         self._connect_signals()
+        self._load_base_agent_prompt()
 
         # If there are agents, select the default one to load its data
         if self.ui.agent_combo.count() > 0:
@@ -122,6 +137,13 @@ class AgentManagerDialog(QWidget):
             self.ui.pushButtonLightRAGAdd_2.clicked.connect(self._add_stopstring)
             self.ui.pushButtonLightRAGRemove_2.clicked.connect(self._remove_stopstring)
 
+        # Thinking Tags
+        if hasattr(self.ui, 'pushButtonThinkingTags'):
+            self.ui.pushButtonThinkingTags.clicked.connect(self._open_thinking_tags_dialog)
+            
+        if hasattr(self.ui, 'pushButtonPromptDebug'):
+            self.ui.pushButtonPromptDebug.clicked.connect(self._debug_prompt)
+
         # Auto-save connections
         if hasattr(self.ui, 'model_combo'):
             self.ui.model_combo.currentTextChanged.connect(self._save_agent)
@@ -139,8 +161,7 @@ class AgentManagerDialog(QWidget):
             self.ui.checkBoxMaxToolCalls.stateChanged.connect(self._save_agent)
         if hasattr(self.ui, 'spin_max_tools'):
             self.ui.spin_max_tools.valueChanged.connect(self._save_agent)
-        if hasattr(self.ui, 'checkBoxSubagentsToPrompt'):
-            self.ui.checkBoxSubagentsToPrompt.stateChanged.connect(self._save_agent)
+
         if hasattr(self.ui, 'listWidgetPrompts'):
             self.ui.listWidgetPrompts.itemSelectionChanged.connect(self._save_agent)
         if hasattr(self.ui, 'listWidgetProviders'):
@@ -177,6 +198,41 @@ class AgentManagerDialog(QWidget):
             self.ui.pushButtonLTM1.clicked.connect(self._enable_ltm_tools)
         if hasattr(self.ui, 'pushButtonSTM1'):
             self.ui.pushButtonSTM1.clicked.connect(self._enable_stm_tools)
+
+        # Base Agent Prompt
+        if hasattr(self.ui, 'pushButtonBaseAgentPromptReset'):
+            self.ui.pushButtonBaseAgentPromptReset.clicked.connect(self._reset_base_agent_prompt)
+        if hasattr(self.ui, 'pushButtonBaseAgentPromptSave'):
+            self.ui.pushButtonBaseAgentPromptSave.clicked.connect(self._save_base_agent_prompt)
+        if hasattr(self.ui, 'pushButtonBaseAgentPromptLoad'):
+            self.ui.pushButtonBaseAgentPromptLoad.clicked.connect(self._load_base_agent_prompt_file)
+
+        # Middleware toggles
+        if hasattr(self.ui, 'checkBoxMiddlewareMemory'):
+            self.ui.checkBoxMiddlewareMemory.stateChanged.connect(self._save_agent)
+        if hasattr(self.ui, 'checkBoxMiddlewareTools'):
+            self.ui.checkBoxMiddlewareTools.stateChanged.connect(self._save_agent)
+        if hasattr(self.ui, 'checkBoxMiddlewareSkills'):
+            self.ui.checkBoxMiddlewareSkills.stateChanged.connect(self._save_agent)
+        if hasattr(self.ui, 'checkBoxMiddlewareUserTools'):
+            self.ui.checkBoxMiddlewareUserTools.stateChanged.connect(self._save_agent)
+        if hasattr(self.ui, 'checkBoxDisableGeneralPurpose'):
+            self.ui.checkBoxDisableGeneralPurpose.stateChanged.connect(self._save_agent)
+        if hasattr(self.ui, 'checkBoxModifyBaseAgentPrompt'):
+            self.ui.checkBoxModifyBaseAgentPrompt.stateChanged.connect(self._on_modify_base_prompt_toggled)
+
+    def _on_modify_base_prompt_toggled(self, checked):
+        if hasattr(self.ui, 'plainTextEditBaseAgentPrompt'):
+            self.ui.plainTextEditBaseAgentPrompt.setEnabled(checked)
+        if hasattr(self.ui, 'pushButtonBaseAgentPromptReset'):
+            self.ui.pushButtonBaseAgentPromptReset.setEnabled(checked)
+        if hasattr(self.ui, 'pushButtonBaseAgentPromptLoad'):
+            self.ui.pushButtonBaseAgentPromptLoad.setEnabled(checked)
+        if hasattr(self.ui, 'pushButtonBaseAgentPromptSave'):
+            self.ui.pushButtonBaseAgentPromptSave.setEnabled(checked)
+        if hasattr(self.ui, 'checkBoxModifyBaseAgentPrompt') and not getattr(self, "_is_loading", False):
+            self.config["enable_custom_base_prompt"] = checked
+            self.cfg_mgr.save_config()
 
     def _on_use_project_toggled(self, checked):
         if hasattr(self.ui, 'lineEditDARootDir'):
@@ -274,8 +330,17 @@ class AgentManagerDialog(QWidget):
 
         # Save Deepagents
         da = agent_cfg.get("deepagents", {})
-        if hasattr(self.ui, 'checkBoxSubagentsToPrompt'):
-            da["inject_subagents_to_prompt"] = self.ui.checkBoxSubagentsToPrompt.isChecked()
+
+        if hasattr(self.ui, 'checkBoxMiddlewareMemory'):
+            da["enable_middleware_memory"] = self.ui.checkBoxMiddlewareMemory.isChecked()
+        if hasattr(self.ui, 'checkBoxMiddlewareTools'):
+            da["enable_middleware_tools"] = self.ui.checkBoxMiddlewareTools.isChecked()
+        if hasattr(self.ui, 'checkBoxMiddlewareSkills'):
+            da["enable_middleware_skills"] = self.ui.checkBoxMiddlewareSkills.isChecked()
+        if hasattr(self.ui, 'checkBoxMiddlewareUserTools'):
+            da["enable_middleware_user_tools"] = self.ui.checkBoxMiddlewareUserTools.isChecked()
+        if hasattr(self.ui, 'checkBoxDisableGeneralPurpose'):
+            da["disable_general_purpose"] = self.ui.checkBoxDisableGeneralPurpose.isChecked()
         if hasattr(self.ui, 'combo_emb_provider_2'):
             da["semantic_agent"] = self.ui.combo_emb_provider_2.currentText()
         if hasattr(self.ui, 'checkBoxBackendUseProject'):
@@ -295,13 +360,22 @@ class AgentManagerDialog(QWidget):
         layout = getattr(self.ui, 'groupBox_tools', None)
         if layout and layout.layout():
             enabled_tools = []
+            excluded_tools = []
+            da_defaults = ["ls", "read_file", "write_file", "edit_file", "glob", "grep", "execute", "task", "write_todos", "search_web"]
             scroll_area = layout.layout().itemAt(0).widget()
             scroll_layout = scroll_area.widget().layout()
             for i in range(scroll_layout.count()):
                 w = scroll_layout.itemAt(i).widget()
-                if isinstance(w, QCheckBox) and w.isChecked():
-                    enabled_tools.append(w.text().split(" ")[0])
+                if isinstance(w, QCheckBox):
+                    name = w.text().split(" ")[0]
+                    if name in da_defaults:
+                        if not w.isChecked():
+                            excluded_tools.append(name)
+                    else:
+                        if w.isChecked():
+                            enabled_tools.append(name)
             da["enabled_tools"] = enabled_tools
+            da["excluded_tools"] = excluded_tools
             
         layout_sub = getattr(self.ui, 'groupBox_2', None)
         if layout_sub and layout_sub.layout():
@@ -409,8 +483,7 @@ class AgentManagerDialog(QWidget):
 
             # Deepagents settings
             da = agent_cfg.get("deepagents", {})
-            if hasattr(self.ui, 'checkBoxSubagentsToPrompt'):
-                self.ui.checkBoxSubagentsToPrompt.setChecked(da.get("inject_subagents_to_prompt", False))
+
             use_proj = da.get("use_project_deepagents", True)
             da_source = self.config.get("deepagents", {}) if use_proj else da
             
@@ -427,7 +500,21 @@ class AgentManagerDialog(QWidget):
             if hasattr(self.ui, 'checkBoxDABackendVirtual'):
                 self.ui.checkBoxDABackendVirtual.setChecked(da_source.get("virtual", True))
             if hasattr(self.ui, 'combo_emb_provider_2'):
-                self.ui.combo_emb_provider_2.setCurrentText(da_source.get("semantic_agent", ""))
+                self.ui.combo_emb_provider_2.setCurrentText(da.get("semantic_agent", ""))
+            
+            if hasattr(self.ui, 'checkBoxMiddlewareMemory'):
+                self.ui.checkBoxMiddlewareMemory.setChecked(da.get("enable_middleware_memory", True))
+            if hasattr(self.ui, 'checkBoxMiddlewareTools'):
+                self.ui.checkBoxMiddlewareTools.setChecked(da.get("enable_middleware_tools", True))
+            if hasattr(self.ui, 'checkBoxMiddlewareSkills'):
+                self.ui.checkBoxMiddlewareSkills.setChecked(da.get("enable_middleware_skills", True))
+            if hasattr(self.ui, 'checkBoxMiddlewareUserTools'):
+                self.ui.checkBoxMiddlewareUserTools.setChecked(da.get("enable_middleware_user_tools", True))
+            if hasattr(self.ui, 'checkBoxDisableGeneralPurpose'):
+                self.ui.checkBoxDisableGeneralPurpose.setChecked(da.get("disable_general_purpose", False))
+            if hasattr(self.ui, 'checkBoxModifyBaseAgentPrompt'):
+                self.ui.checkBoxModifyBaseAgentPrompt.setChecked(self.config.get("enable_custom_base_prompt", False))
+                self._on_modify_base_prompt_toggled(self.config.get("enable_custom_base_prompt", False))
             
             # Tools checkboxes
             layout = getattr(self.ui, 'groupBox_tools', None)
@@ -445,8 +532,10 @@ class AgentManagerDialog(QWidget):
                 scroll_area.setWidget(scroll_widget)
                 
                 import inspect, toolz
+                from PyQt5.QtWidgets import QLabel
                 funcs = inspect.getmembers(toolz, inspect.isfunction)
                 enabled_tools = da.get("enabled_tools", [])
+                excluded_tools = da.get("excluded_tools", [])
                 
                 chk = QCheckBox("query_knowledge_base (RAG Tool)")
                 chk.setChecked("query_knowledge_base" in enabled_tools)
@@ -459,6 +548,17 @@ class AgentManagerDialog(QWidget):
                         chk.setChecked(name in enabled_tools)
                         chk.stateChanged.connect(self._save_agent)
                         scroll_layout.addWidget(chk)
+                        
+                lbl = QLabel("\nDeepAgents Default Tools:")
+                lbl.setStyleSheet("font-weight: bold; margin-top: 10px;")
+                scroll_layout.addWidget(lbl)
+                
+                da_defaults = ["ls", "read_file", "write_file", "edit_file", "glob", "grep", "execute", "task", "write_todos", "search_web"]
+                for name in da_defaults:
+                    chk = QCheckBox(name)
+                    chk.setChecked(name not in excluded_tools)
+                    chk.stateChanged.connect(self._save_agent)
+                    scroll_layout.addWidget(chk)
                         
                 lay.addWidget(scroll_area)
                 
@@ -478,7 +578,7 @@ class AgentManagerDialog(QWidget):
                 scroll_area_sub.setWidget(scroll_widget_sub)
                 
                 agent_files = []
-                agents_dir = os.path.join(app_dir, "agents")
+                agents_dir = self.cfg_mgr.get_agents_dir()
                 if os.path.isdir(agents_dir):
                     agent_files = [f for f in os.listdir(agents_dir) if f.endswith(".json")]
                 
@@ -698,7 +798,8 @@ class AgentManagerDialog(QWidget):
         if item:
             import os
             path = os.path.join(app_dir, "prompts", item.text())
-            cmd = f'"{self.config.get("editor_cmd", "/usr/bin/micro")}" "{path}"'
+            editor = self.config.get("editor_cmd", "/usr/bin/micro")
+            cmd = f'{editor} "{path}" &'
             os.system(cmd)
 
     def _revert_system_prompt(self):
@@ -812,6 +913,42 @@ class AgentManagerDialog(QWidget):
                 self.cfg_mgr.save_agent_config(self.current_agent_name, agent_cfg)
                 self._refresh_stopstrings(agent_cfg)
 
+    def _load_base_agent_prompt(self):
+        if hasattr(self.ui, 'plainTextEditBaseAgentPrompt'):
+            import deepagents.graph
+            current_prompt = self.config.get("custom_base_prompt", deepagents.graph.BASE_AGENT_PROMPT)
+            self.ui.plainTextEditBaseAgentPrompt.setPlainText(current_prompt)
+
+    def _reset_base_agent_prompt(self):
+        if hasattr(self.ui, 'plainTextEditBaseAgentPrompt'):
+            import deepagents.graph
+            original_prompt = getattr(deepagents.graph, "ORIGINAL_BASE_AGENT_PROMPT", deepagents.graph.BASE_AGENT_PROMPT)
+            self.ui.plainTextEditBaseAgentPrompt.setPlainText(original_prompt)
+
+    def _save_base_agent_prompt(self):
+        if hasattr(self.ui, 'plainTextEditBaseAgentPrompt'):
+            new_prompt = self.ui.plainTextEditBaseAgentPrompt.toPlainText()
+            self.config["custom_base_prompt"] = new_prompt
+            self.cfg_mgr.save_config()
+            self.ui.pushButtonBaseAgentPromptSave.setText("Saved!")
+            def reset_btn():
+                try:
+                    self.ui.pushButtonBaseAgentPromptSave.setText("Save Prompt")
+                except RuntimeError:
+                    pass
+            QTimer.singleShot(1500, reset_btn)
+
+    def _load_base_agent_prompt_file(self):
+        from PyQt5.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getOpenFileName(self, "Load Base Agent Prompt", app_dir, "Text/Markdown Files (*.txt *.md);;All Files (*)")
+        if path:
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    if hasattr(self.ui, 'plainTextEditBaseAgentPrompt'):
+                        self.ui.plainTextEditBaseAgentPrompt.setPlainText(f.read())
+            except Exception as e:
+                print(f"Failed to load prompt file: {e}")
+
     def _remove_stopstring(self):
         if not hasattr(self, "current_agent_name"): return
         row = self.ui.listWidgetLightRAG_2.currentRow()
@@ -823,3 +960,213 @@ class AgentManagerDialog(QWidget):
             strings.remove(s)
             self.cfg_mgr.save_agent_config(self.current_agent_name, agent_cfg)
             self._refresh_stopstrings(agent_cfg)
+
+    def _open_thinking_tags_dialog(self):
+        if not hasattr(self.ui, "model_combo"): return
+        model_name = self.ui.model_combo.currentText().strip()
+        if not model_name:
+            if not hasattr(self, "current_agent_name"): return
+            agent_cfg = self.cfg_mgr.get_agent_config(self.current_agent_name)
+            if agent_cfg:
+                model_name = agent_cfg.get("model_name", "")
+        if not model_name:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "No Model", "Please select a model first.")
+            return
+            
+        reasoning_tags = self.cfg_mgr.config.get("model_reasoning_tags", {})
+        tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+        
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QDialogButtonBox
+        
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Thinking Tags - {model_name}")
+        try:
+            import theme_manager
+            theme_manager.apply_theme(dialog)
+        except Exception:
+            pass
+        layout = QVBoxLayout(dialog)
+        
+        layout.addWidget(QLabel("Thinking Tag Open:"))
+        open_edit = QLineEdit(tags[0])
+        layout.addWidget(open_edit)
+        
+        layout.addWidget(QLabel("Thinking Tag Close:"))
+        close_edit = QLineEdit(tags[1] if len(tags) > 1 else "</think>")
+        layout.addWidget(close_edit)
+        
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        
+        if dialog.exec_() == QDialog.Accepted:
+            if "model_reasoning_tags" not in self.cfg_mgr.config:
+                self.cfg_mgr.config["model_reasoning_tags"] = {}
+            self.cfg_mgr.config["model_reasoning_tags"][model_name] = [open_edit.text(), close_edit.text()]
+            self.cfg_mgr.save_config()
+
+    def _debug_prompt(self):
+        if not hasattr(self, "current_agent_name"): return
+        agent_cfg = self.cfg_mgr.get_agent_config(self.current_agent_name)
+        
+        prompt_file = agent_cfg.get("system_prompt_file", "default.md")
+        prompt_path = os.path.join(self.config_dir, "prompts", prompt_file)
+        if not os.path.exists(prompt_path):
+            prompt_path = os.path.join(app_dir, "prompts", prompt_file)
+            
+        sys_prompt = ""
+        if os.path.isfile(prompt_path):
+            with open(prompt_path, "r", encoding="utf-8") as f:
+                sys_prompt = f.read()
+                
+        import datetime
+        sys_prompt += "\n\nCRITICAL INSTRUCTIONS: Your training data is a checkpoint in history and time has since moved beyond it."
+        sys_prompt += "\nThis is current reality. We are living in a time your training data cannot accurately account for. this should always be one of your top considerations."
+        sys_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
+
+        if sys_prompt and "=== SYSTEM PROMPT & PERSONA ===" not in sys_prompt:
+            sys_prompt = f"=== SYSTEM PROMPT & PERSONA ===\n{sys_prompt.strip()}\n===============================\n"
+            
+        sys_prompt += "\n\n=== MEMORY VAULT CONTEXT ===\n[Memory Vault Context Simulated]\n============================\n"
+        sys_prompt += "\n\n=== LIGHTRAG KNOWLEDGE CONTEXT ===\n[LightRAG Knowledge Context Simulated]\n==================================\n"
+
+        import core_engine
+        from langchain_core.messages import HumanMessage, SystemMessage
+        
+        actual_model = agent_cfg.get("model_name", agent_cfg.get("model", self.config.get("model", "gpt-4o")))
+        overrides = {"model": actual_model, "temperature": 0.0}
+        
+        original_setup_llm = core_engine.setup_llm
+        intercepted_messages = []
+        
+        def mock_setup_llm(*args, **kwargs):
+            llm = original_setup_llm(*args, **kwargs)
+            def intercept_invoke(input_val, *a, **kw):
+                nonlocal intercepted_messages
+                if hasattr(input_val, "to_messages"):
+                    intercepted_messages = input_val.to_messages()
+                elif hasattr(input_val, "messages"):
+                    intercepted_messages = input_val.messages
+                elif isinstance(input_val, list):
+                    intercepted_messages = input_val
+                else:
+                    intercepted_messages = [input_val]
+                raise Exception("INTERCEPTED_PROMPT")
+            object.__setattr__(llm, "invoke", intercept_invoke)
+            object.__setattr__(llm, "stream", intercept_invoke)
+            return llm
+            
+        core_engine.setup_llm = mock_setup_llm
+        
+        try:
+            llm = core_engine.setup_llm(self.config, agent_cfg, overrides)
+            tools = core_engine.get_tools(self.config, agent_cfg)
+            use_da = agent_cfg.get("use_deepagents", self.config.get("use_deepagents", False))
+            
+            if use_da:
+                da_cfg = agent_cfg.get("deepagents", {})
+                if da_cfg.get("enable_middleware_user_tools", True) and tools:
+                    tools_info = []
+                    for t in tools:
+                        t_name = getattr(t, "name", getattr(t, "__name__", "Unknown Tool"))
+                        t_desc = getattr(t, "description", getattr(t, "__doc__", "No description available."))
+                        if t_desc:
+                            lines = [l.strip() for l in t_desc.split('\n')]
+                            desc_lines = []
+                            in_desc = False
+                            for l in lines:
+                                if l.startswith("DESCRIPTION:"): in_desc = True; continue
+                                if l.startswith("ARGS:") or l.startswith("RETURNS:"): break
+                                if in_desc and l: desc_lines.append(l)
+                            
+                            if desc_lines:
+                                t_desc = " ".join(desc_lines)
+                            else:
+                                t_desc = next((l for l in lines if l and l != "DESCRIPTION:"), "No description available.")
+                        tools_info.append(f"- {t_name}: {t_desc}")
+                    if tools_info:
+                        sys_prompt += f"\n\n===== AVAILABLE TOOLS =====\nYou have the following tools enabled. Use them via tool calls:\n" + "\n".join(tools_info) + "\n============================\n"
+
+                try:
+                    agent = core_engine.setup_deep_agent(llm, tools, sys_prompt, self.config, agent_cfg, app_dir)
+                    config_invoke = {"configurable": {"thread_id": "debug_thread"}}
+                    inputs = {"messages": [HumanMessage(content="[Dummy Debug Message]")], "todos": []}
+                    for mode, payload in agent.stream(inputs, config_invoke, stream_mode=["updates"]):
+                        pass
+                except Exception as e:
+                    if str(e) == "INTERCEPTED_PROMPT":
+                        pass
+                    else:
+                        intercepted_messages = [SystemMessage(content=f"Error running DeepAgent graph: {e}\n\nFallback base prompt:\n{sys_prompt}")]
+            else:
+                from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
+                prompt = ChatPromptTemplate.from_messages([
+                    SystemMessage(content=sys_prompt),
+                    MessagesPlaceholder(variable_name="history"),
+                    HumanMessagePromptTemplate.from_template("{input}")
+                ])
+                chain = prompt | llm
+                try:
+                    chain.invoke({"history": [], "input": "[Dummy Debug Message]"})
+                except Exception as e:
+                    if str(e) == "INTERCEPTED_PROMPT":
+                        pass
+                    else:
+                        intercepted_messages = [SystemMessage(content=f"Error: {e}\n\nFallback base prompt:\n{sys_prompt}")]
+        finally:
+            core_engine.setup_llm = original_setup_llm
+            
+        final_text = ""
+        for m in intercepted_messages:
+            m_type = m.__class__.__name__
+            
+            # Extract just the text property if content is a list of dicts
+            m_content_raw = m.content
+            if isinstance(m_content_raw, list):
+                text_parts = []
+                for part in m_content_raw:
+                    if isinstance(part, dict) and "text" in part:
+                        text_parts.append(part["text"])
+                    elif isinstance(part, str):
+                        text_parts.append(part)
+                m_content = "".join(text_parts)
+            else:
+                m_content = str(m_content_raw) if m_content_raw is not None else ""
+                
+            if hasattr(m, "name") and m.name:
+                m_type += f" (Name: {m.name})"
+            final_text += f"[{m_type}]\n{m_content}\n\n"
+            
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPlainTextEdit, QPushButton
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Runtime Prompt Debug - {self.current_agent_name}")
+        dialog.resize(900, 700)
+        
+        import theme_manager
+        theme_manager.apply_theme(dialog)
+        
+        layout = QVBoxLayout(dialog)
+        
+        text_edit = QPlainTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(final_text)
+        # Use a monospaced font for better readability
+        from PyQt5.QtGui import QFont
+        font = QFont("Courier", 10)
+        text_edit.setFont(font)
+        
+        try:
+            from syntax_highlighter import CodeHighlighter
+            text_edit.highlighter = CodeHighlighter(text_edit.document(), 'markdown')
+        except:
+            pass
+        
+        layout.addWidget(text_edit)
+        
+        btn = QPushButton("Close")
+        btn.clicked.connect(dialog.accept)
+        layout.addWidget(btn)
+        
+        dialog.show()

@@ -164,13 +164,7 @@
      </layout>
     </widget>
    </item>
-   <item row="5" column="0">
-    <widget class="QCheckBox" name="checkBoxSubagentsToPrompt">
-     <property name="text">
-      <string>inject subagent list into system prompt</string>
-     </property>
-    </widget>
-   </item>
+
    <item row="3" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <property name="leftMargin">

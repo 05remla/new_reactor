@@ -11,6 +11,118 @@ import json
 from PyQt5.QtWidgets import QWidget, QInputDialog, QCheckBox, QScrollArea, QVBoxLayout
 from PyQt5.QtCore import Qt, QTimer
 from settings_ui import Ui_SettingsWindow
+from PyQt5.QtCore import QThread, pyqtSignal
+from langchain_core.messages import SystemMessage, HumanMessage
+import re
+import shutil
+
+class BulkSessionRenamerThread(QThread):
+    progress = pyqtSignal(int, int) # current, total
+    finished = pyqtSignal()
+    error = pyqtSignal(str)
+
+    def __init__(self, sessions_dir, sessions_list, llm, agent_cfg, config, parent=None):
+        super().__init__(parent)
+        self.sessions_dir = sessions_dir
+        self.sessions_list = sessions_list
+        self.llm = llm
+        self.agent_cfg = agent_cfg
+        self.config = config
+
+    def run(self):
+        try:
+            total = len(self.sessions_list)
+            for i, filename in enumerate(self.sessions_list):
+                if self.isInterruptionRequested():
+                    break
+                self.progress.emit(i, total)
+                
+                filepath = os.path.join(self.sessions_dir, filename)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                except Exception:
+                    continue
+                    
+                messages = data if isinstance(data, list) else data.get("messages", [])
+                if not messages:
+                    continue
+                    
+                context_str = ""
+                for msg in messages:
+                    role_name = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    context_str += f"{role_name.upper()}: {content}\n\n"
+                    
+                sys_msg = (
+                    "You are a helpful assistant that generates a concise, relevant filename for a chat session.\n"
+                    "Based on the conversation context, suggest a short, descriptive filename.\n"
+                    "Rules:\n"
+                    "- Must be no more than 30 characters long.\n"
+                    "- Use only lowercase letters, numbers, underscores, or hyphens (safe for filesystems).\n"
+                    "- Do NOT include any file extension (like .json).\n"
+                    "- Output ONLY the filename. Do NOT include quotes, explanations, markdown, or any other text."
+                )
+                
+                user_prompt = f"Here is the conversation context:\n\n{context_str}\n\nSuggested filename:"
+                
+                msgs = [
+                    SystemMessage(content=sys_msg),
+                    HumanMessage(content=user_prompt)
+                ]
+                
+                try:
+                    response = self.llm.invoke(msgs)
+                    response_text = response.content if hasattr(response, 'content') else str(response)
+                    
+                    model_name = self.agent_cfg.get("model_name", self.config.get("model", "llama3"))
+                    reasoning_tags = self.config.get("model_reasoning_tags", {})
+                    tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+                    tag_open = tags[0]
+                    tag_close = tags[1] if len(tags) > 1 else "</think>"
+                    escaped_open = re.escape(tag_open)
+                    escaped_close = re.escape(tag_close)
+                    
+                    # Remove reasoning blocks if present
+                    response_text = re.sub(f'{escaped_open}.*?{escaped_close}', '', response_text, flags=re.DOTALL)
+                    
+                    # Clean and sanitize the filename
+                    if "```" in response_text:
+                        response_text = response_text.split("```")[1]
+                        if response_text.startswith("json"):
+                            response_text = response_text[4:]
+                    
+                    new_filename = response_text.strip().strip('"').strip("'").strip().lower()
+                    # Replace spaces and special characters with underscores
+                    new_filename = re.sub(r'[^a-zA-Z0-9_\-]', '_', new_filename)
+                    # Remove consecutive underscores
+                    new_filename = re.sub(r'_+', '_', new_filename)
+                    # Limit to 30 characters
+                    new_filename = new_filename[:30]
+                    # Ensure it ends with .json
+                    if not new_filename.endswith('.json'):
+                        new_filename += '.json'
+                        
+                    if new_filename != filename:
+                        new_path = os.path.join(self.sessions_dir, new_filename)
+                        # Ensure we don't overwrite an existing renamed file
+                        if os.path.exists(new_path) and new_path != filepath:
+                            base, ext = os.path.splitext(new_filename)
+                            counter = 1
+                            while os.path.exists(new_path):
+                                new_path = os.path.join(self.sessions_dir, f"{base}_{counter}{ext}")
+                                counter += 1
+                        shutil.move(filepath, new_path)
+                        
+                except Exception as e:
+                    print(f"Error renaming {filename}: {e}")
+                    
+            self.progress.emit(total, total)
+            self.finished.emit()
+            
+        except Exception as e:
+            self.error.emit(str(e))
+
 
 class SettingsDialog(QWidget):
     def __init__(self, parent_app):
@@ -104,7 +216,8 @@ class SettingsDialog(QWidget):
         # --- Sessions ---
         if hasattr(self.ui, 'listWidgetSessions'):
             self.ui.listWidgetSessions.clear()
-            sessions_dir = os.path.join(app_dir, "sessions")
+            da_root = cfg.get("da_root_dir", f"{app_dir}/workspace")
+            sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
             sessions = []
             if os.path.isdir(sessions_dir):
                 sessions = [f for f in os.listdir(sessions_dir) if f.endswith(".json") and os.path.isfile(os.path.join(sessions_dir, f))]
@@ -164,6 +277,9 @@ class SettingsDialog(QWidget):
             list_widget.setCurrentItem(items[0])
 
     def _connect_signals(self):
+        if hasattr(self.ui, 'pushButtonConfigSelector'):
+            self.ui.pushButtonConfigSelector.clicked.connect(self.app.launch_config_selector_and_exit)
+            
         if hasattr(self.ui, 'pushButtonAgentsManage'):
             self.ui.pushButtonAgentsManage.setText("Manage Agents")
             self.ui.pushButtonAgentsManage.clicked.connect(self._open_agent_manager)
@@ -221,6 +337,8 @@ class SettingsDialog(QWidget):
             self.ui.listWidgetSessions.itemClicked.connect(self._on_session_selected)
             self.ui.checkBoxSessionAutoSave.stateChanged.connect(self._on_session_auto_save_changed)
             self.ui.pushButtonSessionsOpen.clicked.connect(self._open_session_thread)
+        if hasattr(self.ui, 'pushButtonSessionsRename'):
+            self.ui.pushButtonSessionsRename.clicked.connect(self._bulk_rename_sessions)
 
         # Deepagents moved
         # Runtime settings
@@ -245,6 +363,9 @@ class SettingsDialog(QWidget):
             self.ui.lineEdit_3.textChanged.connect(self._save_preferences)
         if hasattr(self.ui, 'lineEdit_2'):
             self.ui.lineEdit_2.textChanged.connect(self._save_preferences)
+
+        if hasattr(self.ui, 'pushButtonClearCheckpointDb'):
+            self.ui.pushButtonClearCheckpointDb.clicked.connect(self._clear_checkpoint_db)
 
         # Close
         self.ui.pushButtonClose.clicked.connect(self.close)
@@ -398,7 +519,8 @@ class SettingsDialog(QWidget):
         if not session_name.endswith(".json"):
             session_name += ".json"
             
-        sessions_dir = os.path.join(app_dir, "sessions")
+        da_root = self.config.get("da_root_dir", f"{app_dir}/workspace")
+        sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
         if not os.path.exists(sessions_dir):
             os.makedirs(sessions_dir)
             
@@ -420,7 +542,9 @@ class SettingsDialog(QWidget):
         self._push_save()
 
     def _open_session_func(self, *args, **kwargs):
-        path = os.path.join(os.path.join(app_dir, "sessions"), self.config["last_selected_session"])
+        da_root = self.config.get("da_root_dir", f"{app_dir}/workspace")
+        sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
+        path = os.path.join(sessions_dir, self.config["last_selected_session"])
         cmd = '{} "{}"'.format(self.config["editor_cmd"], path)
         os.system(cmd)
 
@@ -434,9 +558,15 @@ class SettingsDialog(QWidget):
         if row < 0:
             return
         session_name = self.ui.listWidgetSessions.item(row).text()
+        
+        from PyQt5.QtWidgets import QMessageBox
+        if QMessageBox.question(self, "Delete Session", f"Are you sure you want to delete session '{session_name}'?") != QMessageBox.Yes:
+            return
+            
         self.ui.listWidgetSessions.takeItem(row)
         
-        sessions_dir = os.path.join(app_dir, "sessions")
+        da_root = self.config.get("da_root_dir", f"{app_dir}/workspace")
+        sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
         session_path = os.path.join(sessions_dir, session_name)
         if os.path.exists(session_path):
             try:
@@ -455,6 +585,83 @@ class SettingsDialog(QWidget):
     def _on_session_auto_save_changed(self, state):
         self.config["session_auto_save"] = (state == Qt.Checked)
         self._push_save()
+
+    def _bulk_rename_sessions(self):
+        if hasattr(self, 'bulk_renamer') and self.bulk_renamer.isRunning():
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.information(self, "Running", "Bulk rename is already running.")
+            return
+
+        import core_engine
+        agent_name = "reactor_worker"
+        agent_cfg = self.app.config_manager.get_agent_config(agent_name)
+        if not agent_cfg:
+            agent_name = self.config.get("default_chat_agent", "Tron")
+            agent_cfg = self.app.config_manager.get_agent_config(agent_name)
+            
+        try:
+            llm = core_engine.setup_llm(self.config, agent_cfg, overrides={"temperature": 0.3})
+        except ValueError as e:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "API Key Missing", str(e))
+            return
+
+        da_root = self.config.get("da_root_dir", f"{app_dir}/workspace")
+        sessions_dir = os.path.join(os.path.dirname(os.path.normpath(da_root)), "sessions")
+        if not os.path.isdir(sessions_dir):
+            return
+            
+        import re
+        default_name_pattern = re.compile(r'^\d+_\d{2}-\d{2}-\d{2}\.json$')
+        
+        sessions_list = [
+            f for f in os.listdir(sessions_dir) 
+            if f.endswith(".json") and os.path.isfile(os.path.join(sessions_dir, f)) and default_name_pattern.match(f)
+        ]
+        
+        if not sessions_list:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.information(self, "No Sessions", "No sessions found to rename.")
+            return
+            
+        from PyQt5.QtWidgets import QMessageBox
+        reply = QMessageBox.question(self, "Bulk Rename", f"Are you sure you want to rename {len(sessions_list)} sessions?\nThis may take a while and consume API credits.", QMessageBox.Yes | QMessageBox.No)
+        if reply != QMessageBox.Yes:
+            return
+            
+        self.ui.pushButtonSessionsRename.setEnabled(False)
+        self.ui.pushButtonSessionsRename.setText("Renaming (0%)...")
+        
+        self.bulk_renamer = BulkSessionRenamerThread(sessions_dir, sessions_list, llm, agent_cfg, self.config, parent=self)
+        
+        def on_progress(current, total):
+            if total > 0:
+                pct = int((current / total) * 100)
+                self.ui.pushButtonSessionsRename.setText(f"Renaming ({pct}%)...")
+                
+        def on_finished():
+            self.ui.pushButtonSessionsRename.setEnabled(True)
+            self.ui.pushButtonSessionsRename.setText("Rename *")
+            
+            # Refresh sessions list in both settings and main app
+            if hasattr(self, '_populate_ui_from_config'):
+                # just re-populate sessions
+                self.ui.listWidgetSessions.clear()
+                sessions = [f for f in os.listdir(sessions_dir) if f.endswith(".json")]
+                self.ui.listWidgetSessions.addItems(sessions)
+            if hasattr(self.app, '_update_session_combobox'):
+                self.app._update_session_combobox()
+            QMessageBox.information(self, "Bulk Rename Complete", "Successfully renamed all sessions.")
+                
+        def on_error(err):
+            self.ui.pushButtonSessionsRename.setEnabled(True)
+            self.ui.pushButtonSessionsRename.setText("Rename *")
+            QMessageBox.critical(self, "Bulk Rename Error", f"An error occurred: {err}")
+            
+        self.bulk_renamer.progress.connect(on_progress)
+        self.bulk_renamer.finished.connect(on_finished)
+        self.bulk_renamer.error.connect(on_error)
+        self.bulk_renamer.start()
 
     # ---------- Models ----------
     def _on_model_selected(self, model_name):
@@ -564,6 +771,38 @@ class SettingsDialog(QWidget):
         if hasattr(self.ui, 'checkBoxDABackendVirtual'):
             self.config["da_virtual"] = self.ui.checkBoxDABackendVirtual.isChecked()
         self._push_save()
+
+    def _clear_checkpoint_db(self):
+        import glob
+        from PyQt5.QtWidgets import QMessageBox
+        da_root_dir = self.config.get("da_root_dir", os.path.join(app_dir, "workspace"))
+        parent_dir = os.path.dirname(os.path.normpath(da_root_dir))
+        pattern = os.path.join(parent_dir, "agent_checkpoints*")
+        files_to_delete = glob.glob(pattern)
+        
+        if not files_to_delete:
+            QMessageBox.information(self, "Clear Checkpoints", "No checkpoint files found to delete.")
+            return
+            
+        reply = QMessageBox.question(
+            self, 
+            "Confirm Delete", 
+            f"Are you sure you want to delete the checkpoint file(s)?\n" + "\n".join([os.path.basename(f) for f in files_to_delete]),
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            deleted_count = 0
+            errors = []
+            for fpath in files_to_delete:
+                try:
+                    os.remove(fpath)
+                    deleted_count += 1
+                except Exception as e:
+                    errors.append(f"{os.path.basename(fpath)}: {str(e)}")
+            if errors:
+                QMessageBox.critical(self, "Error", f"Failed to delete some files:\n" + "\n".join(errors))
+            else:
+                QMessageBox.information(self, "Success", f"Successfully deleted {deleted_count} checkpoint file(s).")
 
     def _save_preferences(self):
         if hasattr(self.ui, 'lineEdit_3'):

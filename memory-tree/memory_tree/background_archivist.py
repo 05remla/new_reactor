@@ -52,7 +52,7 @@ class ArchivistThread(QThread):
             api_key = self.config.get("api_key")
 
             if self.cfg_mgr:
-                agent_cfg = self.cfg_mgr.get_agent_config("Archivist")
+                agent_cfg = self.cfg_mgr.get_agent_config("MemoryManager")
                 
                 # Fallback to the default chat agent if Archivist isn't found
                 if not agent_cfg:

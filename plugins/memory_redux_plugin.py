@@ -143,6 +143,31 @@ def manage_memory(action: str = "set", payload: str = "", context_window: int = 
             if tool_func:
                 try:
                     tool_res = tool_func(**tool_args)
+                    
+                    if not str(tool_res).startswith("Error"):
+                        subject = "memory"
+                        try:
+                            sum_llm = ChatOpenAI(model=model, base_url=api_base, api_key=api_key, temperature=0.1)
+                            sub_res = sum_llm.invoke([
+                                SystemMessage(content="Summarize the following text in 3 words or less. Return ONLY the words, no punctuation."),
+                                HumanMessage(content=str(payload))
+                            ])
+                            subject = sub_res.content.strip()
+                        except:
+                            pass
+                            
+                        location = "memory"
+                        if "scratchpad" in tool_name: location = "short term"
+                        elif "long_term" in tool_name: location = "long term"
+                        elif "note" in tool_name or "vault" in tool_name or "namespace" in tool_name: location = "vault"
+                        
+                        action_str = "added to" if is_set else "retrieved from"
+                        
+                        if app_ref and hasattr(app_ref, 'write_to_chat'):
+                            app_ref.write_to_chat(
+                                f"<br><span style='color:#2ecc71;'><b>[✅] [{action_str} {location}] [{subject}]</b></span><br>", 
+                                is_new_message=False
+                            )
                 except Exception as e:
                     tool_res = f"Error executing {tool_name}: {e}"
             else:

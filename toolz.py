@@ -500,25 +500,20 @@ def list_memory_namespaces():
 def analyze_journal_logs(query: str, journalctl_args: list[str] = None, start_chunk: int = 1, max_chunks: int = 5, **kwargs):
     '''
         DESCRIPTION: 
-             A map-reduce tool that runs journalctl, chunks the massive output, and 
-             uses a sub-agent to summarize each chunk against your query. 
+             A tool that runs journalctl and returns chunks of the raw output. 
              It uses pagination to prevent reading too many logs at once.
              CRITICAL: You MUST use `journalctl_args` to narrow the scope of the search 
              (e.g., filtering by service, time, or priority) to minimize the data processed. 
              Do not query raw unfiltered logs.
-             IMPORTANT: Before running this tool, always check the scratchpad to see 
-             if a previous run was interrupted. If so, you can resume or know what was 
-             already processed.
 
         ARGS:
-            1. query: str = "Find any out of memory errors or failing services"
+            1. query: str = "Find any out of memory errors or failing services" (Used for reference)
             2. journalctl_args: list = None (e.g. ['-b', '--since=yesterday', '-u', 'nginx'])
             3. start_chunk: int = 1 (The chunk number to start processing from, 1-indexed)
             4. max_chunks: int = 5 (The maximum number of chunks to process in this call)
             
         RETURNS:
-             A concatenated string of summaries for the requested chunks, followed by a system message indicating if there are more chunks. If interrupted by the user, 
-             it saves partial summaries to the scratchpad and returns what was processed.
+             A concatenated string of raw log lines for the requested chunks, followed by a system message indicating if there are more chunks.
 
         EXAMPLES ARGS:
             **For targeted debugging of a service's errors in the last hour:
@@ -529,12 +524,6 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, start_ch
             journalctl_args = ['--since=yesterday', 'MESSAGE=failed', '-o', 'json']
     '''
     import subprocess as sp
-    import os
-    import json
-    import sys
-    from rich.console import Console
-    
-    err_console = Console(stderr=True)
     
     if journalctl_args is None and 'v__args' in kwargs:
         journalctl_args = kwargs.get('v__args')
@@ -546,8 +535,6 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, start_ch
         elif isinstance(journalctl_args, str):
             cmd_args.append(journalctl_args)
             
-    err_console.print(f"[dim magenta]Sub-agent starting: Executing {' '.join(cmd_args)}...[/dim magenta]")
-    
     try:
         proc = sp.run(cmd_args, capture_output=True, text=True)
         if proc.returncode != 0:
@@ -560,100 +547,23 @@ def analyze_journal_logs(query: str, journalctl_args: list[str] = None, start_ch
         return "journalctl returned no logs for the given arguments."
         
     lines = output.splitlines()
-    chunk_size = 2000
+    chunk_size = 500  # Smaller chunk size since we return raw text
     chunks = [lines[i:i + chunk_size] for i in range(0, len(lines), chunk_size)]
     total_chunks = len(chunks)
     
     end_chunk = min(start_chunk - 1 + max_chunks, total_chunks)
     chunks_to_process = chunks[start_chunk - 1 : end_chunk]
     
-    err_console.print(f"[dim magenta]Sub-agent chunking logs: {len(lines)} lines split into {total_chunks} chunks. Processing chunks {start_chunk} to {end_chunk}.[/dim magenta]")
-    
-    # Load config to initialize LLM
-    from config_manager import ConfigManager
-    config = ConfigManager().config
-            
-    api_key = config.get("api_key") or os.environ.get("OPENAI_API_KEY", "")
-    if not api_key:
-        return "Error: Cannot initialize sub-agent LLM because api_key is missing in config."
-        
-    try:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.messages import HumanMessage, SystemMessage
-    except ImportError:
-        return "Error: langchain_openai is not installed."
-        
-    llm_kwargs = {
-        "model": config.get("model", "gpt-4o"),
-        "base_url": config.get("api_base", "https://api.openai.com/v1"),
-        "api_key": api_key,
-        "temperature": 0.3,
-        "timeout": 120.0,
-        "max_retries": 0
-    }
-    
-    # Safely handle custom extra_body params if they are passed globally
-    if config.get("top_p"):
-        llm_kwargs["top_p"] = config.get("top_p")
-        
-    llm = ChatOpenAI(**llm_kwargs)
-    summaries = []
-    
-    try:
-        for i, chunk in enumerate(chunks_to_process, start_chunk):
-            err_console.print(f"[dim cyan]Summarizing chunk {i}/{total_chunks}...[/dim cyan]")
-            chunk_text = "\\n".join(chunk)
-            
-            prompt = (
-                f"You are a log analysis sub-agent. Analyze the following chunk ({i}/{total_chunks}) "
-                f"of journalctl logs. Focus strictly on answering or finding information related to this query:\\n"
-                f"'{query}'\\n\\n"
-                f"Logs:\\n{chunk_text}\\n\\n"
-                f"Provide a concise summary of relevant events, errors, or findings. If nothing is relevant, say 'No relevant findings in this chunk.'"
-            )
-            
-            response = llm.invoke([
-                SystemMessage(content="You are a precise, analytical log-summarization assistant."),
-                HumanMessage(content=prompt)
-            ])
-            
-            summaries.append(f"--- Chunk {i} Summary ---\\n{response.content}")
-            
-    except KeyboardInterrupt:
-        err_console.print("\\n[bold yellow]Sub-agent interrupted (Ctrl+C). Saving partial progress...[/bold yellow]")
-        partial_result = "\\n\\n".join(summaries)
-        
-        # Save to scratchpad
-        try:
-            workspace = os.environ.get("DEEP_AGENTS_WORKING_DIR")
-            path = os.path.join(workspace, 'scratchpad.json')
-            data = []
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    data = json.load(f)
-            if not isinstance(data, list): data = []
-            analyzed_count = start_chunk - 1 + len(summaries)
-            data.append(f"INTERRUPTED LOG ANALYSIS. Query: '{query}'. Analyzed {analyzed_count}/{total_chunks} chunks. Partial findings:\\n{partial_result}")
-            with open(path, 'w') as f:
-                json.dump(data, f, indent=4)
-            err_console.print("[dim green]Partial progress written to scratchpad.json[/dim green]")
-        except Exception as e:
-            err_console.print(f"[bold red]Failed to save to scratchpad: {e}[/bold red]")
-            
-        return f"Interrupted at chunk {analyzed_count}/{total_chunks}. Partial summaries saved to scratchpad.\\n\\n{partial_result}"
-        
-    except Exception as e:
-        err_console.print(f"\\n[bold red]Sub-agent encountered an error: {type(e).__name__} - {str(e)}[/bold red]")
-        partial_result = "\\n\\n".join(summaries)
-        return f"Error encountered during summarization: {type(e).__name__} - {str(e)}\\n\\nPartial summaries:\\n{partial_result}"
+    result = []
+    for i, chunk in enumerate(chunks_to_process, start_chunk):
+        result.append(f"--- Chunk {i} ---\n" + "\n".join(chunk))
         
     if end_chunk < total_chunks:
-        summaries.append(f"\\n--- SYSTEM MESSAGE ---\\nAnalyzed chunks {start_chunk} to {end_chunk} out of {total_chunks}. To read the next pages, call analyze_journal_logs again with start_chunk={end_chunk + 1}.")
+        result.append(f"\n--- SYSTEM MESSAGE ---\nReturned chunks {start_chunk} to {end_chunk} out of {total_chunks}. To read the next pages, call analyze_journal_logs again with start_chunk={end_chunk + 1}.")
     else:
-        summaries.append(f"\\n--- SYSTEM MESSAGE ---\\nFinished analyzing all {total_chunks} chunks.")
+        result.append(f"\n--- SYSTEM MESSAGE ---\nFinished returning all {total_chunks} chunks.")
         
-    err_console.print(f"[dim green]Sub-agent finished analyzing chunks {start_chunk} to {end_chunk}.[/dim green]")
-    return "\\n\\n".join(summaries)
+    return "\n\n".join(result)
 
 
 # ==========================================
@@ -670,7 +580,7 @@ def _ensure_memory_tree_path():
 def read_note(title: str = "example"):
     '''
         DESCRIPTION:
-             Reads the content of a specific note from the memory vault. Use this to retrieve full details of a topic.
+             Long-term, wiki-style memory. Reads the content of a specific note from the memory vault. Use this to retrieve full details of a topic.
         ARGS:
             1. title: str = "User_Preferences"
         RETURNS:
@@ -683,7 +593,7 @@ def read_note(title: str = "example"):
 def write_note(title: str = "example", content: str = "Content goes here"):
     '''
         DESCRIPTION:
-             Creates a new note or overwrites an existing note in the memory vault.
+             Long-term, wiki-style memory. Creates a new note or overwrites an existing note in the memory vault.
         ARGS:
             1. title: str = "Project_Alpha"
             2. content: str = "# Project Alpha\\nDetails..."
@@ -697,7 +607,7 @@ def write_note(title: str = "example", content: str = "Content goes here"):
 def append_to_note(title: str = "example", content: str = "Appended details"):
     '''
         DESCRIPTION:
-             Appends new content to the end of an existing note. If the note doesn't exist, it will be created.
+             Long-term, wiki-style memory. Appends new content to the end of an existing note. If the note doesn't exist, it will be created.
         ARGS:
             1. title: str = "Project_Alpha"
             2. content: str = "Additional details..."
@@ -711,7 +621,7 @@ def append_to_note(title: str = "example", content: str = "Appended details"):
 def search_vault(query: str = "keyword"):
     '''
         DESCRIPTION:
-             Searches across all notes in the vault for the given query and returns snippets of matching notes.
+             Long-term, wiki-style memory. Searches across all notes in the vault for the given query and returns snippets of matching notes.
         ARGS:
             1. query: str = "python"
         RETURNS:
@@ -724,7 +634,7 @@ def search_vault(query: str = "keyword"):
 def list_notes():
     '''
         DESCRIPTION:
-             Returns a list of all existing notes in the memory vault.
+             Long-term, wiki-style memory. Returns a list of all existing notes in the memory vault.
         RETURNS:
              A string listing note titles.
     '''

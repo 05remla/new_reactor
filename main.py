@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QSplashScreen
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
 
 if getattr(sys, "frozen", False):
@@ -22,6 +22,7 @@ sys.argv.append("--disable-software-rasterizer")
 sys.argv.append("--limit-fps=30")
 
 app = QApplication(sys.argv)
+app.setFont(QFont("ubuntu-mono"), "QPlainTextEdit")
 splash_image = os.path.join(app_dir, "ui_files", "images", "splash.png")
 splash_pixmap = QPixmap(splash_image)
 splash = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)

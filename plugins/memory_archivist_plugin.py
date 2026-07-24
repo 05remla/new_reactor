@@ -14,20 +14,10 @@ def enable_plugin(main_window):
     main_window._memory_archivist_installed = True
 
     # ==========================================
-    # 1. UI INJECTION
-    # ==========================================
-    ma_checkbox = QCheckBox("Auto-Archivist", main_window.ui.centralwidget)
-    ma_checkbox.setStyleSheet("color: #27ae60; font-weight: bold;")
-    # Give it a tooltip
-    ma_checkbox.setToolTip("Automatically updates the Memory Vault in the background after each response.")
-    main_window.ui.ma_checkbox = ma_checkbox
-    main_window.ui.horizontalLayout_2.insertWidget(1, ma_checkbox)
-
-    # ==========================================
     # 2. LOGIC INJECTION (Hook)
     # ==========================================
     def archivist_hook(full_response):
-        if not hasattr(main_window.ui, 'ma_checkbox') or not main_window.ui.ma_checkbox.isChecked():
+        if not getattr(main_window, '_memory_archivist_installed', False):
             return
 
         if getattr(main_window, '_is_archiving', False):
@@ -48,30 +38,24 @@ def enable_plugin(main_window):
 
         main_window._is_archiving = True
 
-        # Change visual indicator (Flash yellow / archiving text)
-        main_window.ui.ma_checkbox.setStyleSheet("color: #f1c40f; font-weight: bold; background-color: #2c3e50; padding: 2px; border-radius: 3px;")
-        main_window.ui.ma_checkbox.setText("Archiving...")
-
         main_window.archivist_thread = ArchivistThread(main_window.messages, main_window.config, cfg_mgr=main_window.config_manager)
 
         def handle_finished(result):
             main_window._is_archiving = False
-            if hasattr(main_window.ui, 'ma_checkbox'):
-                main_window.ui.ma_checkbox.setStyleSheet("color: #27ae60; font-weight: bold; background-color: transparent;")
-                main_window.ui.ma_checkbox.setText("Auto-Archivist")
+            
+            # Refresh treeWidget since the archivist may have created new memory files
+            if hasattr(main_window, '_populate_project_tree'):
+                main_window._populate_project_tree()
+                
             # Optionally log to UI without interrupting flow
             # main_window.write_to_chat("<br><span style='color:gray; font-size:10px;'><i>[Vault updated in background]</i></span>", False)
 
         def handle_error(err):
             main_window._is_archiving = False
-            if hasattr(main_window.ui, 'ma_checkbox'):
-                main_window.ui.ma_checkbox.setStyleSheet("color: #e74c3c; font-weight: bold; background-color: transparent;")
-                main_window.ui.ma_checkbox.setText("Auto-Archivist (Err)")
             print(f"Archivist Error: {err}")
 
         def handle_status(msg):
-            if hasattr(main_window.ui, 'ma_checkbox'):
-                main_window.ui.ma_checkbox.setText(msg)
+            pass
 
         main_window.archivist_thread.status_update.connect(handle_status)
         main_window.archivist_thread.finished_compilation.connect(handle_finished)
@@ -88,12 +72,6 @@ def disable_plugin(main_window):
     if hasattr(main_window, '_archivist_hook_ref'):
         main_window.unregister_hook("on_generation_finished", main_window._archivist_hook_ref)
         del main_window._archivist_hook_ref
-
-    if hasattr(main_window.ui, 'ma_checkbox'):
-        main_window.ui.ma_checkbox.setChecked(False)
-        main_window.ui.horizontalLayout_2.removeWidget(main_window.ui.ma_checkbox)
-        main_window.ui.ma_checkbox.deleteLater()
-        del main_window.ui.ma_checkbox
 
     main_window._memory_archivist_installed = False
 
@@ -135,7 +113,7 @@ def enable_cli_plugin(app):
                 api_base = app.config.get("api_base")
                 api_key = app.config.get("api_key")
 
-                agent_cfg = app.config_manager.get_agent_config("Archivist")
+                agent_cfg = app.config_manager.get_agent_config("MemoryManager")
                 if not agent_cfg:
                     default_agent = app.config.get("default_chat_agent", "")
                     if default_agent:

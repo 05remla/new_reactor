@@ -1,7 +1,10 @@
 <RCC>
   <qresource prefix="/">
+    <file>images/splash.png</file>
+    <file>images/FoundryIcon3.png</file>
     <file>images/wordpad_32x.png</file>
     <file>images/wordpad_48x.png</file>
     <file>images/wordpad_64x.png</file>
+    <file>images/close.png</file>
   </qresource>
 </RCC>

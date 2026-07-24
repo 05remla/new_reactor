@@ -14,23 +14,86 @@
    <string>Agent*Reactor Config Selector</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(238, 238, 238);</string>
+   <string notr="true">background-color: rgb(238, 238, 238);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+    <item row="1" column="0">
      <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="topMargin">
+         <number>30</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>workspace manager</string>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_2">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>load config</string>
+          </property>
+          <property name="default">
+           <bool>false</bool>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="topMargin">
+       <number>15</number>
+      </property>
+      <item>
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QListWidget" name="listWidget">
         <property name="font">
          <font>
-          <family>Gayathri Thin</family>
-          <pointsize>14</pointsize>
+          <family>GE Inspira</family>
+          <pointsize>11</pointsize>
           <underline>false</underline>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">alternate-background-color: rgb(230, 230, 230);</string>
+         <string notr="true">alternate-background-color: rgb(210, 210, 210);</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -48,12 +111,12 @@
          <enum>QListView::Fixed</enum>
         </property>
         <property name="spacing">
-         <number>30</number>
+         <number>24</number>
         </property>
         <property name="gridSize">
          <size>
-          <width>30</width>
-          <height>30</height>
+          <width>24</width>
+          <height>24</height>
          </size>
         </property>
         <property name="itemAlignment">
@@ -63,40 +126,6 @@
          <bool>true</bool>
         </property>
        </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>edit config</string>
-          </property>
-          <property name="flat">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_2">
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>start app</string>
-          </property>
-          <property name="flat">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
       </item>
      </layout>
     </item>

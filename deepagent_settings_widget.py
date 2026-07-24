@@ -24,7 +24,6 @@ class DeepagentSettingsWidget(QWidget):
         self.ui.lineEditDARootDir.textChanged.connect(self._on_changed)
         self.ui.comboBoxDABackend.currentTextChanged.connect(self._on_changed)
         self.ui.checkBoxDABackendVirtual.stateChanged.connect(self._on_changed)
-        self.ui.checkBoxSubagentsToPrompt.stateChanged.connect(self._on_changed)
         
         self.ui.pushButtonSynBrain.clicked.connect(self._enable_synbrain_tools)
         self.ui.pushButtonLTM.clicked.connect(self._enable_ltm_tools)
@@ -42,8 +41,7 @@ class DeepagentSettingsWidget(QWidget):
 
     def get_parameters(self) -> dict:
         da = {
-            "use_project_deepagents": self.ui.checkBoxBackendUseProject.isChecked(),
-            "inject_subagents_to_prompt": self.ui.checkBoxSubagentsToPrompt.isChecked()
+            "use_project_deepagents": self.ui.checkBoxBackendUseProject.isChecked()
         }
         
         if not da["use_project_deepagents"]:
@@ -84,7 +82,6 @@ class DeepagentSettingsWidget(QWidget):
         
         use_proj = da.get("use_project_deepagents", True)
         self.ui.checkBoxBackendUseProject.setChecked(use_proj)
-        self.ui.checkBoxSubagentsToPrompt.setChecked(da.get("inject_subagents_to_prompt", False))
         
         da_source = global_config.get("deepagents", {}) if (use_proj and global_config) else da
         
@@ -144,7 +141,7 @@ class DeepagentSettingsWidget(QWidget):
         scroll_layout_sub = QVBoxLayout(scroll_widget_sub)
         scroll_area_sub.setWidget(scroll_widget_sub)
         
-        agents_dir = os.path.join(self.app_dir, "agents")
+        agents_dir = self.config_manager.get_agents_dir()
         agent_files = []
         if os.path.isdir(agents_dir):
             agent_files = [f for f in os.listdir(agents_dir) if f.endswith(".json")]

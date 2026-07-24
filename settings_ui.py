@@ -53,7 +53,9 @@ class Ui_SettingsWindow(object):
         self.verticalLayout.addLayout(self.verticalLayout_32)
         self.listWidgetAgents = QtWidgets.QListWidget(self.tab_9)
         self.listWidgetAgents.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"alternate-background-color: rgb(207, 207, 207);")
+"alternate-background-color: rgb(207, 207, 207);\n"
+"selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.listWidgetAgents.setAlternatingRowColors(True)
         self.listWidgetAgents.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.listWidgetAgents.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
@@ -116,6 +118,9 @@ class Ui_SettingsWindow(object):
         self.horizontalLayout_18.addWidget(self.checkBoxSessionAutoSave)
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_18.addItem(spacerItem3)
+        self.pushButtonSessionsRename = QtWidgets.QPushButton(self.tab_8)
+        self.pushButtonSessionsRename.setObjectName("pushButtonSessionsRename")
+        self.horizontalLayout_18.addWidget(self.pushButtonSessionsRename)
         self.pushButtonSessionsOpen = QtWidgets.QPushButton(self.tab_8)
         self.pushButtonSessionsOpen.setObjectName("pushButtonSessionsOpen")
         self.horizontalLayout_18.addWidget(self.pushButtonSessionsOpen)
@@ -189,8 +194,6 @@ class Ui_SettingsWindow(object):
         self.tab_2.setObjectName("tab_2")
         self.gridLayout = QtWidgets.QGridLayout(self.tab_2)
         self.gridLayout.setObjectName("gridLayout")
-        spacerItem5 = QtWidgets.QSpacerItem(20, 390, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout.addItem(spacerItem5, 1, 0, 1, 1)
         self.groupBox = QtWidgets.QGroupBox(self.tab_2)
         self.groupBox.setStyleSheet("")
         self.groupBox.setObjectName("groupBox")
@@ -206,7 +209,9 @@ class Ui_SettingsWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBoxDABackend.sizePolicy().hasHeightForWidth())
         self.comboBoxDABackend.setSizePolicy(sizePolicy)
-        self.comboBoxDABackend.setStyleSheet("")
+        self.comboBoxDABackend.setStyleSheet("background-color: rgb(221, 221, 221);\n"
+"selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.comboBoxDABackend.setEditable(False)
         self.comboBoxDABackend.setObjectName("comboBoxDABackend")
         self.comboBoxDABackend.addItem("")
@@ -228,6 +233,24 @@ class Ui_SettingsWindow(object):
         self.checkBoxDABackendVirtual.setObjectName("checkBoxDABackendVirtual")
         self.gridLayout_8.addWidget(self.checkBoxDABackendVirtual, 2, 1, 1, 1)
         self.gridLayout.addWidget(self.groupBox, 0, 0, 1, 1)
+        spacerItem5 = QtWidgets.QSpacerItem(20, 390, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout.addItem(spacerItem5, 2, 0, 1, 1)
+        self.groupBox_2 = QtWidgets.QGroupBox(self.tab_2)
+        self.groupBox_2.setObjectName("groupBox_2")
+        self.gridLayout_2 = QtWidgets.QGridLayout(self.groupBox_2)
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.label_10 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_10.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_10.setObjectName("label_10")
+        self.horizontalLayout_7.addWidget(self.label_10)
+        self.pushButtonClearCheckpointDb = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButtonClearCheckpointDb.setStyleSheet("background-color: rgb(207, 0, 0);")
+        self.pushButtonClearCheckpointDb.setObjectName("pushButtonClearCheckpointDb")
+        self.horizontalLayout_7.addWidget(self.pushButtonClearCheckpointDb)
+        self.gridLayout_2.addLayout(self.horizontalLayout_7, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.groupBox_2, 1, 0, 1, 1)
         self.tabWidget.addTab(self.tab_2, "")
         self.tab = QtWidgets.QWidget()
         self.tab.setObjectName("tab")
@@ -294,18 +317,18 @@ class Ui_SettingsWindow(object):
         self.label_lms_model_2.setObjectName("label_lms_model_2")
         self.verticalLayout_25.addWidget(self.label_lms_model_2)
         self.comboBoxLightRAGAgent = QtWidgets.QComboBox(self.tab)
-        self.comboBoxLightRAGAgent.setStyleSheet("selection-background-color: @selectionbg;\n"
-"background-color: rgb(221, 221, 221);\n"
-"")
+        self.comboBoxLightRAGAgent.setStyleSheet("background-color: rgb(221, 221, 221);\n"
+"selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.comboBoxLightRAGAgent.setObjectName("comboBoxLightRAGAgent")
         self.verticalLayout_25.addWidget(self.comboBoxLightRAGAgent)
         self.label_4 = QtWidgets.QLabel(self.tab)
         self.label_4.setObjectName("label_4")
         self.verticalLayout_25.addWidget(self.label_4)
         self.comboBoxLightRAGEmbeddingsModel = QtWidgets.QComboBox(self.tab)
-        self.comboBoxLightRAGEmbeddingsModel.setStyleSheet("selection-background-color: @selectionbg;\n"
-"background-color: rgb(221, 221, 221);\n"
-"")
+        self.comboBoxLightRAGEmbeddingsModel.setStyleSheet("background-color: rgb(221, 221, 221);\n"
+"selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.comboBoxLightRAGEmbeddingsModel.setObjectName("comboBoxLightRAGEmbeddingsModel")
         self.verticalLayout_25.addWidget(self.comboBoxLightRAGEmbeddingsModel)
         spacerItem7 = QtWidgets.QSpacerItem(17, 322, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -391,9 +414,9 @@ class Ui_SettingsWindow(object):
         self.label_lms_model.setObjectName("label_lms_model")
         self.verticalLayout_22.addWidget(self.label_lms_model)
         self.lmstudio_ip = QtWidgets.QComboBox(self.tab_6)
-        self.lmstudio_ip.setStyleSheet("selection-background-color: @selectionbg;\n"
-"background-color: rgb(221, 221, 221);\n"
-"")
+        self.lmstudio_ip.setStyleSheet("background-color: rgb(221, 221, 221);\n"
+"selection-background-color: @selectionbg;\n"
+"selection-color: #000000;")
         self.lmstudio_ip.setObjectName("lmstudio_ip")
         self.verticalLayout_22.addWidget(self.lmstudio_ip)
         self.list_btn = QtWidgets.QPushButton(self.tab_6)
@@ -574,6 +597,9 @@ class Ui_SettingsWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         spacerItem13 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem13)
+        self.pushButtonConfigSelector = QtWidgets.QPushButton(SettingsWindow)
+        self.pushButtonConfigSelector.setObjectName("pushButtonConfigSelector")
+        self.horizontalLayout.addWidget(self.pushButtonConfigSelector)
         self.pushButtonClose = QtWidgets.QPushButton(SettingsWindow)
         self.pushButtonClose.setObjectName("pushButtonClose")
         self.horizontalLayout.addWidget(self.pushButtonClose)
@@ -592,6 +618,7 @@ class Ui_SettingsWindow(object):
         self.label_9.setText(_translate("SettingsWindow", "Sessions"))
         self.listWidgetSessions.setSortingEnabled(True)
         self.checkBoxSessionAutoSave.setText(_translate("SettingsWindow", "Implicet save"))
+        self.pushButtonSessionsRename.setText(_translate("SettingsWindow", "Rename *"))
         self.pushButtonSessionsOpen.setText(_translate("SettingsWindow", "Open"))
         self.pushButtonSessionsRemove.setText(_translate("SettingsWindow", "Remove"))
         self.pushButtonSessionsAdd.setText(_translate("SettingsWindow", "Add"))
@@ -611,6 +638,9 @@ class Ui_SettingsWindow(object):
         self.label_2.setText(_translate("SettingsWindow", "mode:"))
         self.label.setText(_translate("SettingsWindow", "root dir:"))
         self.checkBoxDABackendVirtual.setText(_translate("SettingsWindow", "virtual"))
+        self.groupBox_2.setTitle(_translate("SettingsWindow", "check pointing"))
+        self.label_10.setText(_translate("SettingsWindow", "clear checkpointing databases:"))
+        self.pushButtonClearCheckpointDb.setText(_translate("SettingsWindow", "clear"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("SettingsWindow", "Deepagents"))
         self.label_8.setText(_translate("SettingsWindow", "LightRAG Provider URL"))
         self.label_13.setText(_translate("SettingsWindow", "Description:"))
@@ -642,6 +672,7 @@ class Ui_SettingsWindow(object):
         self.labelConfigText.setText(_translate("SettingsWindow", "/home/leo/.pyvirtenvs/new_reactor/config.json"))
         self.label_7.setText(_translate("SettingsWindow", "    session:"))
         self.labelSessionText.setText(_translate("SettingsWindow", "SESSION"))
+        self.pushButtonConfigSelector.setText(_translate("SettingsWindow", "change project"))
         self.pushButtonClose.setText(_translate("SettingsWindow", "Close"))
 
 

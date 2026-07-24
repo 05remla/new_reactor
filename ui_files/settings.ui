@@ -79,7 +79,9 @@ background-color: rgb(238, 238, 238);
           <widget class="QListWidget" name="listWidgetAgents">
            <property name="styleSheet">
             <string notr="true">background-color: rgb(255, 255, 255);
-alternate-background-color: rgb(207, 207, 207);</string>
+alternate-background-color: rgb(207, 207, 207);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
            </property>
            <property name="alternatingRowColors">
             <bool>true</bool>
@@ -237,6 +239,13 @@ alternate-background-color: rgb(207, 207, 207);</string>
               </size>
              </property>
             </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonSessionsRename">
+             <property name="text">
+              <string>Rename *</string>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonSessionsOpen">
@@ -399,19 +408,6 @@ alternate-background-color: rgb(207, 207, 207);</string>
        <string>Deepagents</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="1" column="0">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>390</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="0" column="0">
         <widget class="QGroupBox" name="groupBox">
          <property name="styleSheet">
@@ -437,7 +433,9 @@ alternate-background-color: rgb(207, 207, 207);</string>
              </sizepolicy>
             </property>
             <property name="styleSheet">
-             <string notr="true"/>
+             <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
             </property>
             <property name="editable">
              <bool>false</bool>
@@ -498,6 +496,52 @@ alternate-background-color: rgb(207, 207, 207);</string>
              <bool>true</bool>
             </property>
            </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>390</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>check pointing</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>clear checkpointing databases:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonClearCheckpointDb">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(207, 0, 0);</string>
+              </property>
+              <property name="text">
+               <string>clear</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -631,9 +675,9 @@ alternate-background-color: rgb(207, 207, 207);</string>
                <item>
                 <widget class="QComboBox" name="comboBoxLightRAGAgent">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: @selectionbg;
-background-color: rgb(221, 221, 221);
-</string>
+                  <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
                  </property>
                 </widget>
                </item>
@@ -647,9 +691,9 @@ background-color: rgb(221, 221, 221);
                <item>
                 <widget class="QComboBox" name="comboBoxLightRAGEmbeddingsModel">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: @selectionbg;
-background-color: rgb(221, 221, 221);
-</string>
+                  <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
                  </property>
                 </widget>
                </item>
@@ -834,9 +878,9 @@ alternate-background-color: rgb(207, 207, 207);</string>
                <item>
                 <widget class="QComboBox" name="lmstudio_ip">
                  <property name="styleSheet">
-                  <string notr="true">selection-background-color: @selectionbg;
-background-color: rgb(221, 221, 221);
-</string>
+                  <string notr="true">background-color: rgb(221, 221, 221);
+selection-background-color: @selectionbg;
+selection-color: #000000;</string>
                  </property>
                 </widget>
                </item>
@@ -1252,6 +1296,13 @@ color: black;
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonConfigSelector">
+       <property name="text">
+        <string>change project</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonClose">
