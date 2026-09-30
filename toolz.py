@@ -247,7 +247,7 @@ def context7(library: str = "requests",
     import json
 
     try:
-        API_KEY = "ctx7sk-bcd11a6a-58dd-4c43-95b2-17b0f19e8d69"
+        API_KEY = ""
         headers = {"Authorization": f"Bearer {API_KEY}"}
 
         query_str = '+'.join(query.split()) if isinstance(query, str) else '+'.join(query)
