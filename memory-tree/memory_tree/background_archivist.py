@@ -49,7 +49,7 @@ class ArchivistThread(QThread):
             # Default fallbacks if we can't resolve anything
             model_name = "gpt-4o"
             api_base = self.config.get("api_base")
-            api_key = self.config.get("api_key")
+            api_key = self.config.get("provider_keys", {}).get(api_base) or self.config.get("api_key")
 
             if self.cfg_mgr:
                 agent_cfg = self.cfg_mgr.get_agent_config("MemoryManager")
@@ -71,7 +71,7 @@ class ArchivistThread(QThread):
 
             # If gemini, try to grab the google_api_key specifically
             if "gemini" in model_name.lower() and not api_key:
-                api_key = self.config.get("google_api_key", "")
+                api_key = self.config.get("provider_keys", {}).get(api_base) or self.config.get("google_api_key", "")
 
             def emit_status(msg):
                 self.status_update.emit(msg)

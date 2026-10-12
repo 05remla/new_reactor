@@ -36,7 +36,7 @@ class PlannerThread(QThread):
 
             model_name = self.main_window.config.get("model", "llama3")
             api_base = self.main_window.config.get("api_base")
-            api_key = self.main_window.config.get("api_key") or "sk-no-key"
+            api_key = self.main_window.config.get("provider_keys", {}).get(api_base) or self.main_window.config.get("api_key") or "sk-no-key"
             temperature = 0.7
             
             system_prompt = (
@@ -139,10 +139,13 @@ def enable_plugin(main_window):
         def handle_chunk(chunk):
             safe_chunk = chunk.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>").replace("'", "\\'")
             js = f"""
+            var isScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50);
             var content = document.getElementById('{plan_id}_content');
             if(content) {{
                 content.innerHTML += '{safe_chunk}';
-                window.scrollTo(0, document.body.scrollHeight);
+                if (isScrolledToBottom) {{
+                    window.scrollTo(0, document.body.scrollHeight);
+                }}
             }}
             """
             main_window.ui.chat_display.page().runJavaScript(js)

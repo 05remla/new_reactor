@@ -25,7 +25,7 @@ class GenerationThread(QThread):
     error_occurred = pyqtSignal(str)
     todos_updated = pyqtSignal(list)
 
-    def __init__(self, model, sys_prompt, messages, config, rag_config, temp, top_p, min_p, top_k, repeat_penalty, max_tokens=None, session_file=None, cfg_mgr=None, staged_files=None):
+    def __init__(self, model, sys_prompt, messages, config, rag_config, temp, top_p, min_p, top_k, repeat_penalty, max_tokens=None, session_file=None, cfg_mgr=None, staged_files=None, hook_executor=None):
         super().__init__()
         self.model = model
         # is sysprompt dynamic???
@@ -42,6 +42,7 @@ class GenerationThread(QThread):
         self.max_tokens = max_tokens
         self.session_file = session_file
         self.cancel_flag = False
+        self.hook_executor = hook_executor
 
         if cfg_mgr is not None:
             self.cfg_mgr = cfg_mgr
@@ -66,14 +67,15 @@ class GenerationThread(QThread):
             prompt_path = os.path.join(app_dir, "prompts", prompt_file)
             if os.path.isfile(prompt_path):
                 try:
-                    with open(prompt_path, "r", encoding="utf-8") as f:
-                        self.sys_prompt = f.read()
-                        
-                        ## dynamic date injection
-                        import datetime
-                        self.sys_prompt += "\n\nCRITICAL INSTRUCTIONS: Your training data is a checkpoint in history and time has since moved beyond it."
-                        self.sys_prompt += "\nThis is current reality. We are living in a time your training data cannot accurately account for. this should always be one of your top considerations."
-                        self.sys_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
+                    if not self.sys_prompt:
+                        with open(prompt_path, "r", encoding="utf-8") as f:
+                            self.sys_prompt = f.read()
+                            
+                            ## dynamic date injection
+                            import datetime
+                            self.sys_prompt += "\n\nCRITICAL INSTRUCTIONS: Your training data is a checkpoint in history and time has since moved beyond it."
+                            self.sys_prompt += "\nThis is current reality. We are living in a time your training data cannot accurately account for. this should always be one of your top considerations."
+                            self.sys_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
                 except:
                     pass
 
@@ -84,9 +86,6 @@ class GenerationThread(QThread):
             tags = reasoning_tags.get(actual_model, ["<think>", "</think>"])
             tag_open = tags[0]
             tag_close = tags[1] if len(tags) > 1 else "</think>"
-
-            if self.sys_prompt and "=== SYSTEM PROMPT & PERSONA ===" not in self.sys_prompt:
-                self.sys_prompt = f"=== SYSTEM PROMPT & PERSONA ===\n{self.sys_prompt.strip()}\n===============================\n"
 
             # Merge consecutive messages of the same role to prevent LangChain prompt template validation errors
             cleaned_messages = []
@@ -129,61 +128,41 @@ class GenerationThread(QThread):
             except (ValueError, TypeError):
                 repeat_p_str = str(self.repeat_penalty)
 
-            header_line1 = f"{self.model} ({prompt_file_name} on {actual_model})"
-            header_line2 = f"([temp: {temp_str}, top_k: {self.top_k}, top_p: {top_p_str}, min_p: {min_p_str}, repeat_p: {repeat_p_str}])"
+            api_base = self.agent_cfg.get("provider_url") if self.agent_cfg else None
+            if not api_base:
+                api_base = self.config.get("api_base", "https://api.openai.com/v1")
+
+            header_line1 = f"{prompt_file_name} on {actual_model}"
+            header_line2 = f"[temp: {temp_str}, top_k: {self.top_k}, top_p: {top_p_str}, min_p: {min_p_str}, repeat_p: {repeat_p_str}, endpoint: {api_base}]"
             
-            self.status_update.emit(f"🤖 {header_line1}   \n{header_line2}   \n", True)
+            details_html = (
+                f"🤖 <details style='color:#7f8c8d; font-style:italic; margin-bottom:10px; display:inline-block;'>"
+                f"<summary style='cursor:pointer; font-weight:bold;'>{self.model}</summary>"
+                f"{header_line1}<br>"
+                f"{header_line2}"
+                f"</details>   \n"
+            )
+            
+            self.status_update.emit(details_html, True)
 
-            # Retrieve context from Obsidian-style Memory Tree
-            try:
-                memory_tree_path = os.path.join(app_dir, "memory-tree")
-                if memory_tree_path not in sys.path:
-                    sys.path.append(memory_tree_path)
-                from memory_tree.agent import pre_generation_retrieval
-                
-                self.status_update.emit("[🧠 Searching Memory Vault...]   \n", False)
-                vault_context = pre_generation_retrieval(user_message)
-                if "No relevant context found" not in vault_context:
-                    self.sys_prompt += f"\n\n=== MEMORY VAULT CONTEXT ===\n{vault_context}\n(System Hint: The above are only partial snippets. If you need more details, use your memory tools (e.g., read_note or manage_memory) to read the full document.)\n============================\n"
-                    self.status_update.emit("[✅ Memory Vault context injected]   \n", False)
-            except Exception as e:
-                print(f"Failed to retrieve memory vault context: {e}", file=sys.stderr)
-
-            # Retrieve LightRAG Context directly if enabled
-            if self.rag_config.get("use_rag") and not self.cancel_flag:
-                mode = self.rag_config.get("retrieval_mode", "hybrid")
-                self.status_update.emit(f"[🔍 Querying LightRAG ({mode} mode)...]   \n", False)
-                
-                try:
-                    url = f"{self.rag_config.get('base_url')}/query"
-                    payload = {"query": user_message or "", "mode": mode, "only_need_context": True, "model": self.rag_config.get("model")}
-                    headers = {"X-API-Key": self.rag_config.get("api_key")} if self.rag_config.get("api_key") else {}
-                    
-                    resp = requests.post(url, json=payload, headers=headers, timeout=45)
-                    resp.raise_for_status()
-                    d = resp.json()
-                    ctx = d.get("response", d.get("context", str(d))) if isinstance(d, dict) else str(d)
-                    
-                    if ctx and not "No context retrieved due to error." in ctx:
-                        self.sys_prompt += f"\n\n=== LIGHTRAG KNOWLEDGE CONTEXT ===\n(System Hint: Use the following retrieved knowledge context to answer the question. If the context is irrelevant, ignore it and answer from your general knowledge.)\n\n{ctx}\n==================================\n"
-                        self.status_update.emit("[✅ LightRAG knowledge retrieved and injected]   \n   \n", False)
-                except Exception as e:
-                    self.status_update.emit(f"[❌ LightRAG Error: {str(e)}]   \n   \n", False)
-                    print(f"Failed to retrieve LightRAG context: {e}", file=sys.stderr)
-
-            if self.staged_files:
-                files_context = "\n\n=== STAGED FILE CONTENTS ===\n"
-                files_context += "(System Hint: The following are complete documents provided by the user. They are NOT partial snippets.)\n"
-                for fpath in self.staged_files:
-                    if os.path.isfile(fpath):
-                        try:
-                            with open(fpath, "r", encoding="utf-8") as f:
-                                content = f.read()
-                            files_context += f"\n--- File: {os.path.basename(fpath)} ---\n{content}\n--- End of File: {os.path.basename(fpath)} ---\n"
-                        except Exception as e:
-                            files_context += f"\n--- File: {os.path.basename(fpath)} ---\n[Error reading file: {e}]\n--- End of File: {os.path.basename(fpath)} ---\n"
-                files_context += "============================\n"
-                self.sys_prompt += files_context
+            import core_engine
+            tools = core_engine.get_tools(self.config, self.agent_cfg, cancel_flag_func=lambda: self.cancel_flag)
+            
+            self.sys_prompt = core_engine.build_system_prompt(
+                base_prompt=self.sys_prompt,
+                config=self.config,
+                agent_cfg=self.agent_cfg,
+                cfg_mgr=self.cfg_mgr,
+                app_dir=app_dir,
+                rag_config=self.rag_config,
+                user_message=user_message,
+                staged_files=self.staged_files,
+                tools=tools,
+                status_update_func=lambda msg, is_new: self.status_update.emit(msg, is_new),
+                hook_executor=self.hook_executor,
+                cancel_flag_func=lambda: self.cancel_flag,
+                debug_mode=False
+            )
 
             actual_model = self.agent_cfg.get("model_name", self.agent_cfg.get("model", self.model)) if self.agent_cfg else self.model
 
@@ -195,7 +174,7 @@ class GenerationThread(QThread):
                 "min_p": self.min_p,
                 "top_k": self.top_k,
                 "repeat_penalty": self.repeat_penalty,
-                "max_tokens": self.max_tokens
+                "max_tokens": self.max_tokens,
             }
             llm = core_engine.setup_llm(self.config, self.agent_cfg, overrides)
 
@@ -226,43 +205,6 @@ class GenerationThread(QThread):
                     return
                 
                 self.status_update.emit("<span style='color:#8e44ad;'><b>[🧠 Using DeepAgents (Agentic Planning & Tools)...]</b></span>   \n", False)
-
-                tools = core_engine.get_tools(self.config, self.agent_cfg, cancel_flag_func=lambda: self.cancel_flag)
-
-
-                da_cfg = self.agent_cfg.get("deepagents", {}) if self.agent_cfg else {}
-                if da_cfg.get("inject_subagents_to_prompt", False):
-                    enabled_subs = da_cfg.get("enabled_subagents", self.config.get("da_enabled_subagents", self.cfg_mgr.list_agents()))
-                    subagents_info = []
-                    for a in enabled_subs:
-                        if a != actual_model:
-                            a_conf = self.cfg_mgr.get_agent_config(a)
-                            desc = a_conf.get("description", f"AI subagent specialized as {a}.") if a_conf else f"AI subagent specialized as {a}."
-                            subagents_info.append(f"- {a}: {desc}")
-                    if subagents_info:
-                        self.sys_prompt += f"\n\n=== AVAILABLE SUBAGENTS ===\nYou may use these agents via tool calls if enabled:\n" + "\n".join(subagents_info) + "\n===========================\n"
-
-                if da_cfg.get("enable_middleware_user_tools", True) and tools:
-                    tools_info = []
-                    for t in tools:
-                        t_name = getattr(t, "name", getattr(t, "__name__", "Unknown Tool"))
-                        t_desc = getattr(t, "description", getattr(t, "__doc__", "No description available."))
-                        if t_desc:
-                            lines = [l.strip() for l in t_desc.split('\n')]
-                            desc_lines = []
-                            in_desc = False
-                            for l in lines:
-                                if l.startswith("DESCRIPTION:"): in_desc = True; continue
-                                if l.startswith("ARGS:") or l.startswith("RETURNS:"): break
-                                if in_desc and l: desc_lines.append(l)
-                            
-                            if desc_lines:
-                                t_desc = " ".join(desc_lines)
-                            else:
-                                t_desc = next((l for l in lines if l and l != "DESCRIPTION:"), "No description available.")
-                        tools_info.append(f"- {t_name}: {t_desc}")
-                    if tools_info:
-                        self.sys_prompt += f"\n\n===== AVAILABLE TOOLS =====\nYou have the following tools enabled. Use them via tool calls:\n" + "\n".join(tools_info) + "\n============================\n"
 
                 agent = core_engine.setup_deep_agent(llm, tools, self.sys_prompt, self.config, self.agent_cfg, app_dir)
 
@@ -321,24 +263,33 @@ class GenerationThread(QThread):
 
                     if mode == "messages":
                         msg, metadata = payload
+
                         # Ensure we only handle messages generated by the LLM (not human msgs/tool outputs)
                         if msg.__class__.__name__ in ("AIMessageChunk", "AIMessage"):
                             reasoning = msg.additional_kwargs.get("reasoning_content", "") or msg.additional_kwargs.get("thought", "") or msg.additional_kwargs.get("thinking", "")
                             
                             content_str = ""
-                            if isinstance(msg.content, list):
-                                for item in msg.content:
-                                    if isinstance(item, dict):
-                                        if item.get("type") in ("thinking", "thought"):
-                                            reasoning += item.get("thinking", item.get("thought", item.get("text", "")))
-                                        else:
-                                            content_str += item.get("text", "")
-                                    else:
-                                        content_str += str(item)
-                            elif isinstance(msg.content, str):
-                                content_str = msg.content
+                            if hasattr(msg, "content_blocks") and isinstance(msg.content_blocks, list):
+                                for block in msg.content_blocks:
+                                    if isinstance(block, dict):
+                                        if block.get("type") == "reasoning":
+                                            reasoning += block.get("reasoning", "")
+                                        elif block.get("type") == "text":
+                                            content_str += block.get("text", "")
                             else:
-                                content_str = str(msg.content) if msg.content else ""
+                                if isinstance(msg.content, list):
+                                    for item in msg.content:
+                                        if isinstance(item, dict):
+                                            if item.get("type") in ("thinking", "thought"):
+                                                reasoning += item.get("thinking", item.get("thought", item.get("text", "")))
+                                            else:
+                                                content_str += item.get("text", "")
+                                        else:
+                                            content_str += str(item)
+                                elif isinstance(msg.content, str):
+                                    content_str = msg.content
+                                else:
+                                    content_str = str(msg.content) if msg.content else ""
 
                             if reasoning:
                                 if not is_reasoning:
@@ -360,6 +311,10 @@ class GenerationThread(QThread):
                             if getattr(msg, "tool_call_chunks", None):
                                 for tc in msg.tool_call_chunks:
                                     if tc.get("name"):
+                                        if is_reasoning:
+                                            assistant_response += f"\n{tag_close}\n"
+                                            self.chunk_received.emit(f"<br>{tag_close.replace('<', '&lt;').replace('>', '&gt;')}<br>")
+                                            is_reasoning = False
                                         self.status_update.emit(f"   \n<span style='color:#26a55c;'><i>[🔧 Agent calling tool: {tc['name']}]</i></span>   \n", False)
 
                 if is_reasoning:
@@ -392,19 +347,27 @@ class GenerationThread(QThread):
                     
                     reasoning = chunk.additional_kwargs.get("reasoning_content", "") or chunk.additional_kwargs.get("thought", "") or chunk.additional_kwargs.get("thinking", "")
                     content_str = ""
-                    if isinstance(chunk.content, list):
-                        for item in chunk.content:
-                            if isinstance(item, dict):
-                                if item.get("type") in ("thinking", "thought"):
-                                    reasoning += item.get("thinking", item.get("thought", item.get("text", "")))
-                                else:
-                                    content_str += item.get("text", "")
-                            else:
-                                content_str += str(item)
-                    elif isinstance(chunk.content, str):
-                        content_str = chunk.content
+                    if hasattr(chunk, "content_blocks") and isinstance(chunk.content_blocks, list):
+                        for block in chunk.content_blocks:
+                            if isinstance(block, dict):
+                                if block.get("type") == "reasoning":
+                                    reasoning += block.get("reasoning", "")
+                                elif block.get("type") == "text":
+                                    content_str += block.get("text", "")
                     else:
-                        content_str = str(chunk.content) if chunk.content else ""
+                        if isinstance(chunk.content, list):
+                            for item in chunk.content:
+                                if isinstance(item, dict):
+                                    if item.get("type") in ("thinking", "thought"):
+                                        reasoning += item.get("thinking", item.get("thought", item.get("text", "")))
+                                    else:
+                                        content_str += item.get("text", "")
+                                else:
+                                    content_str += str(item)
+                        elif isinstance(chunk.content, str):
+                            content_str = chunk.content
+                        else:
+                            content_str = str(chunk.content) if chunk.content else ""
                         
                     if reasoning:
                         if not is_reasoning:

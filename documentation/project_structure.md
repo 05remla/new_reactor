@@ -33,12 +33,19 @@ new_reactor/
 ├── toolz.py            # Collection of Python functions available as AI tools   
 │   
 ├── documentation/      # Project documentation, guides, and walkthroughs   
+│   ├── agent_manager_flow.md                     # Flowchart and signal architecture for agent_manager.py   
+│   ├── config_manager_flow.md                    # Singleton and config IO architecture for config_manager.py   
+│   ├── core_engine_flow.md                       # Execution engine, prompt compilation, and DeepAgents pipeline for core_engine.py   
+│   ├── generation_thread_flow.md                 # Background streaming thread and tool loops for generation_thread.py   
 │   ├── getting_started.md                        # High-level setup and overview guide for users   
 │   ├── implimentation_plans/                     # Saved implementation plan artifacts   
 │   ├── invocation_flowchart_details.md           # Detailed breakdown of the LLM pipeline nodes   
 │   ├── invocation_flowchart.md                   # Mermaid flowchart of the execution pipeline   
+│   ├── mainwindow_flow.md                        # Main GUI event and signal architecture for mainwindow.py   
 │   ├── Memory_Architecture_and_Implementation.md # Guide to the vault memory architecture   
 │   ├── README(for_agents).md                     # Strict guidelines and context for AI agents   
+│   ├── repl_flow.md                              # Headless CLI and pipeline architecture for repl.py   
+│   ├── settings_flow.md                          # Settings dialog and worker thread architecture for settings.py   
 │   └── walkthroughs/                             # Walkthrough artifacts documenting major features   
 │   
 ├── web_assets/         # Static assets (CSS/JS) for rendering rich markdown   

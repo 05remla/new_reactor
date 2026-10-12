@@ -1618,6 +1618,18 @@ class MstyCloneApp(QMainWindow):
         except Exception as e:
             self.write_to_chat(f"   \n[LM Studio Error]: {str(e)}   \n")
 
+    def list_provider_models():
+        endpoint = agent_cfg.get("provider_url") or self.config.get("api_base", "")
+        url = f"{endpoint}/models"
+        api_key = agent_cfg.get("api_key", "")
+        headers = {"Authorization": f"Bearer {api_key}"}
+        resp = requests.get(url, headers=headers)
+        struct_data = json.loads(resp.content)
+
+        self.ui.model_combo.clear()
+        for i in struct_data['data']:
+            self.ui.model_combo.insertItem(i['id'])
+
     def get_lms_models(self, mode=1):
         '''
             mode 3: load agents from config
@@ -1669,14 +1681,18 @@ class MstyCloneApp(QMainWindow):
 
         if is_new_message:
             js = f"""
+            var isScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50);
             var div = document.createElement('div');
             div.style.marginBottom = '15px';
             div.innerHTML = '<b>' + {safe_js_string} + '</b>';
             document.body.appendChild(div);
-            window.scrollTo(0, document.body.scrollHeight);
+            if (isScrolledToBottom) {{
+                window.scrollTo(0, document.body.scrollHeight);
+            }}
             """
         else:
             js = f"""
+            var isScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50);
             var last = document.body.lastElementChild;
             if (last) {{
                 last.innerHTML += {safe_js_string};
@@ -1685,7 +1701,9 @@ class MstyCloneApp(QMainWindow):
                 div.innerHTML = {safe_js_string};
                 document.body.appendChild(div);
             }}
-            window.scrollTo(0, document.body.scrollHeight);
+            if (isScrolledToBottom) {{
+                window.scrollTo(0, document.body.scrollHeight);
+            }}
             """
         self.ui.chat_display.page().runJavaScript(js)
 
@@ -1737,7 +1755,12 @@ class MstyCloneApp(QMainWindow):
         if hasattr(self, 'scratchpad_text'):
             spad = self.scratchpad_text.toPlainText().strip()
             if spad:
-                prompt += f"\n\n--- SCRATCHPAD (Working Memory) ---\n{spad}"
+                import core_engine
+                agent_name = self.ui.agent_combo.currentText().strip()
+                agent_cfg = self.config_manager.get_agent_config(agent_name)
+                tools = core_engine.get_tools(self.config, agent_cfg)
+                if any(getattr(t, "__name__", "") == "write_to_scratchpad" for t in tools):
+                    prompt += f"\n\n--- SCRATCHPAD (Working Memory) ---\n{spad}"
         return prompt
 
     def send_message(self):
@@ -1813,7 +1836,8 @@ class MstyCloneApp(QMainWindow):
             max_tokens=self.config.get("max_tokens", 0),
             session_file=self.session_file,
             cfg_mgr=self.config_manager,
-            staged_files=staged_files
+            staged_files=staged_files,
+            hook_executor=self.execute_string_hook
         )
 
         self.generation_thread.todos_updated.connect(self._on_todos_updated)
@@ -1940,6 +1964,16 @@ class MstyCloneApp(QMainWindow):
     def unregister_hook(self, event_name, callback):
         if event_name in self.hooks:
             self.hooks[event_name] = [(p, cb) for p, cb in self.hooks[event_name] if cb != callback]
+
+    def execute_string_hook(self, event_name, initial_string, **kwargs):
+        current_string = initial_string
+        for priority, callback in self.hooks.get(event_name, []):
+            try:
+                current_string = callback(current_string, **kwargs)
+            except Exception as e:
+                import sys
+                print(f"Error in string hook {callback}: {e}", file=sys.stderr)
+        return current_string
 
     def _on_generation_finished(self, full_response):
         if not self.generation_thread.cancel_flag:

@@ -166,6 +166,7 @@ def simple_web_scraper(url: str = 'http://www.google.com',
             {"title": "...", "html": "...", "href": "..."}.
     '''
     import json
+    browser = None
     try:
         from automata_browser import auto_browser
         browser = auto_browser.web_manager.Browser()
@@ -177,6 +178,12 @@ def simple_web_scraper(url: str = 'http://www.google.com',
         return json.dumps(data, ensure_ascii=False)
     except Exception as e:
         return json.dumps({'title': 'Error', 'href': url, 'html': f'{str(e)}'})
+    finally:
+        if browser is not None:
+            try:
+                browser.quit()
+            except Exception:
+                pass
 
 
 def bulk_web_search(subject: str = '$YOUR QUERY HERE',
@@ -247,7 +254,7 @@ def context7(library: str = "requests",
     import json
 
     try:
-        API_KEY = "ctx7sk-bcd11a6a-58dd-4c43-95b2-17b0f19e8d69"
+        API_KEY = ""
         headers = {"Authorization": f"Bearer {API_KEY}"}
 
         query_str = '+'.join(query.split()) if isinstance(query, str) else '+'.join(query)

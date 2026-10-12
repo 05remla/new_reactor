@@ -33,7 +33,7 @@ class CritiqueThread(QThread):
             llm = ChatOpenAI(
                 model=self.config.get("model", "llama3"),
                 base_url=self.config.get("api_base"),
-                api_key=self.config.get("api_key") or "sk-no-key",
+                api_key=self.config.get("provider_keys", {}).get(self.config.get("api_base")) or self.config.get("api_key") or "sk-no-key",
                 temperature=0.3, # Lower temperature for analytical critique
                 streaming=True,
                 max_retries=0
@@ -118,9 +118,12 @@ def enable_plugin(main_window):
             # Stream the text directly into our custom yellow DIV via Javascript
             safe_chunk = chunk.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>").replace("'", "\\'")
             js = f"""
+            var isScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50);
             var last = document.body.lastElementChild;
             last.innerHTML += '{safe_chunk}';
-            window.scrollTo(0, document.body.scrollHeight);
+            if (isScrolledToBottom) {{
+                window.scrollTo(0, document.body.scrollHeight);
+            }}
             """
             main_window.ui.chat_display.page().runJavaScript(js)
 

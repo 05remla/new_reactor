@@ -14,6 +14,8 @@ from config_selector_ui import *
 def populate():
     dirs = os.listdir(os.path.join(app_dir, "workspaces"))
     for d in dirs:
+        if not os.path.isdir(os.path.join(app_dir, "workspaces", d)):
+            continue
         files = os.listdir(os.path.join(app_dir, "workspaces", d))
         for f in files:
             if '.json' in f:

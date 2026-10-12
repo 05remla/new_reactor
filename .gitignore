@@ -17,6 +17,7 @@ scratchpad*
 pyvenv.cfg
 CACHEDIR.TAG
 roadmap.md
+keys.json
 
 # Additional Virtual Environment Folders
 include/

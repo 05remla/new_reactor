@@ -127,10 +127,13 @@ class AgentManagerDialog(QWidget):
         # Providers
         if hasattr(self.ui, 'listWidgetProviders'):
             self.ui.listWidgetProviders.itemClicked.connect(self._on_provider_selected)
+            self.ui.listWidgetProviders.currentItemChanged.connect(lambda cur, prev: self._on_provider_selected(cur) if cur else None)
             self.ui.pushButtonProvidersAdd.clicked.connect(self._add_provider)
             self.ui.pushButtonProvidersRemove.clicked.connect(self._remove_provider)
             if hasattr(self.ui, 'plainTextEditProviderDescription'):
                 self.ui.plainTextEditProviderDescription.textChanged.connect(self._on_provider_description_changed)
+            if hasattr(self.ui, 'lineEditProviderKey'):
+                self.ui.lineEditProviderKey.textChanged.connect(self._on_provider_key_changed)
 
         # Stopstrings
         if hasattr(self.ui, 'pushButtonLightRAGAdd_2'):
@@ -309,6 +312,8 @@ class AgentManagerDialog(QWidget):
             item = self.ui.listWidgetProviders.currentItem()
             if item:
                 agent_cfg["provider_url"] = item.text()
+                if hasattr(self.ui, 'labelModelTabProvider'):
+                    self.ui.labelModelTabProvider.setText(item.text())
 
         # Save Inference
         inf = agent_cfg.get("inference_params", {})
@@ -450,6 +455,8 @@ class AgentManagerDialog(QWidget):
 
             # Provider
             selected_provider = agent_cfg.get("provider_url", "")
+            if hasattr(self.ui, 'labelModelTabProvider'):
+                self.ui.labelModelTabProvider.setText(selected_provider)
             if hasattr(self.ui, 'listWidgetProviders'):
                 items = self.ui.listWidgetProviders.findItems(selected_provider, Qt.MatchExactly)
                 if items:
@@ -639,44 +646,48 @@ class AgentManagerDialog(QWidget):
         if not hasattr(self, "current_agent_name"): return
         agent_cfg = self.cfg_mgr.get_agent_config(self.current_agent_name)
         api_base = agent_cfg.get("provider_url", self.config.get("api_base", "http://localhost:1234/v1"))
+        print(api_base)
+        api_key = self.config.get('provider_keys')[api_base]
+        print(api_key)
+        headers = {"Authorization": f"Bearer {api_key}"}
         
         import requests, json
-        if "api.openai.com" in api_base:
-            base_url = "http://localhost:1234"
-        else:
-            parts = api_base.split('/')
-            if len(parts) >= 3:
-                base_url = f"{parts[0]}//{parts[2]}"
-            else:
-                base_url = api_base
+        # if "api.openai.com" in api_base:
+        #     base_url = "http://localhost:1234"
+        # else:
+        #     parts = api_base.split('/')
+        #     if len(parts) >= 3:
+        #         base_url = f"{parts[0]}//{parts[2]}"
+        #     else:
+        #         base_url = api_base
 
         try:
-            data = requests.get(f"{base_url}/api/v1/models", timeout=3)
+            data = requests.get(f"{api_base}/models", headers=headers, timeout=10)
             data2 = json.loads(data.text)
         except Exception as e:
-            print(f"Failed to fetch models from {base_url}/api/v1/models: {e}")
+            print(f"Failed to fetch models from {api_base}/models: {e}")
             self.ui.model_combo.blockSignals(False)
             return
 
         models = self.config.setdefault("saved_models", [])
         added_any = False
         
-        if 'models' in data2:
-            for model in data2['models']:
-                if mode == 1:
-                    if 'loaded_instances' in model and len(model['loaded_instances']) > 0:
-                        self.ui.model_combo.addItem(model['key'])
-                        if model['key'] not in models:
-                            models.append(model['key'])
-                        added_any = True
-                elif mode == 2:
-                    key = model.get('key', model.get('id', ''))
-                    if key:
-                        self.ui.model_combo.addItem(key)
-                        if key not in models:
-                            models.append(key)
-                        added_any = True
-        elif 'data' in data2:
+        # if 'models' in data2:
+        #     for model in data2['models']:
+        #         if mode == 1:
+        #             if 'loaded_instances' in model and len(model['loaded_instances']) > 0:
+        #                 self.ui.model_combo.addItem(model['key'])
+        #                 if model['key'] not in models:
+        #                     models.append(model['key'])
+        #                 added_any = True
+        #         elif mode == 2:
+        #             key = model.get('key', model.get('id', ''))
+        #             if key:
+        #                 self.ui.model_combo.addItem(key)
+        #                 if key not in models:
+        #                     models.append(key)
+        #                 added_any = True
+        if 'data' in data2:
             for model in data2['data']:
                 key = model.get('id', '')
                 if key:
@@ -833,12 +844,21 @@ class AgentManagerDialog(QWidget):
         self.ui.listWidgetProviders.addItems(urls)
         
     def _on_provider_selected(self, item):
+        if not item: return
         url = item.text()
+        if hasattr(self.ui, 'labelModelTabProvider'):
+            self.ui.labelModelTabProvider.setText(url)
         desc = self.config.get("provider_descriptions", {}).get(url, "")
         if hasattr(self.ui, 'plainTextEditProviderDescription'):
             self.ui.plainTextEditProviderDescription.blockSignals(True)
             self.ui.plainTextEditProviderDescription.setPlainText(desc)
             self.ui.plainTextEditProviderDescription.blockSignals(False)
+
+        key = self.config.get("provider_keys", {}).get(url, "")
+        if hasattr(self.ui, 'lineEditProviderKey'):
+            self.ui.lineEditProviderKey.blockSignals(True)
+            self.ui.lineEditProviderKey.setText(key)
+            self.ui.lineEditProviderKey.blockSignals(False)
 
     def _on_provider_description_changed(self):
         item = self.ui.listWidgetProviders.currentItem()
@@ -847,6 +867,15 @@ class AgentManagerDialog(QWidget):
             desc = self.ui.plainTextEditProviderDescription.toPlainText()
             descs = self.config.setdefault("provider_descriptions", {})
             descs[item.text()] = desc
+            self.cfg_mgr.save_config()
+
+    def _on_provider_key_changed(self):
+        item = self.ui.listWidgetProviders.currentItem()
+        if item and hasattr(self.ui, 'lineEditProviderKey'):
+            url = item.text()
+            key = self.ui.lineEditProviderKey.text()
+            keys = self.config.setdefault("provider_keys", {})
+            keys[item.text()] = key
             self.cfg_mgr.save_config()
 
     def _enable_synbrain_tools(self):
@@ -886,6 +915,7 @@ class AgentManagerDialog(QWidget):
             items = self.ui.listWidgetProviders.findItems(url, Qt.MatchExactly)
             if items:
                 self.ui.listWidgetProviders.setCurrentItem(items[0])
+                self._on_provider_selected(items[0])
 
     def _remove_provider(self):
         row = self.ui.listWidgetProviders.currentRow()
@@ -896,6 +926,15 @@ class AgentManagerDialog(QWidget):
             urls.remove(url)
             self.cfg_mgr.save_config()
             self._refresh_providers()
+            if hasattr(self, "current_agent_name"):
+                agent_cfg = self.cfg_mgr.get_agent_config(self.current_agent_name)
+                if agent_cfg.get("provider_url") == url:
+                    cur_item = self.ui.listWidgetProviders.currentItem()
+                    new_url = cur_item.text() if cur_item else ""
+                    agent_cfg["provider_url"] = new_url
+                    self.cfg_mgr.save_agent_config(self.current_agent_name, agent_cfg)
+                    if hasattr(self.ui, 'labelModelTabProvider'):
+                        self.ui.labelModelTabProvider.setText(new_url)
 
     def _refresh_stopstrings(self, agent_cfg):
         if hasattr(self.ui, 'listWidgetLightRAG_2'):
@@ -1021,17 +1060,6 @@ class AgentManagerDialog(QWidget):
             with open(prompt_path, "r", encoding="utf-8") as f:
                 sys_prompt = f.read()
                 
-        import datetime
-        sys_prompt += "\n\nCRITICAL INSTRUCTIONS: Your training data is a checkpoint in history and time has since moved beyond it."
-        sys_prompt += "\nThis is current reality. We are living in a time your training data cannot accurately account for. this should always be one of your top considerations."
-        sys_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
-
-        if sys_prompt and "=== SYSTEM PROMPT & PERSONA ===" not in sys_prompt:
-            sys_prompt = f"=== SYSTEM PROMPT & PERSONA ===\n{sys_prompt.strip()}\n===============================\n"
-            
-        sys_prompt += "\n\n=== MEMORY VAULT CONTEXT ===\n[Memory Vault Context Simulated]\n============================\n"
-        sys_prompt += "\n\n=== LIGHTRAG KNOWLEDGE CONTEXT ===\n[LightRAG Knowledge Context Simulated]\n==================================\n"
-
         import core_engine
         from langchain_core.messages import HumanMessage, SystemMessage
         
@@ -1063,31 +1091,26 @@ class AgentManagerDialog(QWidget):
         try:
             llm = core_engine.setup_llm(self.config, agent_cfg, overrides)
             tools = core_engine.get_tools(self.config, agent_cfg)
+            
+            sys_prompt = core_engine.build_system_prompt(
+                base_prompt=sys_prompt,
+                config=self.config,
+                agent_cfg=agent_cfg,
+                cfg_mgr=self.cfg_mgr,
+                app_dir=app_dir,
+                rag_config={"use_rag": True}, # Mock RAG enabled to ensure placeholder is injected
+                user_message="[Dummy Debug Message]",
+                staged_files=None,
+                tools=tools,
+                status_update_func=None,
+                hook_executor=None,
+                cancel_flag_func=None,
+                debug_mode=True
+            )
+            
             use_da = agent_cfg.get("use_deepagents", self.config.get("use_deepagents", False))
             
             if use_da:
-                da_cfg = agent_cfg.get("deepagents", {})
-                if da_cfg.get("enable_middleware_user_tools", True) and tools:
-                    tools_info = []
-                    for t in tools:
-                        t_name = getattr(t, "name", getattr(t, "__name__", "Unknown Tool"))
-                        t_desc = getattr(t, "description", getattr(t, "__doc__", "No description available."))
-                        if t_desc:
-                            lines = [l.strip() for l in t_desc.split('\n')]
-                            desc_lines = []
-                            in_desc = False
-                            for l in lines:
-                                if l.startswith("DESCRIPTION:"): in_desc = True; continue
-                                if l.startswith("ARGS:") or l.startswith("RETURNS:"): break
-                                if in_desc and l: desc_lines.append(l)
-                            
-                            if desc_lines:
-                                t_desc = " ".join(desc_lines)
-                            else:
-                                t_desc = next((l for l in lines if l and l != "DESCRIPTION:"), "No description available.")
-                        tools_info.append(f"- {t_name}: {t_desc}")
-                    if tools_info:
-                        sys_prompt += f"\n\n===== AVAILABLE TOOLS =====\nYou have the following tools enabled. Use them via tool calls:\n" + "\n".join(tools_info) + "\n============================\n"
 
                 try:
                     agent = core_engine.setup_deep_agent(llm, tools, sys_prompt, self.config, agent_cfg, app_dir)

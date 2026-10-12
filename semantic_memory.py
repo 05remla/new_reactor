@@ -94,7 +94,8 @@ def get_embedding(text: str, config: dict) -> list[float]:
     if provider == "gemini":
         try:
             from langchain_google_genai import GoogleGenAIEmbeddings
-            api_key = config.get("google_api_key") or os.environ.get("GOOGLE_API_KEY", "")
+            api_base = config.get("api_base")
+            api_key = config.get("provider_keys", {}).get(api_base) or config.get("google_api_key") or os.environ.get("GOOGLE_API_KEY", "")
             if api_key:
                 model_to_use = model_param or "models/text-embedding-004"
                 embeddings_helper = GoogleGenAIEmbeddings(
@@ -107,8 +108,8 @@ def get_embedding(text: str, config: dict) -> list[float]:
 
     # 2. OpenAI / LMStudio Embeddings
     elif provider == "openai":
-        api_key = config.get("api_key")
         api_base = config.get("api_base")
+        api_key = config.get("provider_keys", {}).get(api_base) or config.get("api_key")
         if api_key and api_base:
             try:
                 from langchain_openai import OpenAIEmbeddings

@@ -111,7 +111,7 @@ def enable_cli_plugin(app):
 
                 model_name = "gpt-4o"
                 api_base = app.config.get("api_base")
-                api_key = app.config.get("api_key")
+                api_key = app.config.get("provider_keys", {}).get(api_base) or app.config.get("api_key")
 
                 agent_cfg = app.config_manager.get_agent_config("MemoryManager")
                 if not agent_cfg:
@@ -128,7 +128,7 @@ def enable_cli_plugin(app):
                     api_base = None
 
                 if "gemini" in model_name.lower() and not api_key:
-                    api_key = app.config.get("google_api_key", "")
+                    api_key = app.config.get("provider_keys", {}).get(api_base) or app.config.get("google_api_key", "")
 
                 def print_status(msg):
                     status_ctx.update(f"[dim yellow]{msg}[/dim yellow]")

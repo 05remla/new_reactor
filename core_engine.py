@@ -15,6 +15,51 @@ except ImportError:
 import toolz
 import deepagents.backends
 
+
+def _extract_reasoning(d):
+    """Pull reasoning text from an OpenAI-compatible delta/message dict.
+
+    llama.cpp / Unsloth Studio / DeepSeek use `reasoning_content`; newer vLLM
+    and some other servers use `reasoning`.
+    """
+    if not isinstance(d, dict):
+        return ""
+    val = d.get("reasoning_content") or d.get("reasoning")
+    return val if isinstance(val, str) else ""
+
+
+class ChatOpenAIWithReasoning(ChatOpenAI):
+    """ChatOpenAI that preserves non-standard reasoning fields.
+
+    langchain-openai's ChatOpenAI intentionally drops `reasoning_content`
+    from Chat Completions responses. This subclass copies it into
+    `message.additional_kwargs["reasoning_content"]` so the UI can render it.
+    """
+
+    def _convert_chunk_to_generation_chunk(self, chunk, default_chunk_class, base_generation_info):
+        gen = super()._convert_chunk_to_generation_chunk(chunk, default_chunk_class, base_generation_info)
+        if gen is None:
+            return gen
+        choices = chunk.get("choices") or chunk.get("chunk", {}).get("choices") or []
+        if choices:
+            rc = _extract_reasoning(choices[0].get("delta"))
+            if rc:
+                gen.message.additional_kwargs["reasoning_content"] = rc
+        return gen
+
+    def _create_chat_result(self, response, generation_info=None):
+        result = super()._create_chat_result(response, generation_info)
+        try:
+            response_dict = response if isinstance(response, dict) else response.model_dump()
+            for gen, choice in zip(result.generations, response_dict.get("choices") or []):
+                rc = _extract_reasoning(choice.get("message"))
+                if rc:
+                    gen.message.additional_kwargs["reasoning_content"] = rc
+        except Exception as e:
+            print(f"Failed to extract reasoning_content: {e}", file=sys.stderr)
+        return result
+
+
 def wrap_llm_to_clean_null_messages(model_inst, config):
     orig_invoke = model_inst.invoke
     orig_stream = model_inst.stream
@@ -169,11 +214,11 @@ def wrap_llm_to_clean_null_messages(model_inst, config):
                 return cleaned
         return cleaned
 
-    def wrapped_invoke(input, conf=None, **kwargs):
-        return orig_invoke(clean_msgs(input), conf, **kwargs)
+    def wrapped_invoke(input_val, *args, **kwargs):
+        return orig_invoke(clean_msgs(input_val), *args, **kwargs)
 
-    def wrapped_stream(input, conf=None, **kwargs):
-        return orig_stream(clean_msgs(input), conf, **kwargs)
+    def wrapped_stream(input_val, *args, **kwargs):
+        return orig_stream(clean_msgs(input_val), *args, **kwargs)
 
     object.__setattr__(model_inst, "invoke", wrapped_invoke)
     object.__setattr__(model_inst, "stream", wrapped_stream)
@@ -200,7 +245,9 @@ def setup_llm(config, agent_cfg=None, overrides=None):
 
     if "gemini" in model_name.lower():
         from langchain_google_genai import ChatGoogleGenerativeAI
-        api_key = config.get("google_api_key") or os.environ.get("GOOGLE_API_KEY", "")
+        api_key = config.get("provider_keys", {}).get(api_base)
+        if not api_key:
+            api_key = config.get("google_api_key") or os.environ.get("GOOGLE_API_KEY", "")
         if not api_key:
             raise ValueError("GOOGLE_API_KEY is not set.")
             
@@ -214,9 +261,22 @@ def setup_llm(config, agent_cfg=None, overrides=None):
             include_thoughts=True,
         )
     else:
-        api_key = config.get("api_key") or os.environ.get("OPENAI_API_KEY", "")
+        api_key = config.get("provider_keys", {}).get(api_base)
+        if not api_key:
+            api_key = config.get("api_key") or os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
             raise ValueError("API key is not set.")
+
+        # Thinking toggle for llama.cpp-based servers (Unsloth Studio, llama-server, vLLM).
+        # Passed through to the model's chat template; ignored by templates that lack it.
+        enable_thinking = overrides.get("enable_thinking", inf.get("enable_thinking", config.get("enable_thinking", True)))
+        chat_template_kwargs = {"enable_thinking": bool(enable_thinking)}
+
+        # Optional reasoning level (e.g. "low" / "medium" / "high"). Only models whose
+        # chat template reads `reasoning_effort` (gpt-oss, some Qwen variants) honor it.
+        reasoning_effort = overrides.get("reasoning_effort", inf.get("reasoning_effort", config.get("reasoning_effort")))
+        if reasoning_effort:
+            chat_template_kwargs["reasoning_effort"] = str(reasoning_effort)
 
         llm_kwargs = {
             "model": model_name,
@@ -227,7 +287,8 @@ def setup_llm(config, agent_cfg=None, overrides=None):
             "extra_body": {
                 "top_k": top_k,
                 "min_p": min_p,
-                "repeat_penalty": repeat_penalty
+                "repeat_penalty": repeat_penalty,
+                "chat_template_kwargs": chat_template_kwargs,
             },
             "streaming": True,
             "max_retries": 0,
@@ -235,7 +296,7 @@ def setup_llm(config, agent_cfg=None, overrides=None):
         if max_tokens > 0:
             llm_kwargs["max_tokens"] = max_tokens
             
-        llm = ChatOpenAI(**llm_kwargs)
+        llm = ChatOpenAIWithReasoning(**llm_kwargs)
 
     return wrap_llm_to_clean_null_messages(llm, config)
 
@@ -253,6 +314,161 @@ def get_tools(config, agent_cfg=None, cancel_flag_func=None):
             tools.append(funcs[tool_name])
 
     return tools
+
+def build_system_prompt(
+    base_prompt, 
+    config, 
+    agent_cfg=None, 
+    cfg_mgr=None,
+    app_dir=".", 
+    rag_config=None, 
+    user_message="", 
+    staged_files=None,
+    tools=None,
+    status_update_func=None,
+    hook_executor=None,
+    cancel_flag_func=None,
+    debug_mode=False
+):
+    import datetime
+    import os
+    import sys
+
+    sys_prompt = base_prompt or ""
+    
+    if "Your training data is a checkpoint in history" not in sys_prompt:
+        sys_prompt += "\n\nCRITICAL INSTRUCTIONS: Your training data is a checkpoint in history and time has since moved beyond it."
+        sys_prompt += "\nThis is current reality. We are living in a time your training data cannot accurately account for. this should always be one of your top considerations."
+        sys_prompt += f"\nit is now: {datetime.datetime.ctime(datetime.datetime.now())}"
+
+    if hook_executor and sys_prompt:
+        sys_prompt = hook_executor("on_pre_generation_prompt", sys_prompt, agent_cfg=agent_cfg, config=config)
+
+    if sys_prompt and "=== SYSTEM PROMPT & PERSONA ===" not in sys_prompt:
+        sys_prompt = f"=== SYSTEM PROMPT & PERSONA ===\n{sys_prompt.strip()}\n===============================\n"
+
+    if tools is None:
+        tools = get_tools(config, agent_cfg)
+        
+    if any(getattr(t, "__name__", "") == "write_to_scratchpad" for t in tools):
+        scratchpad_path = os.path.join(os.environ.get("DEEP_AGENTS_WORKING_DIR", config.get("da_root_dir", os.path.join(app_dir, "workspace"))), 'scratchpad.json')
+        if os.path.exists(scratchpad_path):
+            try:
+                with open(scratchpad_path, 'r', encoding='utf-8') as sf:
+                    scratchpad_data = sf.read()
+                sys_prompt += f"\n\n--- SCRATCHPAD DATA ---\n{scratchpad_data}\n"
+            except:
+                pass
+        else:
+            if debug_mode:
+                sys_prompt += f"\n\n--- SCRATCHPAD DATA ---\n[Scratchpad Data Simulated]\n"
+
+    if debug_mode:
+        sys_prompt += f"\n\n=== MEMORY VAULT CONTEXT ===\n[Memory Vault Context Simulated]\n============================\n"
+    elif user_message:
+        try:
+            memory_tree_path = os.path.join(app_dir, "memory-tree")
+            if memory_tree_path not in sys.path:
+                sys.path.append(memory_tree_path)
+            from memory_tree.agent import pre_generation_retrieval
+            
+            if status_update_func:
+                status_update_func("[🧠 Searching Memory Vault...]   \n", False)
+                
+            vault_context = pre_generation_retrieval(user_message)
+            if vault_context and "No relevant context found" not in vault_context:
+                sys_prompt += f"\n\n=== MEMORY VAULT CONTEXT ===\n{vault_context}\n(System Hint: The above are only partial snippets. If you need more details, use your memory tools (e.g., read_note or manage_memory) to read the full document.)\n============================\n"
+                if status_update_func:
+                    status_update_func("[✅ Memory Vault context injected]   \n", False)
+        except Exception as e:
+            print(f"Failed to retrieve memory vault context: {e}", file=sys.stderr)
+
+    rag_config = rag_config or {}
+    if rag_config.get("use_rag"):
+        if cancel_flag_func and cancel_flag_func():
+            pass
+        elif debug_mode:
+            sys_prompt += f"\n\n=== LIGHTRAG KNOWLEDGE CONTEXT ===\n[LightRAG Context Simulated]\n==================================\n"
+        else:
+            mode = rag_config.get("retrieval_mode", "hybrid")
+            if status_update_func:
+                status_update_func(f"[🔍 Querying LightRAG ({mode} mode)...]   \n", False)
+            
+            try:
+                import requests
+                url = f"{rag_config.get('base_url')}/query"
+                payload = {"query": user_message or "", "mode": mode, "only_need_context": True, "model": rag_config.get("model")}
+                headers = {"X-API-Key": rag_config.get("api_key")} if rag_config.get("api_key") else {}
+                
+                resp = requests.post(url, json=payload, headers=headers, timeout=45)
+                resp.raise_for_status()
+                d = resp.json()
+                ctx = d.get("response", d.get("context", str(d))) if isinstance(d, dict) else str(d)
+                
+                if ctx and not "No context retrieved due to error." in ctx:
+                    sys_prompt += f"\n\n=== LIGHTRAG KNOWLEDGE CONTEXT ===\n(System Hint: Use the following retrieved knowledge context to answer the question. If the context is irrelevant, ignore it and answer from your general knowledge.)\n\n{ctx}\n==================================\n"
+                    if status_update_func:
+                        status_update_func("[✅ LightRAG knowledge retrieved and injected]   \n   \n", False)
+            except Exception as e:
+                if status_update_func:
+                    status_update_func(f"[❌ LightRAG Error: {str(e)}]   \n   \n", False)
+                print(f"Failed to retrieve LightRAG context: {e}", file=sys.stderr)
+
+    staged_files = staged_files or []
+    if staged_files:
+        files_context = "\n\n=== STAGED FILE CONTENTS ===\n"
+        files_context += "(System Hint: The following are complete documents provided by the user. They are NOT partial snippets.)\n"
+        for fpath in staged_files:
+            if os.path.isfile(fpath):
+                try:
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    files_context += f"\n--- File: {os.path.basename(fpath)} ---\n{content}\n--- End of File: {os.path.basename(fpath)} ---\n"
+                except Exception as e:
+                    files_context += f"\n--- File: {os.path.basename(fpath)} ---\n[Error reading file: {e}]\n--- End of File: {os.path.basename(fpath)} ---\n"
+        files_context += "============================\n"
+        sys_prompt += files_context
+
+    da_cfg = agent_cfg.get("deepagents", {}) if agent_cfg else {}
+    use_da = agent_cfg.get("use_deepagents", config.get("use_deepagents", False)) if agent_cfg else config.get("use_deepagents", False)
+    
+    if use_da:
+        if da_cfg.get("inject_subagents_to_prompt", False):
+            enabled_subs = da_cfg.get("enabled_subagents", config.get("da_enabled_subagents", cfg_mgr.list_agents() if cfg_mgr else []))
+            actual_model = agent_cfg.get("model_name", agent_cfg.get("model", config.get("model"))) if agent_cfg else config.get("model")
+            subagents_info = []
+            for a in enabled_subs:
+                if a != actual_model:
+                    a_conf = cfg_mgr.get_agent_config(a) if cfg_mgr else None
+                    desc = a_conf.get("description", f"AI subagent specialized as {a}.") if a_conf else f"AI subagent specialized as {a}."
+                    subagents_info.append(f"- {a}: {desc}")
+            if subagents_info:
+                sys_prompt += f"\n\n=== AVAILABLE SUBAGENTS ===\nYou may use these agents via tool calls if enabled:\n" + "\n".join(subagents_info) + "\n===========================\n"
+
+        if da_cfg.get("enable_middleware_user_tools", True) and tools:
+            tools_info = []
+            for t in tools:
+                t_name = getattr(t, "name", getattr(t, "__name__", "Unknown Tool"))
+                t_desc = getattr(t, "description", getattr(t, "__doc__", "No description available."))
+                if t_desc:
+                    lines = [l.strip() for l in t_desc.split('\n')]
+                    desc_lines = []
+                    in_desc = False
+                    for l in lines:
+                        if l.startswith("DESCRIPTION:"): in_desc = True; continue
+                        if l.startswith("ARGS:") or l.startswith("RETURNS:"): break
+                        if in_desc and l: desc_lines.append(l)
+                    
+                    if desc_lines:
+                        t_desc = " ".join(desc_lines)
+                    else:
+                        t_desc = next((l for l in lines if l and l != "DESCRIPTION:"), "No description available.")
+                tools_info.append(f"- {t_name}: {t_desc}")
+            if tools_info:
+                sys_prompt += f"\n\n===== AVAILABLE TOOLS =====\nYou have the following tools enabled. Use them via tool calls:\n" + "\n".join(tools_info) + "\n============================\n"
+
+    return sys_prompt
+
 
 def setup_deep_agent(llm, tools, sys_prompt, config, agent_cfg=None, app_dir="."):
     if create_deep_agent is None:

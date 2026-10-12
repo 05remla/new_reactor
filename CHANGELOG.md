@@ -4,9 +4,42 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).   
    
+## [Unreleased] - 2026-10-11   
+   
+### Changed   
+- **Agent Manager Provider Display**: Updated `labelModelTabProvider` in `agent_manager.py` to dynamically reflect the selected agent's `provider_url` whenever changing agents or updating the provider.   
+   
+### Added   
+- **Module Architecture Flowcharts & Call Graphs**: Generated dedicated Mermaid flowcharts and trigger-to-state reference tables across all core project modules in `documentation/`:   
+  - `agent_manager_flow.md` (`agent_manager.py`)   
+  - `config_manager_flow.md` (`config_manager.py`)   
+  - `core_engine_flow.md` (`core_engine.py`)   
+  - `generation_thread_flow.md` (`generation_thread.py`)   
+  - `mainwindow_flow.md` (`mainwindow.py`)   
+  - `repl_flow.md` (`repl.py`)   
+  - `settings_flow.md` (`settings.py`)   
+- **Tests**: Added `tests/test_agent_manager.py` to verify that switching agents and changing providers updates `labelModelTabProvider` accordingly.   
+   
+## [Unreleased] - 2026-10-06   
+   
+### Changed   
+- **Agent Parameters Display**: Updated the generation thread to format the agent parameters displayed in the chat history as a collapsible block (similar to reasoning blocks) and appended the agent's API endpoint configuration to the listed details.   
+   
+### Fixed   
+- **Browser Memory Leak**: Fixed an issue in `toolz.py`'s `simple_web_scraper` where the headless browser process (`auto_browser`) was left running in memory after `interactive_web_search` and scraping operations because the `browser.quit()` call was unreachable. It is now properly cleaned up in a `finally` block.   
+- **Reasoning Rendering**: Fixed a rendering issue where tool call notifications (e.g. `[🔧 Agent calling tool: ...]`) were being incorrectly rendered inside the `<think>` block if the model invoked a tool immediately after or during a reasoning phase.   
+- **Reasoning Not Showing (Unsloth Studio / llama.cpp / vLLM)**: `langchain-openai`'s `ChatOpenAI` silently drops the non-standard `reasoning_content` field. Added `ChatOpenAIWithReasoning` in `core_engine.py`, which copies `reasoning_content` (or vLLM's `reasoning`) into `additional_kwargs["reasoning_content"]` for both streaming and non-streaming responses, so the existing reasoning display in `generation_thread.py` and `repl.py` now works.   
+- **Thinking Toggle**: Replaced the unrecognized `reasoning` / `includereasoning` keys in `extra_body` with the documented `chat_template_kwargs: {"enable_thinking": ...}`. Configurable via `enable_thinking` in an agent's `inference_params` or in `config.json` (defaults to `true`). Removed the matching dead override keys in `generation_thread.py`.   
+   
+### Added   
+- **Reasoning Level**: Optional `reasoning_effort` (e.g. `"low"`, `"medium"`, `"high"`) in an agent's `inference_params` or `config.json`, sent via `chat_template_kwargs`. Only honored by models whose chat template supports it.   
+- **Tests**: `tests/test_reasoning_extraction.py` covers stream/non-stream reasoning extraction, the `reasoning` alias, no duplication, and the `enable_thinking` toggle.   
+   
 ## [Unreleased] - 2026-07-16   
    
 ### Added
+- **Dynamic Prompt Cleaner Plugin**: Created `prompt_cleaner_plugin.py` to seamlessly intercept and scrub hardcoded tool instructions (like `write_todos` and `task`) out of the active system prompt before generation if those tools are disabled in the UI. Built a new `on_pre_generation_prompt` string hook in `mainwindow.py` and `generation_thread.py` to support this plugin and future extensible prompt modification.   
+- **Autonomous Web Search Plugin**: Created `autonomous_web_search_plugin.py` to seamlessly intercept the `interactive_web_search` tool call. When enabled, it spawns a secondary LLM agent in the background to dynamically evaluate and filter search results, stream its reasoning to the UI in real-time, and automatically scrape the most relevant links—bypassing the need for the main agent to manually call `scrape_indexed_urls`.   
 - **Workspace Manager**: Built `workspace_manager.py` to handle the logic for `workspace_manager_ui.py`. Includes creating workspaces, populating tree widgets with workspaces' files, copying items between source and destination workspaces, and deleting items.   
 - **Config Selector**: Wired up the edit `pushButton` in `config_selector.py` to launch the Workspace Manager window.   
 - **Main Window Integration**: Connected `pushButtonWorkspaceMan` in `mainwindow.py` to spawn the Workspace Manager natively. Also configured the project tree view to automatically refresh whenever the Workspace Manager window is closed, ensuring new files and changes are immediately visible.   

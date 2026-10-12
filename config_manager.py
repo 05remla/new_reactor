@@ -54,6 +54,7 @@ class ConfigManager:
             "api_base": "http://localhost:11434/v1", "api_key": "ollama", "google_api_key": "",
             "saved_provider_urls": ["http://localhost:11434/v1", "http://localhost:1234/v1", "https://api.openai.com/v1"],
             "provider_descriptions": {},
+            "provider_keys": {},
             "inference_presets": {},
             "stop_strings": [],
             "file_manager_cmd": "/usr/bin/pcmanfm-qt",

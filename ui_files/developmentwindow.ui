@@ -364,7 +364,7 @@ env linker?</string>
          <widget class="QTabWidget" name="tabWidget_2">
           <widget class="QWidget" name="tab_6">
            <attribute name="title">
-            <string>ROADMAP</string>
+            <string>Scratch Pad</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_8">
             <item row="0" column="0">

@@ -35,10 +35,11 @@ class ValidatorThread(QThread):
             llm = ChatOpenAI(
                 model=self.config.get("model", "llama3"),
                 base_url=self.config.get("api_base"),
-                api_key=self.config.get("api_key") or "sk-no-key",
+                api_key=self.config.get("provider_keys", {}).get(self.config.get("api_base")) or self.config.get("api_key") or "sk-no-key",
                 temperature=0.1, # Keep it strict for validation
                 streaming=True,
-                max_retries=0
+                max_retries=0,
+                timeout=600 # 10 minute timeout to allow slower local models to finish
             )
 
             messages = [
@@ -114,9 +115,12 @@ def enable_plugin(main_window):
         def handle_chunk(chunk):
             safe_chunk = chunk.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>").replace("'", "\\'")
             js = f"""
+            var isScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50);
             var last = document.body.lastElementChild;
             last.innerHTML += '{safe_chunk}';
-            window.scrollTo(0, document.body.scrollHeight);
+            if (isScrolledToBottom) {{
+                window.scrollTo(0, document.body.scrollHeight);
+            }}
             """
             main_window.ui.chat_display.page().runJavaScript(js)
 
@@ -252,9 +256,10 @@ def enable_cli_plugin(repl_app):
             llm = ChatOpenAI(
                 model=repl_app.config.get("model", "llama3"),
                 base_url=repl_app.config.get("api_base"),
-                api_key=repl_app.config.get("api_key") or "sk-no-key",
+                api_key=repl_app.config.get("provider_keys", {}).get(repl_app.config.get("api_base")) or repl_app.config.get("api_key") or "sk-no-key",
                 temperature=0.1,
-                max_retries=0
+                max_retries=0,
+                timeout=600
             )
             messages = [
                 SystemMessage(content=(

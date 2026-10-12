@@ -43,7 +43,8 @@ def manage_memory(action: str = "set", payload: str = "", context_window: int = 
         return "Error: langchain_openai is not installed."
 
     config = ConfigManager().config
-    api_key = config.get("api_key") or os.environ.get("OPENAI_API_KEY", "")
+    api_base = config.get("api_base", "https://api.openai.com/v1")
+    api_key = config.get("provider_keys", {}).get(api_base) or config.get("api_key") or os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
         return "Error: Cannot initialize Memory Archivist LLM because API key is missing."
 

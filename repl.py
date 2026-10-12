@@ -103,6 +103,32 @@ class ReplApp:
         # We need to expose _save_config so the shared SettingsDialog can push saves
         self.config_manager.save_config()
 
+    def launch_config_selector_and_exit(self):
+        import subprocess
+        import sys
+        import os
+        from PyQt5.QtWidgets import QApplication, QMessageBox
+        
+        reply = QMessageBox.question(
+            None, 
+            "Change Project", 
+            "Are you sure you want to change projects? This will close the current application.",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+            
+        # app_dir is defined globally in repl.py
+        script_path = os.path.join(app_dir, "config_selector.py")
+        
+        subprocess.Popen([sys.executable, script_path])
+        
+        if QApplication.instance():
+            QApplication.closeAllWindows()
+            QApplication.quit()
+        sys.exit(0)
+
+
     def register_hook(self, hook_name, func, priority=50):
         if hook_name not in self.hooks:
             self.hooks[hook_name] = []
@@ -232,42 +258,27 @@ class ReplApp:
         with open(sys_prompt_file, 'r') as promptFile:
             sys_prompt = promptFile.read()
             
-        sys_prompt += f"\n\nCurrent Date and Time: {datetime.datetime.ctime(datetime.datetime.now())}"
+        def repl_status_update(msg, is_new):
+            import re
+            clean_msg = re.sub(r'<[^>]+>', '', msg).strip()
+            if clean_msg:
+                err_console.print(f"[dim cyan]{clean_msg}[/dim cyan]")
 
-        scratchpad_path = os.path.join(os.environ.get("DEEP_AGENTS_WORKING_DIR", ""), 'scratchpad.json')
-        if os.path.exists(scratchpad_path):
-            try:
-                with open(scratchpad_path, 'r', encoding='utf-8') as sf:
-                    scratchpad_data = sf.read()
-                sys_prompt += f"\n\n--- SCRATCHPAD DATA ---\n{scratchpad_data}\n"
-            except Exception as e:
-                err_console.print(f"[bold yellow]Warning: Could not read scratchpad: {e}[/bold yellow]")
-
-        if initial_prompt:
-            try:
-                memory_tree_path = os.path.join(app_dir, "memory-tree")
-                if memory_tree_path not in sys.path:
-                    sys.path.append(memory_tree_path)
-                from memory_tree.agent import pre_generation_retrieval
-                
-                err_console.print("[dim cyan][🧠 Searching Memory Vault...][/dim cyan]")
-                vault_context = pre_generation_retrieval(initial_prompt)
-                if vault_context and "No relevant context found" not in vault_context:
-                    sys_prompt += f"\n\n[Relevant Memory Vault Context]\n{vault_context}\n"
-                    err_console.print("[dim green][✅ Memory Vault context injected][/dim green]")
-            except Exception as e:
-                err_console.print(f"[dim red]Failed to retrieve memory vault context: {e}[/dim red]")
-
-        if da_cfg.get("inject_subagents_to_prompt", False):
-            enabled_subs = da_cfg.get("enabled_subagents", self.config.get("da_enabled_subagents", self.config_manager.list_agents()))
-            subagents_info = []
-            for a in enabled_subs:
-                if a != actual_model:
-                    a_conf = self.config_manager.get_agent_config(a)
-                    desc = a_conf.get("description", f"AI subagent specialized as {a}.") if a_conf else f"AI subagent specialized as {a}."
-                    subagents_info.append(f"- {a}: {desc}")
-            if subagents_info:
-                sys_prompt += f"\n\n[Available Subagents]\nYou may use these agents via tool calls if enabled:\n" + "\n".join(subagents_info) + "\n"
+        sys_prompt = core_engine.build_system_prompt(
+            base_prompt=sys_prompt,
+            config=self.config,
+            agent_cfg=agent_cfg,
+            cfg_mgr=self.config_manager,
+            app_dir=app_dir,
+            rag_config=None,  # REPL doesn't currently build LightRAG config natively
+            user_message=initial_prompt or "",
+            staged_files=None,
+            tools=tools,
+            status_update_func=repl_status_update,
+            hook_executor=None,
+            cancel_flag_func=None,
+            debug_mode=False
+        )
 
         self.agent = core_engine.setup_deep_agent(llm, tools, sys_prompt, self.config, agent_cfg, app_dir)
 
