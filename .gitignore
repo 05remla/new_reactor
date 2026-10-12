@@ -12,6 +12,7 @@ sessions/
 session_templates/
 scratchpad*
 *.db
+*.bak
 *config.json
 *.spec
 pyvenv.cfg
