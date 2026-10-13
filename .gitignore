@@ -10,6 +10,7 @@ PROJECT*
 workspaces*
 sessions/
 session_templates/
+RAG/blueprint/
 scratchpad*
 *.db
 *.bak
