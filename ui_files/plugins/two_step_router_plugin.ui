@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TwoStepRouterWidget</class>
+ <widget class="QWidget" name="TwoStepRouterWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QCheckBox" name="enable_checkbox">
+     <property name="text">
+      <string>Enable Two-Step Routing</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="alter_msg_checkbox">
+     <property name="text">
+      <string>Allow Step 1 to alter the user's message before handoff</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_prompt">
+     <property name="text">
+      <string>Step 1 Routing Prompt:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTextEdit" name="router_prompt_input">
+
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_agents">
+     <property name="text">
+      <string>Available Agents for Step 2:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="agent_list">
+
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="name_input">
+     <property name="placeholderText">
+      <string>Agent Name (e.g., Python Expert)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="prompt_list">
+
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="btn_layout">
+   <item>
+    <widget class="QPushButton" name="add_btn">
+     <property name="text">
+      <string>Add / Update Agent</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="remove_btn">
+     <property name="text">
+      <string>Remove Selected</string>
+     </property>
+    </widget>
+   </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

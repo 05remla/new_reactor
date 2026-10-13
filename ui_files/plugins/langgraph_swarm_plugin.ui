@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LGSwarmWidget</class>
+ <widget class="QWidget" name="LGSwarmWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QCheckBox" name="enable_checkbox">
+     <property name="text">
+      <string>Enable Official langgraph-swarm</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_agents">
+     <property name="text">
+      <string>Available Agents in the Swarm:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="agent_list">
+
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="name_input">
+     <property name="placeholderText">
+      <string>Agent Name (e.g., Researcher)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="prompt_list">
+
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="btn_layout">
+   <item>
+    <widget class="QPushButton" name="add_btn">
+     <property name="text">
+      <string>Add / Update Agent</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="remove_btn">
+     <property name="text">
+      <string>Remove Selected</string>
+     </property>
+    </widget>
+   </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

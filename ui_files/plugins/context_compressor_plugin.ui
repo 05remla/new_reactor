@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ContextCompressorWidget</class>
+ <widget class="QWidget" name="ContextCompressorWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QCheckBox" name="enable_chk">
+     <property name="text">
+      <string>Enable Automatic Context Compression</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="h1">
+   <item>
+    <widget class="QLabel" name="label_spin">
+     <property name="text">
+      <string>Compress after N messages:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSpinBox" name="spin">
+
+    </widget>
+   </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="h2">
+   <item>
+    <widget class="QLabel" name="label_combo">
+     <property name="text">
+      <string>Compressor Agent Profile:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="agent_combo">
+
+    </widget>
+   </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_prompt">
+     <property name="text">
+      <string>Compression System Prompt / Instructions:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTextEdit" name="prompt_edit">
+
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="btn">
+     <property name="text">
+      <string>Compress Active Context Now</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
