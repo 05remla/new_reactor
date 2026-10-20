@@ -13,20 +13,25 @@
 # Temporary cache for interactive web searching
 LAST_SEARCH_RESULTS = []
 
-def interactive_web_search(query: str, max_results: int = 10):
+def interactive_web_search(query: str, page: int = 1, max_results: int = 10):
     '''
         DESCRIPTION:
             Search the web and return a numbered list of results.
             The results are cached internally. You MUST follow up by
             calling `scrape_indexed_urls` with the indices of the pages
-            you want to read. **If you call interactive_web_search
-            back to back you lose the ability to retrieve data for the
-            previous search as scrape_indexed_urls needs to be called 
-            immidiatly after interactive_web_search.** 
+            you want to read. 
+            **If you call interactive_web_search back to back you lose 
+            the ability to retrieve data for the previous search 
+            because scrape_indexed_urls needs to be called immidiatly 
+            after interactive_web_search.**
+            **If you need to search further because you haven't found 
+            the desired results, incramentally add 1 to the page
+            arg to return the next results from page N** 
 
         ARGS:
             1. query: str = "your search query"
-            2. max_results: int = 10
+            2. page: int = 1
+            3. max_results: int = 10
 
         RETURNS:
             A string listing the enumerated search results and instructions on how to read them.
@@ -35,7 +40,7 @@ def interactive_web_search(query: str, max_results: int = 10):
     global LAST_SEARCH_RESULTS
     try:
         from ddgs import DDGS
-        results = list(DDGS().text(query, safesearch="off", max_results=max_results))
+        results = list(DDGS().text(query, safesearch="off", page=page, max_results=max_results))
         LAST_SEARCH_RESULTS = [res.get('href', '') for res in results if res.get('href')]
         
         output = f"Search Results for '{query}':\n\n"
@@ -47,6 +52,20 @@ def interactive_web_search(query: str, max_results: int = 10):
         return output
     except Exception as e:
         return f"Error executing web search: {str(e)}"
+
+def get_date_and_time():
+    '''
+        DESCRIPTION:
+            retrieves current date and time
+
+        ARGS:
+            None
+
+        RETURNS:
+            A string of the current date and time
+    '''
+    from datetime import datetime
+    return(datetime.ctime(datetime.now()))
 
 def scrape_indexed_urls(indices: list):
     '''

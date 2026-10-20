@@ -127,7 +127,10 @@ def enable_plugin(main_window):
 
     # 1. UI Injection
     gc_widget = GroupChatWidget(main_window)
-    main_window.ui.tabs.addTab(gc_widget, "Group Chat")
+    if hasattr(main_window.ui, 'toolBoxPlugins'):
+        main_window.ui.toolBoxPlugins.addItem(gc_widget, "Group Chat")
+    else:
+        main_window.ui.tabs.addTab(gc_widget, "Group Chat")
     main_window.gc_widget = gc_widget
 
     # 2. Logic Injection
@@ -360,13 +363,19 @@ def disable_plugin(main_window):
     if not getattr(main_window, '_group_chat_installed', False):
         return
 
-    # Remove UI Tab
-    idx = main_window.ui.tabs.indexOf(main_window.gc_widget)
-    if idx != -1:
-        main_window.ui.tabs.removeTab(idx)
-        
-    main_window.gc_widget.deleteLater()
-    del main_window.gc_widget
+    # Remove UI Page/Tab
+    if hasattr(main_window, 'gc_widget'):
+        if hasattr(main_window.ui, 'toolBoxPlugins'):
+            idx = main_window.ui.toolBoxPlugins.indexOf(main_window.gc_widget)
+            if idx != -1:
+                main_window.ui.toolBoxPlugins.removeItem(idx)
+        else:
+            idx = main_window.ui.tabs.indexOf(main_window.gc_widget)
+            if idx != -1:
+                main_window.ui.tabs.removeTab(idx)
+            
+        main_window.gc_widget.deleteLater()
+        del main_window.gc_widget
 
     # Restore functions
     if hasattr(main_window, '_original_write_to_chat_gc'):

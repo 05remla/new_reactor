@@ -53,7 +53,7 @@ class SlashCommandPopup(QListWidget):
         self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
         self.setFocusPolicy(Qt.NoFocus)
         self.setStyleSheet("background-color: #2b2b2b; color: #a9b7c6; font-size: 13px; border: 1px solid #555;")
-        self.commands = ["/goal", "/schedule", "/browser", "/continue", "/grill-me", "/teamwork-preview", "/compress"]
+        self.commands = ["/goal", "/schedule", "/browser", "/continue", "/grill-me", "/teamwork-preview"]
         self.hide()
 
     def filter_commands(self, prefix):
@@ -92,6 +92,12 @@ class MstyCloneApp(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        if hasattr(self.ui, 'toolBoxPlugins'):
+            while self.ui.toolBoxPlugins.count() > 0:
+                widget = self.ui.toolBoxPlugins.widget(0)
+                self.ui.toolBoxPlugins.removeItem(0)
+                if widget:
+                    widget.deleteLater()
         import theme_manager
         theme_manager.apply_theme(self)
 
@@ -239,7 +245,6 @@ class MstyCloneApp(QMainWindow):
         self._is_updating_scratchpad = False
         self._load_scratchpad()
 
-        self.register_hook("on_generation_finished", self.context_compressor_hook, priority=80)
 
         self.refresh_prompts(True)
         self._update_context_len()
@@ -685,55 +690,6 @@ class MstyCloneApp(QMainWindow):
         except:
             pass
 
-    def context_compressor_hook(self, full_response=None, force=False):
-        if not force and not self.config.get("enable_context_compression", False): return
-        threshold = self.config.get("context_compress_threshold", 15)
-        if force or len(self.messages) > threshold:
-            import threading, requests
-            def worker():
-                if not force and len(self.messages) <= threshold: return
-                if force and len(self.messages) <= 2: return
-                
-                num_to_compress = max(len(self.messages) - 2, 1) if force else 5
-                msgs_to_compress = self.messages[:num_to_compress]
-                rest = self.messages[num_to_compress:]
-                text_to_compress = "\n".join([f"{m.get('role', 'unknown')}: {m.get('content', '')}" for m in msgs_to_compress])
-                prompt = f"Summarize the following previous conversation chronologically and concisely. Retain all important facts, tasks, and context.\n\n{text_to_compress}"
-                
-                try:
-                    agent_name = self.ui.agent_combo.currentText()
-                    agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
-                except Exception:
-                    agent_cfg = {}
-                    
-                api_base = agent_cfg.get("provider_url") or self.config.get("api_base", "https://api.openai.com/v1")
-                if api_base.endswith("/"): api_base = api_base[:-1]
-                url = f"{api_base}/chat/completions"
-                model_name = agent_cfg.get("model_name", agent_cfg.get("model", self.config.get("model", "gpt-4o")))
-                api_key = self.config.get("api_key", "")
-                
-                payload = {
-                    "model": model_name,
-                    "messages": [{"role": "user", "content": prompt}]
-                }
-                headers = {"Authorization": f"Bearer {api_key}"}
-                try:
-                    resp = requests.post(url, json=payload, headers=headers)
-                    if resp.status_code == 200:
-                        resp_json = resp.json()
-                        if "choices" in resp_json and len(resp_json["choices"]) > 0:
-                            summary = resp_json["choices"][0]["message"]["content"]
-                            new_sys_msg = {"role": "system", "content": f"[Summary of prior conversation]:\n{summary}"}
-                            self.messages = [new_sys_msg] + rest
-                            self.context_compressed_signal.emit()
-                        else:
-                            print(f"Compressor error: No 'choices' in response. {resp_json}")
-                    else:
-                        print(f"Compressor HTTP error {resp.status_code}: {resp.text}")
-                except Exception as e:
-                    print(f"Compressor error: {e}")
-            threading.Thread(target=worker, daemon=True).start()
-
     ## SESSIONS MANAGMENT
     def yesNoBox(self, title="Confirmation", msg="Are you sure?"):
         msg_box = QMessageBox()
@@ -1177,6 +1133,8 @@ class MstyCloneApp(QMainWindow):
     def _on_context_compressed(self):
         self.write_to_chat("<br><span style='color:#e67e22;'><i>🤖 [System: Context automatically compressed to save tokens]</i></span><br>", is_new_message=True)
         self._update_context_len()
+        if hasattr(self, 'session_file') and self.session_file:
+            self.save_session(self.session_file)
 
     ## SIGNALZ
     def _connect_signals(self):
@@ -1767,15 +1725,15 @@ class MstyCloneApp(QMainWindow):
         user_text = self.ui.input_box.toPlainText()
         if not user_text: return
         
-        # Handle /compress specifically
-        if user_text.strip() == "/compress":
-            self.context_compressor_hook(None, force=True)
-            self.ui.input_box.clear()
-            self.write_to_chat("<br><span style='color:#3498db;'><i>🤖 [System: Manual compression triggered...]</i></span><br>", is_new_message=True)
-            if hasattr(self, 'slash_popup'):
-                self.slash_popup.hide()
-            return
-            
+        # Plugin slash commands (e.g. /compress from context_compressor_plugin)
+        if user_text.strip().startswith("/"):
+            handled = self.execute_string_hook("on_slash_command", "", command=user_text.strip())
+            if handled == "HANDLED":
+                self.ui.input_box.clear()
+                if hasattr(self, 'slash_popup'):
+                    self.slash_popup.hide()
+                return
+
         # Handle /continue specifically
         if user_text.strip() == "/continue":
             user_text = "Please continue where you left off."

@@ -36,6 +36,7 @@ flowchart TD
     end
 
     subgraph Branching ["🔀 Execution Mode Selection"]
+        da_hook["hook: decide_use_deepagents (YES / NO / passthrough)"]:::callback
         check_mode{"use_deepagents is True?"}:::decision
     end
 
@@ -68,7 +69,8 @@ flowchart TD
     build_hdr --> compile_sys
     compile_sys --> get_tools
     compile_sys --> setup_llm
-    setup_llm --> check_mode
+    setup_llm --> da_hook
+    da_hook --> check_mode
 
     %% Branching
     check_mode -- Yes --> setup_da
@@ -105,3 +107,18 @@ flowchart TD
 | `todos_updated` | `(list todos)` | DeepAgent emits state updates containing todos | `self._on_todos_updated` |
 | `finished` | `(str response)` | LLM generation completes successfully | `self._on_generation_finished` |
 | `error_occurred` | `(str error)` | Uncaught exception or model connection error | `self._on_generation_error` |
+
+---   
+   
+## Plugin Hooks Invoked by the Thread   
+   
+Hooks are executed through `self.hook_executor` (`MainWindow.execute_string_hook`). Plugins register with `main_window.register_hook(event, callback, priority)`; callbacks run in ascending priority order, each receiving the previous callback's return value.   
+   
+| Hook | Called When | Initial Value | kwargs | Return Value |
+| :--- | :--- | :--- | :--- | :--- |
+| `decide_use_deepagents` | After `setup_llm()` and history build, right before the DeepAgents/LCEL branch. Skipped for `reactor_worker`. | `""` | `user_message`, `llm`, `history` (LangChain msgs), `default` (bool from agent/global config), `status_update(msg, is_new)`, `cancel_flag_func()` | `"YES"` forces DeepAgents on, `"NO"` forces it off, anything else keeps `default`. Per-run only; config is never modified. |
+
+> [!NOTE]   
+> Runs on the generation thread (not the Qt main thread). Callbacks must not touch Qt widgets directly — read settings from `main_window.config` and report via `status_update`. Exceptions are caught and logged to stderr; the default is then used.   
+   
+**Current consumers**: `plugins/auto_deep_agent_plugin.py`.   

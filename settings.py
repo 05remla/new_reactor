@@ -234,10 +234,11 @@ class SettingsDialog(QWidget):
             self.ui.chk_use_semantic.setChecked(cfg.get("use_semantic_ltm", False))
         if hasattr(self.ui, 'spin_threshold'):
             self.ui.spin_threshold.setValue(cfg.get("semantic_ltm_threshold", 0.55))
-        if hasattr(self.ui, 'checkBoxCompressContext'):
-            self.ui.checkBoxCompressContext.setChecked(cfg.get("enable_context_compression", False))
-        if hasattr(self.ui, 'spinBoxCompressContextCount'):
-            self.ui.spinBoxCompressContextCount.setValue(cfg.get("context_compress_threshold", 15))
+        # Context compression is owned by plugins/context_compressor_plugin.py (main-window tab).
+        # Hide the legacy Settings controls so they can't fight the plugin over the same config keys.
+        for _w in ('checkBoxCompressContext', 'spinBoxCompressContextCount'):
+            if hasattr(self.ui, _w):
+                getattr(self.ui, _w).hide()
 
         # --- Deepagents tab ---
         if hasattr(self.ui, 'lineEditDARootDir'):
@@ -346,10 +347,6 @@ class SettingsDialog(QWidget):
             self.ui.chk_use_semantic.stateChanged.connect(self._on_runtime_settings_changed)
         if hasattr(self.ui, 'spin_threshold'):
             self.ui.spin_threshold.valueChanged.connect(self._on_runtime_settings_changed)
-        if hasattr(self.ui, 'checkBoxCompressContext'):
-            self.ui.checkBoxCompressContext.stateChanged.connect(self._on_runtime_settings_changed)
-        if hasattr(self.ui, 'spinBoxCompressContextCount'):
-            self.ui.spinBoxCompressContextCount.valueChanged.connect(self._on_runtime_settings_changed)
 
         if hasattr(self.ui, 'lineEditDARootDir'):
             self.ui.lineEditDARootDir.textChanged.connect(self._on_runtime_settings_changed)
@@ -759,10 +756,6 @@ class SettingsDialog(QWidget):
             self.config["use_semantic_ltm"] = self.ui.chk_use_semantic.isChecked()
         if hasattr(self.ui, 'spin_threshold'):
             self.config["semantic_ltm_threshold"] = self.ui.spin_threshold.value()
-        if hasattr(self.ui, 'checkBoxCompressContext'):
-            self.config["enable_context_compression"] = self.ui.checkBoxCompressContext.isChecked()
-        if hasattr(self.ui, 'spinBoxCompressContextCount'):
-            self.config["context_compress_threshold"] = self.ui.spinBoxCompressContextCount.value()
 
         if hasattr(self.ui, 'lineEditDARootDir'):
             self.config["da_root_dir"] = self.ui.lineEditDARootDir.text().strip()

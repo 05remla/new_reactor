@@ -117,7 +117,11 @@ def parse_markdown(main_window):
     """
     parse_script = parse_script.replace("TAG_OPEN_PLACEHOLDER", json.dumps(thinking_tag_open))
     parse_script = parse_script.replace("TAG_CLOSE_PLACEHOLDER", json.dumps(thinking_tag_close))
-    main_window.ui.chat_display.page().runJavaScript(parse_script)
+    def _on_parse_done(*_):
+        if hasattr(main_window, 'save_session') and hasattr(main_window, 'session_file') and main_window.session_file:
+            main_window.save_session(main_window.session_file)
+
+    main_window.ui.chat_display.page().runJavaScript(parse_script, _on_parse_done)
 
 def enable_plugin(main_window):
     """

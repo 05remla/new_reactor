@@ -196,6 +196,27 @@ class GenerationThread(QThread):
             # 1. DEEP AGENTS INTEGRATION
             # ==========================================
             use_da = self.agent_cfg.get("use_deepagents", self.config.get("use_deepagents", False)) if self.agent_cfg else self.config.get("use_deepagents", False)
+            # Plugin hook: allow plugins (e.g. auto_deep_agent) to decide DeepAgents usage.
+            # Returns "YES" -> enable, "NO" -> disable, anything else -> keep default.
+            if self.hook_executor and self.model != "reactor_worker":
+                try:
+                    decision = self.hook_executor(
+                        "decide_use_deepagents", "",
+                        user_message=user_message,
+                        llm=llm,
+                        history=lc_history,
+                        default=use_da,
+                        status_update=lambda msg, is_new=False: self.status_update.emit(msg, is_new),
+                        cancel_flag_func=lambda: self.cancel_flag,
+                    )
+                    decision = (decision or "").strip().upper()
+                    if decision == "YES":
+                        use_da = True
+                    elif decision == "NO":
+                        use_da = False
+                except Exception as e:
+                    print(f"decide_use_deepagents hook failed: {e}", file=sys.stderr)
+
             if self.model == "reactor_worker":
                 use_da = False
                 

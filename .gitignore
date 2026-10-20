@@ -1,13 +1,16 @@
 .git/
 __pycache__/
-home/
-GEMINI.md
-lib*
-dist*
-build*
-bin*
-PROJECT*
-workspaces*
+.pytest_cache/
+lib/
+lib64/
+dist/
+build/
+bin/
+include/
+share/
+PROJECT_ARCHIVES/
+PROJECT_MANAGMENT_SCRIPTS/
+workspaces/
 sessions/
 session_templates/
 RAG/blueprint/
@@ -16,14 +19,11 @@ scratchpad*
 *.bak
 *config.json
 *.spec
+GEMINI.md
 pyvenv.cfg
 CACHEDIR.TAG
 roadmap.md
 keys.json
-
-# Additional Virtual Environment Folders
-include/
-share/
 
 # System / Run files
 .lock

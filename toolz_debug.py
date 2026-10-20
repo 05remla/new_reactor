@@ -34,7 +34,7 @@ def interactive_web_search(query: str, max_results: int = 10):
         return f"Error executing web search: {str(e)}"
 
 def clean():
-    data = interactive_web_search_debug('leo remick')
+    data = interactive_web_search_debug('test')
     data_array = data.split('\n\n')
     built_array = []
     for n in range(len(data_array)):

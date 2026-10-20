@@ -37,7 +37,7 @@ except ImportError:
 
 # LangChain / LangGraph imports
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage, messages_from_dict, message_to_dict
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, messages_from_dict, message_to_dict
 
 # Rich imports for terminal UI
 from rich.console import Console
@@ -134,6 +134,15 @@ class ReplApp:
             self.hooks[hook_name] = []
         self.hooks[hook_name].append((priority, func))
         self.hooks[hook_name].sort(key=lambda x: x[0])
+
+    def execute_string_hook(self, event_name, initial_string, **kwargs):
+        current_string = initial_string
+        for priority, callback in self.hooks.get(event_name, []):
+            try:
+                current_string = callback(current_string, **kwargs)
+            except Exception as e:
+                err_console.print(f"[bold red]Error in string hook {callback}: {e}[/bold red]")
+        return current_string
 
     def write_to_chat(self, text, is_new_message=False):
         # Strip simple HTML from plugin messages so they look good in the CLI
@@ -275,12 +284,85 @@ class ReplApp:
             staged_files=None,
             tools=tools,
             status_update_func=repl_status_update,
-            hook_executor=None,
+            hook_executor=self.execute_string_hook,
             cancel_flag_func=None,
             debug_mode=False
         )
 
-        self.agent = core_engine.setup_deep_agent(llm, tools, sys_prompt, self.config, agent_cfg, app_dir)
+        # Plugin hook: allow plugins (e.g. auto_deep_agent) to decide DeepAgents usage.
+        # Returns "YES" -> enable, "NO" -> disable, anything else -> keep default.
+        if self.hooks.get("decide_use_deepagents") and agent_name != "reactor_worker":
+            try:
+                decision = self.execute_string_hook(
+                    "decide_use_deepagents", "",
+                    user_message=initial_prompt or "",
+                    llm=llm,
+                    history=self.history,
+                    default=use_da,
+                    status_update=lambda msg, is_new=False: repl_status_update(msg, is_new),
+                    cancel_flag_func=lambda: False,
+                )
+                decision = (decision or "").strip().upper()
+                if decision == "YES":
+                    use_da = True
+                elif decision == "NO":
+                    use_da = False
+            except Exception as e:
+                err_console.print(f"[bold red]decide_use_deepagents hook failed: {e}[/bold red]")
+
+        if agent_name == "reactor_worker":
+            use_da = False
+
+        self.use_da = use_da
+        self.llm = llm
+        self.sys_prompt = sys_prompt
+
+        if self.use_da:
+            self.agent = core_engine.setup_deep_agent(llm, tools, sys_prompt, self.config, agent_cfg, app_dir)
+        else:
+            self.agent = None
+
+    def _extract_and_log_ai_message(self, last_msg):
+        reasoning_val = (
+            last_msg.additional_kwargs.get("reasoning_content", "")
+            or last_msg.additional_kwargs.get("thought", "")
+            or last_msg.additional_kwargs.get("thinking", "")
+        )
+        content_val = ""
+        if isinstance(last_msg.content, list):
+            for item in last_msg.content:
+                if isinstance(item, dict):
+                    if item.get("type") in ("thinking", "thought"):
+                        reasoning_val += item.get("thinking", item.get("thought", item.get("text", "")))
+                    else:
+                        content_val += item.get("text", "")
+                else:
+                    content_val += str(item)
+        elif not isinstance(last_msg.content, str):
+            content_val = str(last_msg.content) if last_msg.content else ""
+        else:
+            content_val = last_msg.content
+
+        if reasoning_val:
+            err_console.print(f"[dim cyan]Thinking:\n{reasoning_val}[/dim cyan]")
+
+        agent_name = self.config.get("default_chat_agent", "Tron")
+        agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
+        model_name = agent_cfg.get("model_name", self.config.get("model", "llama3"))
+        reasoning_tags = self.config.get("model_reasoning_tags", {})
+        tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
+        tag_open = tags[0]
+        tag_close = tags[1] if len(tags) > 1 else "</think>"
+
+        import re
+        escaped_open = re.escape(tag_open)
+        escaped_close = re.escape(tag_close)
+        inline_thoughts = re.findall(f'{escaped_open}(.*?){escaped_close}', content_val, flags=re.DOTALL)
+        for thought in inline_thoughts:
+            err_console.print(f"[dim cyan]Thinking:\n{thought.strip()}[/dim cyan]")
+
+        cleaned_content = re.sub(f'{escaped_open}.*?{escaped_close}', '', content_val, flags=re.DOTALL).strip()
+        self.final_answer = cleaned_content
 
     def execute(self, initial_prompt=None):
         self.prompt = initial_prompt
@@ -326,96 +408,67 @@ class ReplApp:
             
             with err_console.status("[bold cyan]Agent is analyzing...[/bold cyan]", spinner="dots"):
                 try:
-                    from langchain_core.callbacks import BaseCallbackHandler
+                    if getattr(self, "use_da", True) and self.agent is not None:
+                        from langchain_core.callbacks import BaseCallbackHandler
 
-                    class ToolLoopLimitException(Exception):
-                        pass
+                        class ToolLoopLimitException(Exception):
+                            pass
 
-                    class ToolLoopBreakerCallback(BaseCallbackHandler):
-                        def __init__(self, max_tool_calls: int = 12, enable: bool = True):
-                            super().__init__()
-                            self.max_tool_calls = max_tool_calls
-                            self.tool_call_count = 0
-                            self.enable = enable
+                        class ToolLoopBreakerCallback(BaseCallbackHandler):
+                            def __init__(self, max_tool_calls: int = 12, enable: bool = True):
+                                super().__init__()
+                                self.max_tool_calls = max_tool_calls
+                                self.tool_call_count = 0
+                                self.enable = enable
 
-                        def on_tool_start(self, serialized: dict, input_str: str, **kwargs) -> None:
-                            if not self.enable: return
-                            self.tool_call_count += 1
-                            if self.tool_call_count > self.max_tool_calls:
-                                raise ToolLoopLimitException(f"\n\n[🛑 Loop Breaker Triggered]: Agent exceeded maximum allowed sequential tool calls ({self.max_tool_calls}). Halting execution.")
+                            def on_tool_start(self, serialized: dict, input_str: str, **kwargs) -> None:
+                                if not self.enable: return
+                                self.tool_call_count += 1
+                                if self.tool_call_count > self.max_tool_calls:
+                                    raise ToolLoopLimitException(f"\n\n[🛑 Loop Breaker Triggered]: Agent exceeded maximum allowed sequential tool calls ({self.max_tool_calls}). Halting execution.")
 
-                    cb = ToolLoopBreakerCallback(max_tool_calls=self.max_tools, enable=self.enable_max_tools)
-                    config["callbacks"] = [cb]
+                        cb = ToolLoopBreakerCallback(max_tool_calls=self.max_tools, enable=self.enable_max_tools)
+                        config["callbacks"] = [cb]
 
-                    stream = self.agent.stream(inputs, config, stream_mode="updates")
-                    for step in stream:
-                        for node_name, state_update in step.items():
-                            if not isinstance(state_update, dict):
-                                continue
-                            messages = state_update.get("messages", [])
-                            
-                            if type(messages).__name__ == "Overwrite":
-                                messages = getattr(messages, "value", [])
+                        stream = self.agent.stream(inputs, config, stream_mode="updates")
+                        for step in stream:
+                            for node_name, state_update in step.items():
+                                if not isinstance(state_update, dict):
+                                    continue
+                                messages = state_update.get("messages", [])
                                 
-                            if not isinstance(messages, list):
-                                messages = [messages]
+                                if type(messages).__name__ == "Overwrite":
+                                    messages = getattr(messages, "value", [])
+                                    
+                                if not isinstance(messages, list):
+                                    messages = [messages]
 
-                            if messages:
-                                last_msg = messages[-1]
-                                
-                                if getattr(last_msg, "type", "") == "ai":
-                                    if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
-                                        for tc in last_msg.tool_calls:
-                                            err_console.print(f"[dim magenta]🛠️ Executing: {tc['name']}('{tc.get('args', '')}')[/dim magenta]")
+                                if messages:
+                                    last_msg = messages[-1]
                                     
-                                    # Always process reasoning and content, even if there are tool calls
-                                    reasoning_val = last_msg.additional_kwargs.get("reasoning_content", "") or last_msg.additional_kwargs.get("thought", "") or last_msg.additional_kwargs.get("thinking", "")
-                                    content_val = ""
-                                    if isinstance(last_msg.content, list):
-                                        for item in last_msg.content:
-                                            if isinstance(item, dict):
-                                                if item.get("type") in ("thinking", "thought"):
-                                                    reasoning_val += item.get("thinking", item.get("thought", item.get("text", "")))
-                                                else:
-                                                    content_val += item.get("text", "")
-                                            else:
-                                                content_val += str(item)
-                                    elif not isinstance(last_msg.content, str):
-                                        content_val = str(last_msg.content) if last_msg.content else ""
-                                    else:
-                                        content_val = last_msg.content
+                                    if getattr(last_msg, "type", "") == "ai":
+                                        if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+                                            for tc in last_msg.tool_calls:
+                                                err_console.print(f"[dim magenta]🛠️ Executing: {tc['name']}('{tc.get('args', '')}')[/dim magenta]")
                                         
-                                    if reasoning_val:
-                                        err_console.print(f"[dim cyan]Thinking:\n{reasoning_val}[/dim cyan]")
-                                        
-                                    agent_name = self.config.get("default_chat_agent", "Tron")
-                                    agent_cfg = self.config_manager.get_agent_config(agent_name) or {}
-                                    model_name = agent_cfg.get("model_name", self.config.get("model", "llama3"))
-                                    reasoning_tags = self.config.get("model_reasoning_tags", {})
-                                    tags = reasoning_tags.get(model_name, ["<think>", "</think>"])
-                                    tag_open = tags[0]
-                                    tag_close = tags[1] if len(tags) > 1 else "</think>"
-                                    
-                                    import re
-                                    escaped_open = re.escape(tag_open)
-                                    escaped_close = re.escape(tag_close)
-                                    inline_thoughts = re.findall(f'{escaped_open}(.*?){escaped_close}', content_val, flags=re.DOTALL)
-                                    for thought in inline_thoughts:
-                                        err_console.print(f"[dim cyan]Thinking:\n{thought.strip()}[/dim cyan]")
-                                        
-                                    cleaned_content = re.sub(f'{escaped_open}.*?{escaped_close}', '', content_val, flags=re.DOTALL).strip()
-                                    self.final_answer = cleaned_content
-                                        
-                                elif getattr(last_msg, "type", "") == "tool":
-                                    for msg in messages:
-                                        if getattr(msg, "type", "") == "tool":
-                                            content_val = msg.content
-                                            if isinstance(content_val, list):
-                                                content_val = "".join([item.get("text", "") if isinstance(item, dict) else str(item) for item in content_val])
-                                            elif not isinstance(content_val, str):
-                                                content_val = str(content_val)
-                                            out = content_val[:80].replace("\n", " ") + "..." if len(content_val) > 80 else content_val
-                                            err_console.print(f"[dim blue]🔍 Tool Result: {out}[/dim blue]")
+                                        # Always process reasoning and content, even if there are tool calls
+                                        self._extract_and_log_ai_message(last_msg)
+                                            
+                                    elif getattr(last_msg, "type", "") == "tool":
+                                        for msg in messages:
+                                            if getattr(msg, "type", "") == "tool":
+                                                content_val = msg.content
+                                                if isinstance(content_val, list):
+                                                    content_val = "".join([item.get("text", "") if isinstance(item, dict) else str(item) for item in content_val])
+                                                elif not isinstance(content_val, str):
+                                                    content_val = str(content_val)
+                                                out = content_val[:80].replace("\n", " ") + "..." if len(content_val) > 80 else content_val
+                                                err_console.print(f"[dim blue]🔍 Tool Result: {out}[/dim blue]")
+                    else:
+                        # Standard LangChain LCEL path (DeepAgents disabled)
+                        lc_msgs = [SystemMessage(content=getattr(self, "sys_prompt", ""))] + list(self.history)
+                        resp = self.llm.invoke(lc_msgs, config={"callbacks": []})
+                        self._extract_and_log_ai_message(resp)
 
                 except Exception as e:
                     import traceback
@@ -444,6 +497,8 @@ def load_plugins(app, plugins_list):
         plugin_name = plugin_name.strip()
         if not plugin_name:
             continue
+        if plugin_name.endswith("_plugin"):
+            plugin_name = plugin_name[:-7]
         try:
             mod = import_module(f"{plugin_name}_plugin")
             if hasattr(mod, "enable_cli_plugin"):
@@ -453,6 +508,7 @@ def load_plugins(app, plugins_list):
                 err_console.print(f"[bold yellow]Warning: Plugin {plugin_name} does not support CLI mode.[/bold yellow]")
         except Exception as e:
             err_console.print(f"[bold red]Failed to load plugin {plugin_name}: {e}[/bold red]")
+
 
 # ==========================================
 # MAIN CLI LOGIC
@@ -645,10 +701,10 @@ def main():
             else:
                 full_prompt = piped_data
 
-    app.setup_agent(full_prompt)
-    
     if args.plugins:
         load_plugins(app, args.plugins.split(","))
+
+    app.setup_agent(full_prompt)
         
     try:
         final_answer = app.execute(full_prompt)

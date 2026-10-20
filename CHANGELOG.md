@@ -4,6 +4,73 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).   
    
+## [Unreleased] - 2026-10-20   
+   
+### Fixed   
+- **Auto Web Search Checkbox Layout Placement**:   
+  - In `plugins/autonomous_web_search_plugin.py` (`enable_plugin`), changed `horizontalLayout_2.insertWidget(2, checkbox)` to `insertWidget(1, checkbox)`. When loaded at application startup before other plugins, index 2 placed the checkbox past the expanding spacer on the far right. Changing it to index 1 ensures it always stays on the left alongside the other feature checkboxes.   
+   
+## [Unreleased] - 2026-10-18   
+   
+### Changed   
+- **Documentation Reorganization**:   
+  - Moved all module and architecture flowcharts to `documentation/execution_flow_charts/`.   
+  - Moved all plugin walkthroughs to `documentation/plugins/`.   
+  - Annotated centralized plugin resources directory `plugin_resources/<plugin name>` (e.g., `benchmarking_resources` -> `plugin_resources/benchmark/`) across agent instruction files (`GEMINI.md`, `documentation/README(for_agents).md`, `.agent/skills/create_plugin/SKILL.md`) and project layout documentation (`documentation/project_structure.md`).   
+  - Updated AI agent instructions and skills (`GEMINI.md`, `documentation/README(for_agents).md`, and `.agent/skills/create_plugin/SKILL.md`) to mandate reviewing flow charts in `documentation/execution_flow_charts/` and creating plugin walkthroughs in `documentation/plugins/`.   
+- **Context Compressor UI Designer File**:   
+  - Updated `ui_files/plugins/context_compressor_plugin.ui` to add `keep_label_spin` ("Keep last N full messages:") and `keep_spin` in layout `h1b` directly under `h1` ("Compress after N messages:").   
+- **Plugin UI Migration to `toolBoxPlugins`**:   
+  - Migrated all UI-injecting plugins (`context_compressor_plugin`, `auto_deep_agent_plugin`, `autonomous_web_search_plugin`, `two_step_router_plugin`, `group_chat_plugin`, `langgraph_supervisor_plugin`, and `langgraph_swarm_plugin`) to append pages to `main_window.ui.toolBoxPlugins` via `addItem()` and clean up via `removeItem()`, with graceful fallback to `main_window.ui.tabs`.   
+  - In `mainwindow.py` (`MainWindow.__init__`), cleared any placeholder pages (e.g. Designer default "Page 1") from `self.ui.toolBoxPlugins` on initialization so the toolbox only contains active plugin pages.   
+  - Updated `create_plugin` skill (`.agent/skills/create_plugin/SKILL.md`) documentation to specify `toolBoxPlugins` as the standard UI container for plugins.   
+- **Autonomous Web Search Empty-List Retry (`page` Increment)**:   
+  - Updated `plugins/autonomous_web_search_plugin.py` (`auto_web_search_hook`) to match `toolz.interactive_web_search(query: str, page: int = 1, max_results: int = 10)` and increment `page` by `+1` (rather than `max_results`) when the evaluator agent returns an empty list `[]`.   
+   
+### Fixed   
+- **Planner Plugin 401 Authentication Error (`Invalid token payload`)**:   
+  - In `plugins/planner_plugin.py` (`PlannerThread.run`), `api_key` was previously looked up from `provider_keys[api_base]` using the global `config["api_base"]` *before* `planner_cfg` overrode `api_base` with `planner_cfg["provider_url"]`, sending the wrong provider's API key to authenticated endpoints (such as Unsloth Studio). `api_key` is now resolved after `planner_cfg` overrides `api_base`.   
+   
+## [Unreleased] - 2026-10-17   
+   
+### Added   
+- **Auto Deep Agent CLI (`repl.py`) Compatibility**:   
+  - Added `enable_cli_plugin(repl_app)` to `plugins/auto_deep_agent_plugin.py` (with lazy `PyQt5.QtWidgets` import so CLI mode runs without loading Qt widgets).   
+  - Added `ReplApp.execute_string_hook()`, `decide_use_deepagents` hook execution in `ReplApp.setup_agent()`, and a standard LCEL fallback in `ReplApp.execute()` when `use_da` is `False`.   
+  - Updated `repl.py` `main()` to load `--plugins` before `app.setup_agent(full_prompt)` so pre-generation hooks (`decide_use_deepagents`, `on_pre_generation_prompt`) run during agent setup.   
+   
+## [Unreleased] - 2026-10-16
+
+### Changed
+- **Session Auto-Save on Context Compression & Markdown Parsing**:
+  - `MainWindow._on_context_compressed()` now invokes `self.save_session(self.session_file)` so the updated `self.messages` list and compressed state are saved to disk immediately after compression finishes.   
+  - `parse_markdown_plugin.py` now triggers `main_window.save_session(main_window.session_file)` in the completion callback of `runJavaScript` so the parsed HTML rendering in the chat display is saved to disk immediately after markdown parsing.   
+
+## [Unreleased] - 2026-10-15
+
+### Added
+- **Auto Deep Agent Plugin** (`plugins/auto_deep_agent_plugin.py`): Before each run, the active model is asked (YES/NO) whether DeepAgents is needed for the user's message, and DeepAgents is enabled/disabled for that run only. Adds an "Auto Deep Agent" tab (router prompt, optional history context, reset button, and an agent selector to choose which agent's endpoint/model answers the YES/NO question).   
+- **`decide_use_deepagents` hook** in `generation_thread.py`: string hook returning `"YES"`/`"NO"` to override DeepAgents usage per run; any other value keeps the default.   
+- **Auto Deep Agent walkthrough**: `plugins/auto_deep_agent_walkthrough.md`; hook documented in `documentation/generation_thread_flow.md`.   
+- **`create_plugin` agent skill** (`.agent/skills/create_plugin/SKILL.md`): plugin contract, full hook reference, UI tab pattern, thread-safety rules, adding new hook points, and documentation requirements.   
+
+### Removed
+- **Built-in context compressor** (`MainWindow.context_compressor_hook`, its hook registration, and hardcoded `/compress` handling). `plugins/context_compressor_plugin.py` is now the only compressor. Settings dialog compression controls are hidden and no longer write `enable_context_compression` / `context_compress_threshold`.   
+
+### Changed
+- **`on_slash_command` hook** (`MainWindow.send_message`): string hook; plugins return `"HANDLED"` to consume a `/command`. Context Compressor now claims `/compress` this way and adds/removes it from the slash popup. Plugin tab settings now persist via `_save_config()`.   
+- **Context Compressor "Keep last N full messages"**: new spinbox (under "Compress after N messages") saved as `context_keep_last_n` (default 4). Both automatic and manual compression now summarize everything except the last N messages, replacing the old hardcoded behavior (auto: first 5 messages; manual: all but last 2).   
+
+### Fixed
+- **Context compression firing twice**: `_init_plugins()` runs inside `_connect_signals()` *before* `MainWindow.__init__` registered the built-in `context_compressor_hook`, so the plugin's unregister was a no-op and both compressors ran. Also, the plugin's `send_message` monkey-patch never took effect (Send button was bound to the original), so `/compress` used the built-in compressor.   
+- **Auto Web Search reply capture**: the main agent's final reply streamed into the collapsible evaluation box because `write_to_chat` appends to `body.lastElementChild`. The plugin now appends an empty sibling `<div>` after the box so subsequent output lands outside it.   
+
+## [Unreleased] - 2026-10-13
+   
+   
+### Fixed   
+- **PII Checker Gitignore Wildcards**: `PROJECT_MANAGMENT_SCRIPTS/pii_check.py` passed `.gitignore` rules through `re.escape()`, so `*` was a literal asterisk (e.g. `*config.json` never matched) and rules with a `/` (e.g. `RAG/blueprint/`) never matched files. It now uses `fnmatch` on paths relative to the repo root, handles dir-only/anchored rules, and skips ignored directories during `os.walk`. Removed the broken, unused `scan_directory()` function.   
+   
 ## [Unreleased] - 2026-10-11   
    
 ### Changed   

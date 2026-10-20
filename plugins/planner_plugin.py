@@ -36,7 +36,6 @@ class PlannerThread(QThread):
 
             model_name = self.main_window.config.get("model", "llama3")
             api_base = self.main_window.config.get("api_base")
-            api_key = self.main_window.config.get("provider_keys", {}).get(api_base) or self.main_window.config.get("api_key") or "sk-no-key"
             temperature = 0.7
             
             system_prompt = (
@@ -60,6 +59,14 @@ class PlannerThread(QThread):
                     if os.path.exists(filepath):
                         with open(filepath, "r", encoding="utf-8") as f:
                             system_prompt = f.read()
+
+            # Resolve api_key AFTER planner_cfg may have overridden api_base
+            api_key = (
+                (planner_cfg.get("api_key") if planner_cfg else None)
+                or self.main_window.config.get("provider_keys", {}).get(api_base)
+                or self.main_window.config.get("api_key")
+                or "sk-no-key"
+            )
                             
             llm = ChatOpenAI(
                 model=model_name,

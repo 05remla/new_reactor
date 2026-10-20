@@ -106,7 +106,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- |
 | **Manage Agents Button** | `pushButtonAgentsManage.clicked` | `_open_agent_manager()` | Spawns `AgentManagerDialog` and connects `destroyed` signal to refresh list. |
 | **Slider Adjustments** | `*_slider.valueChanged` | `_update_slider_labels()` | Updates numeric text labels, saves parameters to `config.json`. |
-| **Runtime Settings** | Checkboxes / Spinboxes | `_on_runtime_settings_changed()` | Updates semantic LTM, context compression thresholds, DA root dir and backend. |
+| **Runtime Settings** | Checkboxes / Spinboxes | `_on_runtime_settings_changed()` | Updates semantic LTM, DA root dir and backend. (Context compression controls are hidden; owned by `context_compressor_plugin.py`.) |
 | **LightRAG Management** | Add / Remove buttons / List click | `_add_lightrag_url()`, `_remove_lightrag_url()`, etc. | Updates `saved_lightrag_urls`, active URL, descriptions map in `config.json`. |
 | **LM Studio Endpoints** | Add / Remove buttons / List click | `_add_lmstudio()`, `_remove_lmstudio()` | Updates `saved_lmstudio_urls` and active URL. |
 | **Bulk Session Rename** | `pushButtonSessionsRename.clicked` | `_bulk_rename_sessions()` | Spawns `BulkSessionRenamerThread` using `reactor_worker` to rename default timestamped sessions. |

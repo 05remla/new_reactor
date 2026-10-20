@@ -28,15 +28,23 @@ def plugin_compressor_hook(main_window, full_response=None, force=False):
     except Exception:
         threshold = 15
         
-    print(f"[ContextCompressorPlugin] threshold={threshold}, msg_len={len(main_window.messages)}")
+    try:
+        keep_last = max(int(main_window.config.get("context_keep_last_n", 4)), 0)
+    except Exception:
+        keep_last = 4
+
+    print(f"[ContextCompressorPlugin] threshold={threshold}, keep_last={keep_last}, msg_len={len(main_window.messages)}")
     
     if force or len(main_window.messages) > threshold:
         print("[ContextCompressorPlugin] Condition met. Starting worker thread...")
         def worker():
             if not force and len(main_window.messages) <= threshold: return
-            if force and len(main_window.messages) <= 2: return
             
-            num_to_compress = max(len(main_window.messages) - 2, 1) if force else 5
+            # Keep the last N messages verbatim; compress everything before them
+            num_to_compress = len(main_window.messages) - keep_last
+            if num_to_compress < 1:
+                print(f"[ContextCompressorPlugin] Nothing to compress (keep_last={keep_last} >= {len(main_window.messages)} messages)")
+                return
             msgs_to_compress = main_window.messages[:num_to_compress]
             rest = main_window.messages[num_to_compress:]
             
@@ -94,30 +102,24 @@ def enable_plugin(main_window):
         return
     main_window._context_compressor_installed = True
 
-    # 1. Unregister legacy hook
-    main_window.unregister_hook("on_generation_finished", main_window.context_compressor_hook)
-    
-    # 2. Register our new hook
+    # 1. Register auto-compression hook
     # Attach wrapper to main_window so we can unregister it later
     if not hasattr(main_window, '_plugin_compressor_wrapper'):
         main_window._plugin_compressor_wrapper = lambda resp: plugin_compressor_hook(main_window, resp, force=False)
     main_window.register_hook("on_generation_finished", main_window._plugin_compressor_wrapper, priority=80)
 
-    # 3. Intercept `/compress` slash command in send_message
-    main_window._original_send_message_compressor = main_window.send_message
-    
-    def compressor_send_message_hook():
-        user_text = main_window.ui.input_box.toPlainText()
-        if user_text and user_text.strip() == "/compress":
-            plugin_compressor_hook(main_window, None, force=True)
-            main_window.ui.input_box.clear()
-            main_window.write_to_chat("<br><span style='color:#3498db;'><i>🤖 [System: Manual compression triggered via plugin...]</i></span><br>", is_new_message=True)
-            if hasattr(main_window, 'slash_popup'):
-                main_window.slash_popup.hide()
-            return
-        return main_window._original_send_message_compressor()
-        
-    main_window.send_message = compressor_send_message_hook
+    # 2. Claim the `/compress` slash command via the on_slash_command hook
+    def compressor_slash_hook(current, command="", **kwargs):
+        if current == "HANDLED" or command != "/compress":
+            return current
+        plugin_compressor_hook(main_window, None, force=True)
+        main_window.write_to_chat("<br><span style='color:#3498db;'><i>🤖 [System: Manual compression triggered...]</i></span><br>", is_new_message=True)
+        return "HANDLED"
+
+    main_window._compressor_slash_hook = compressor_slash_hook
+    main_window.register_hook("on_slash_command", compressor_slash_hook, priority=50)
+    if hasattr(main_window, 'commands') and "/compress" not in main_window.commands:
+        main_window.commands.append("/compress")
 
     # 4. Inject Dynamic UI into Main Window Tabs
     # Build the new tab
@@ -138,6 +140,16 @@ def enable_plugin(main_window):
     h1.addWidget(spin)
     h1.addStretch()
     layout.addLayout(h1)
+    
+    # SpinBox for messages kept verbatim
+    h1b = QHBoxLayout()
+    h1b.addWidget(QLabel("Keep last N full messages:"))
+    keep_spin = QSpinBox()
+    keep_spin.setMaximum(500)
+    keep_spin.setValue(main_window.config.get("context_keep_last_n", 4))
+    h1b.addWidget(keep_spin)
+    h1b.addStretch()
+    layout.addLayout(h1b)
     
     # Agent Selection
     h2 = QHBoxLayout()
@@ -165,41 +177,52 @@ def enable_plugin(main_window):
     def save_settings(*args):
         main_window.config["enable_context_compression"] = enable_chk.isChecked()
         main_window.config["context_compress_threshold"] = spin.value()
+        main_window.config["context_keep_last_n"] = keep_spin.value()
         main_window.config["context_compressor_agent"] = agent_combo.currentText()
         main_window.config["context_compressor_prompt"] = prompt_edit.toPlainText()
+        if hasattr(main_window, "_save_config"):
+            main_window._save_config()
         
     enable_chk.stateChanged.connect(save_settings)
     spin.valueChanged.connect(save_settings)
+    keep_spin.valueChanged.connect(save_settings)
     agent_combo.currentTextChanged.connect(save_settings)
     prompt_edit.textChanged.connect(save_settings)
     
     btn.clicked.connect(lambda checked=False: plugin_compressor_hook(main_window, None, force=True))
     
-    # Add to main window tabs
+    # Add to main window toolBoxPlugins (or fallback to tabs)
     main_window._context_compressor_tab = compressor_tab
-    main_window.ui.tabs.addTab(compressor_tab, "Context Compression")
+    if hasattr(main_window.ui, 'toolBoxPlugins'):
+        main_window.ui.toolBoxPlugins.addItem(compressor_tab, "Context Compression")
+    else:
+        main_window.ui.tabs.addTab(compressor_tab, "Context Compression")
 
 
 def disable_plugin(main_window):
     if not getattr(main_window, '_context_compressor_installed', False):
         return
 
-    # Unregister plugin hook
+    # Unregister plugin hooks
     if hasattr(main_window, '_plugin_compressor_wrapper'):
         main_window.unregister_hook("on_generation_finished", main_window._plugin_compressor_wrapper)
 
-    # Re-register original hook
-    main_window.register_hook("on_generation_finished", main_window.context_compressor_hook, priority=80)
+    if hasattr(main_window, '_compressor_slash_hook'):
+        main_window.unregister_hook("on_slash_command", main_window._compressor_slash_hook)
+        del main_window._compressor_slash_hook
+    if hasattr(main_window, 'commands') and "/compress" in main_window.commands:
+        main_window.commands.remove("/compress")
 
-    if hasattr(main_window, '_original_send_message_compressor'):
-        main_window.send_message = main_window._original_send_message_compressor
-        del main_window._original_send_message_compressor
-
-    # Remove UI tab
+    # Remove UI page/tab
     if hasattr(main_window, '_context_compressor_tab'):
-        idx = main_window.ui.tabs.indexOf(main_window._context_compressor_tab)
-        if idx != -1:
-            main_window.ui.tabs.removeTab(idx)
+        if hasattr(main_window.ui, 'toolBoxPlugins'):
+            idx = main_window.ui.toolBoxPlugins.indexOf(main_window._context_compressor_tab)
+            if idx != -1:
+                main_window.ui.toolBoxPlugins.removeItem(idx)
+        else:
+            idx = main_window.ui.tabs.indexOf(main_window._context_compressor_tab)
+            if idx != -1:
+                main_window.ui.tabs.removeTab(idx)
         main_window._context_compressor_tab.deleteLater()
         del main_window._context_compressor_tab
 

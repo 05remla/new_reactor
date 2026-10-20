@@ -223,7 +223,7 @@ def enable_plugin(main_window):
     read_btn = QPushButton("🔊 Read Last")
     read_btn.setStyleSheet("font-weight: bold; padding: 4px 8px; border-radius: 4px;")
     main_window.ui.read_btn = read_btn
-    main_window.ui.horizontalLayout_2.insertWidget(2, read_btn) # Top bar
+    main_window.ui.horizontalLayout_2.insertWidget(1, read_btn) # Top bar
 
     def read_last_message():
         api_key = main_window.config.get("cartesia_api_key", "")

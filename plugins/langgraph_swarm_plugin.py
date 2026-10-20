@@ -321,7 +321,10 @@ def enable_plugin(main_window):
     main_window._lgswarm_chat_installed = True
 
     lgswarm_widget = LGSwarmWidget(main_window)
-    main_window.ui.tabs.addTab(lgswarm_widget, "Langgraph Swarm")
+    if hasattr(main_window.ui, 'toolBoxPlugins'):
+        main_window.ui.toolBoxPlugins.addItem(lgswarm_widget, "Langgraph Swarm")
+    else:
+        main_window.ui.tabs.addTab(lgswarm_widget, "Langgraph Swarm")
     main_window.lgswarm_widget = lgswarm_widget
 
     main_window._original_send_message_lgswarm = main_window.send_message
@@ -360,12 +363,18 @@ def disable_plugin(main_window):
     if not getattr(main_window, '_lgswarm_chat_installed', False):
         return
 
-    idx = main_window.ui.tabs.indexOf(main_window.lgswarm_widget)
-    if idx != -1:
-        main_window.ui.tabs.removeTab(idx)
-        
-    main_window.lgswarm_widget.deleteLater()
-    del main_window.lgswarm_widget
+    if hasattr(main_window, 'lgswarm_widget'):
+        if hasattr(main_window.ui, 'toolBoxPlugins'):
+            idx = main_window.ui.toolBoxPlugins.indexOf(main_window.lgswarm_widget)
+            if idx != -1:
+                main_window.ui.toolBoxPlugins.removeItem(idx)
+        else:
+            idx = main_window.ui.tabs.indexOf(main_window.lgswarm_widget)
+            if idx != -1:
+                main_window.ui.tabs.removeTab(idx)
+            
+        main_window.lgswarm_widget.deleteLater()
+        del main_window.lgswarm_widget
 
     main_window.send_message = main_window._original_send_message_lgswarm
     del main_window._original_send_message_lgswarm

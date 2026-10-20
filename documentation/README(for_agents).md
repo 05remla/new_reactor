@@ -39,9 +39,12 @@ When adding a new feature (e.g., a new capability for the agent):
 ## 6. Strict AI Agent Rules   
 Whenever you (an AI agent) are assisting with this project, you **MUST** adhere to the following rules:   
 1. **Maintain the Changelog**: Always keep `CHANGELOG.md` updated as you work on features or refactoring.   
-2. **Document Major Changes**: Create `walkthrough.md` artifacts after finishing big architectural changes or new implementations so the user can easily understand what was done.   
-3. **Always Validate Syntax**: After any major refactoring or file editing, ALWAYS run `python -m py_compile <modified_files>` to check for syntax errors before presenting the solution to the user.   
-4. **Environment Paths**: Be aware that the project root is `/home/leo/.pyvirtenvs/new_reactor` and the Python interpreter is located at `/home/leo/.pyvirtenvs/new_reactor/bin/python`. Use these paths if running any background Python scripts or terminal commands.   
-5. **Check the Scratchpad**: If you are jumping into the middle of a task, or utilizing background sub-agents, always check the `scratchpad.json` in the workspace directory to see if there are partial notes or interrupted processes you should be aware of.   
-6. **Markdown Formatting**: when formatting for markdown or context history, end all lines with a three space padding, for formatting reasons.   
+2. **Review Flow Documentation First**: Before planning or editing any core module (e.g., `agent_manager.py`, `mainwindow.py`, `generation_thread.py`, `core_engine.py`, `settings.py`, `config_manager.py`, `repl.py`), you MUST review its corresponding flow documentation in `documentation/execution_flow_charts/<module>_flow.md` to trace callers, Qt signals, and side-effects.   
+3. **Document Major Changes & Plugins**: Create `walkthrough.md` artifacts after finishing big architectural changes or new implementations. For plugins, write walkthroughs in `documentation/plugins/<name>_walkthrough.md`.   
+4. **Always Validate Syntax**: After any major refactoring or file editing, ALWAYS run `python -m py_compile <modified_files>` to check for syntax errors before presenting the solution to the user.   
+5. **Environment Paths**: Be aware that the project root is `/home/leo/.pyvirtenvs/new_reactor` and the Python interpreter is located at `/home/leo/.pyvirtenvs/new_reactor/bin/python`. Use these paths if running any background Python scripts or terminal commands.   
+6. **Check the Scratchpad**: If you are jumping into the middle of a task, or utilizing background sub-agents, always check the `scratchpad.json` in the workspace directory to see if there are partial notes or interrupted processes you should be aware of.   
+7. **Markdown Formatting**: When formatting for markdown or context history, end all lines with a three space padding, for formatting reasons.   
+8. **Never Run Git Commands**: NEVER run or mind ANY Git commands! The user handles all Git operations exclusively!   
+9. **Plugin Resources Directory**: All plugin-specific resources (benchmarks, prompt datasets, sample data, asset files, etc.) must reside under `/home/leo/.pyvirtenvs/new_reactor/plugin_resources/<plugin name>` (e.g. `plugin_resources/benchmark/`).   
    

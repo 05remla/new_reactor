@@ -284,7 +284,10 @@ def enable_plugin(main_window):
     main_window._two_step_installed = True
 
     two_step_widget = TwoStepRouterWidget(main_window)
-    main_window.ui.tabs.addTab(two_step_widget, "Two-Step Router")
+    if hasattr(main_window.ui, 'toolBoxPlugins'):
+        main_window.ui.toolBoxPlugins.addItem(two_step_widget, "Two-Step Router")
+    else:
+        main_window.ui.tabs.addTab(two_step_widget, "Two-Step Router")
     main_window.two_step_widget = two_step_widget
 
     main_window._original_send_message_two_step = main_window.send_message
@@ -318,12 +321,18 @@ def disable_plugin(main_window):
     if not getattr(main_window, '_two_step_installed', False):
         return
 
-    idx = main_window.ui.tabs.indexOf(main_window.two_step_widget)
-    if idx != -1:
-        main_window.ui.tabs.removeTab(idx)
-        
-    main_window.two_step_widget.deleteLater()
-    del main_window.two_step_widget
+    if hasattr(main_window, 'two_step_widget'):
+        if hasattr(main_window.ui, 'toolBoxPlugins'):
+            idx = main_window.ui.toolBoxPlugins.indexOf(main_window.two_step_widget)
+            if idx != -1:
+                main_window.ui.toolBoxPlugins.removeItem(idx)
+        else:
+            idx = main_window.ui.tabs.indexOf(main_window.two_step_widget)
+            if idx != -1:
+                main_window.ui.tabs.removeTab(idx)
+            
+        main_window.two_step_widget.deleteLater()
+        del main_window.two_step_widget
 
     main_window.send_message = main_window._original_send_message_two_step
     del main_window._original_send_message_two_step

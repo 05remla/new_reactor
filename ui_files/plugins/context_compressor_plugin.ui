@@ -13,59 +13,67 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="mainLayout">
-   <item>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
     <widget class="QCheckBox" name="enable_chk">
      <property name="text">
       <string>Enable Automatic Context Compression</string>
      </property>
     </widget>
    </item>
-   <item>
+   <item row="1" column="0">
     <layout class="QHBoxLayout" name="h1">
-   <item>
-    <widget class="QLabel" name="label_spin">
-     <property name="text">
-      <string>Compress after N messages:</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QSpinBox" name="spin">
-
-    </widget>
-   </item>
+     <item>
+      <widget class="QLabel" name="label_spin">
+       <property name="text">
+        <string>Compress after N messages:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="spin"/>
+     </item>
     </layout>
    </item>
-   <item>
+   <item row="2" column="0">
+    <layout class="QHBoxLayout" name="h1b">
+     <item>
+      <widget class="QLabel" name="keep_label_spin">
+       <property name="text">
+        <string>Keep last N full messages:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="keep_spin"/>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0">
     <layout class="QHBoxLayout" name="h2">
-   <item>
-    <widget class="QLabel" name="label_combo">
-     <property name="text">
-      <string>Compressor Agent Profile:</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QComboBox" name="agent_combo">
-
-    </widget>
-   </item>
+     <item>
+      <widget class="QLabel" name="label_combo">
+       <property name="text">
+        <string>Compressor Agent Profile:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="agent_combo"/>
+     </item>
     </layout>
    </item>
-   <item>
+   <item row="4" column="0">
     <widget class="QLabel" name="label_prompt">
      <property name="text">
       <string>Compression System Prompt / Instructions:</string>
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="QTextEdit" name="prompt_edit">
-
-    </widget>
+   <item row="5" column="0">
+    <widget class="QTextEdit" name="prompt_edit"/>
    </item>
-   <item>
+   <item row="6" column="0">
     <widget class="QPushButton" name="btn">
      <property name="text">
       <string>Compress Active Context Now</string>

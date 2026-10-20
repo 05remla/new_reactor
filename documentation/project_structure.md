@@ -33,19 +33,24 @@ new_reactor/
 ├── toolz.py            # Collection of Python functions available as AI tools   
 │   
 ├── documentation/      # Project documentation, guides, and walkthroughs   
-│   ├── agent_manager_flow.md                     # Flowchart and signal architecture for agent_manager.py   
-│   ├── config_manager_flow.md                    # Singleton and config IO architecture for config_manager.py   
-│   ├── core_engine_flow.md                       # Execution engine, prompt compilation, and DeepAgents pipeline for core_engine.py   
-│   ├── generation_thread_flow.md                 # Background streaming thread and tool loops for generation_thread.py   
+│   ├── execution_flow_charts/                    # Module flowcharts, signal graphs, and pipeline details   
+│   │   ├── agent_manager_flow.md                 # Flowchart and signal architecture for agent_manager.py   
+│   │   ├── config_manager_flow.md                # Singleton and config IO architecture for config_manager.py   
+│   │   ├── core_engine_flow.md                   # Execution engine, prompt compilation, and DeepAgents pipeline for core_engine.py   
+│   │   ├── generation_thread_flow.md             # Background streaming thread and tool loops for generation_thread.py   
+│   │   ├── invocation_flowchart_details.md       # Detailed breakdown of the LLM pipeline nodes   
+│   │   ├── invocation_flowchart.md               # Mermaid flowchart of the execution pipeline   
+│   │   ├── mainwindow_flow.md                    # Main GUI event and signal architecture for mainwindow.py   
+│   │   ├── repl_flow.md                          # Headless CLI and pipeline architecture for repl.py   
+│   │   ├── settings_flow.md                      # Settings dialog and worker thread architecture for settings.py   
+│   │   └── startup_flowchart.md                  # Sequential application loading and startup flow   
+│   ├── plugins/                                  # Walkthrough documentation for plugins   
+│   │   └── <name>_walkthrough.md                 # Per-plugin architecture, hooks, and verification guide   
 │   ├── getting_started.md                        # High-level setup and overview guide for users   
 │   ├── implimentation_plans/                     # Saved implementation plan artifacts   
-│   ├── invocation_flowchart_details.md           # Detailed breakdown of the LLM pipeline nodes   
-│   ├── invocation_flowchart.md                   # Mermaid flowchart of the execution pipeline   
-│   ├── mainwindow_flow.md                        # Main GUI event and signal architecture for mainwindow.py   
 │   ├── Memory_Architecture_and_Implementation.md # Guide to the vault memory architecture   
 │   ├── README(for_agents).md                     # Strict guidelines and context for AI agents   
-│   ├── repl_flow.md                              # Headless CLI and pipeline architecture for repl.py   
-│   ├── settings_flow.md                          # Settings dialog and worker thread architecture for settings.py   
+│   ├── usage_examples.md                         # CLI workflow and practical usage examples   
 │   └── walkthroughs/                             # Walkthrough artifacts documenting major features   
 │   
 ├── web_assets/         # Static assets (CSS/JS) for rendering rich markdown   
@@ -74,7 +79,8 @@ new_reactor/
 │   └── subwindow.ui        # Qt layout for secondary pop-out windows   
 │   
 ├── agents/             # Stored agent persona configuration files   
-├── plugins/            # DeepAgent graph implementations and walkthroughs   
+├── plugin_resources/   # External datasets, benchmarks, and assets keyed by plugin name (<plugin name>/)   
+├── plugins/            # DeepAgent plugins, graph implementations, and custom hook extensions   
 ├── prompts/            # Markdown files containing raw system prompts   
 ├── sessions/           # Saved JSON conversation history files   
 ├── session_templates/  # Template files for injecting specific contexts   
