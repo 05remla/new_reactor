@@ -286,6 +286,19 @@ class MstyCloneApp(QMainWindow):
             self.ui.labelProjectFilesName.setText(workspace_name)
             
         if hasattr(self.ui, 'treeWidget'):
+            # Save expanded paths before clearing so user's expanded folders persist
+            expanded_paths = set()
+            def collect_expanded(item):
+                if item.isExpanded():
+                    p = item.data(0, Qt.UserRole)
+                    if p:
+                        expanded_paths.add(p)
+                for i in range(item.childCount()):
+                    collect_expanded(item.child(i))
+
+            for i in range(self.ui.treeWidget.topLevelItemCount()):
+                collect_expanded(self.ui.treeWidget.topLevelItem(i))
+
             self.ui.treeWidget.clear()
             self.ui.treeWidget.setHeaderLabels(["Project Files"])
             self.ui.treeWidget.setDragEnabled(True)
@@ -320,7 +333,19 @@ class MstyCloneApp(QMainWindow):
             root_item = QTreeWidgetItem(self.ui.treeWidget, [root_name])
             root_item.setData(0, Qt.UserRole, da_root_dir)
             add_items(root_item, da_root_dir)
-            root_item.setExpanded(True)
+
+            # Restore expansion state (or default root to expanded)
+            if not expanded_paths:
+                root_item.setExpanded(True)
+            else:
+                def restore_expanded(item):
+                    p = item.data(0, Qt.UserRole)
+                    if p in expanded_paths:
+                        item.setExpanded(True)
+                    for i in range(item.childCount()):
+                        restore_expanded(item.child(i))
+
+                restore_expanded(root_item)
 
     def _open_file_in_tab(self, item, column):
         file_path = item.data(0, Qt.UserRole)
@@ -1241,6 +1266,10 @@ class MstyCloneApp(QMainWindow):
             
         if hasattr(self.ui, 'pushButtonProjectTreeRefresh'):
             self.ui.pushButtonProjectTreeRefresh.clicked.connect(self._populate_project_tree)
+        if hasattr(self.ui, 'pushButtonProjectTreeCollapse') and hasattr(self.ui, 'treeWidget'):
+            self.ui.pushButtonProjectTreeCollapse.clicked.connect(self.ui.treeWidget.collapseAll)
+        if hasattr(self.ui, 'pushButtonProjectTreeExpand') and hasattr(self.ui, 'treeWidget'):
+            self.ui.pushButtonProjectTreeExpand.clicked.connect(self.ui.treeWidget.expandAll)
         
     def _open_agent_manager(self):
         from agent_manager import AgentManagerDialog

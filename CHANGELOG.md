@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
    
 ## [Unreleased] - 2026-10-20   
    
+### Added   
+- **Ask Question Plugin** (`plugins/ask_question_plugin.py`):   
+  - Dynamically registers an `ask_question(question: str)` tool on `toolz.py` when enabled.   
+  - Uses a cross-thread `QuestionBridge` (`QObject` signal) to prompt the user via `QInputDialog` on the main GUI thread while safely pausing `GenerationThread` with a `threading.Event()`, allowing the agent to clarify requirements mid-execution without breaking the tool chain.   
+  - Implements `enable_cli_plugin(repl_app)` for CLI console prompting via standard input.   
+  - Created plugin walkthrough in `documentation/plugins/ask_question_walkthrough.md`.   
+   
+### Changed   
+- **Project Files Tree Expansion Persistence**:   
+  - In `mainwindow.py` (`_populate_project_tree`), collected all expanded node paths (`item.data(0, Qt.UserRole)`) prior to clearing the tree and restored their expansion state after repopulating. This prevents the project tree from collapsing all folders when generation finishes, sessions are saved, or plugins refresh the tree.   
+  - Connected `pushButtonProjectTreeCollapse` and `pushButtonProjectTreeExpand` to `treeWidget.collapseAll` and `treeWidget.expandAll` for one-click collapsing/expanding of all project files.   
+   
 ### Fixed   
 - **Auto Web Search Checkbox Layout Placement**:   
   - In `plugins/autonomous_web_search_plugin.py` (`enable_plugin`), changed `horizontalLayout_2.insertWidget(2, checkbox)` to `insertWidget(1, checkbox)`. When loaded at application startup before other plugins, index 2 placed the checkbox past the expanding spacer on the far right. Changing it to index 1 ensures it always stays on the left alongside the other feature checkboxes.   
